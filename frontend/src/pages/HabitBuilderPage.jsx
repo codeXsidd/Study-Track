@@ -200,10 +200,10 @@ const HabitBuilderPage = () => {
                                         {habit.goal && <p style={{ fontSize: '0.8rem', color: 'var(--text-soft)' }}>{habit.goal}</p>}
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                        <button type="button" onClick={() => openModal('edit', habit)} className="action-btn" style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 8, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                                        <button type="button" onClick={(e) => { e.stopPropagation(); openModal('edit', habit); }} className="action-btn" title="Edit Habit" style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 8, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', zIndex: 10 }}>
                                             <Edit2 size={16} />
                                         </button>
-                                        <button type="button" onClick={() => handleDelete(habit._id)} className="action-btn" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 8, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                                        <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(habit._id); }} className="action-btn" title="Delete Habit" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 8, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', zIndex: 10 }}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -225,21 +225,35 @@ const HabitBuilderPage = () => {
                                         {habit.totalCompleted} Total Completions
                                     </span>
                                     <button
-                                        onClick={() => handleToggle(habit._id)}
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleToggle(habit._id); }}
                                         style={{
-                                            background: completed ? 'rgba(16,185,129,0.1)' : 'transparent',
-                                            border: completed ? '1px solid #10b981' : '1px solid #64748b',
+                                            background: completed ? 'rgba(16,185,129,0.15)' : 'rgba(99,102,241,0.05)',
+                                            border: completed ? '1.5px solid #10b981' : '1.5px solid rgba(148, 163, 184, 0.3)',
                                             color: completed ? '#10b981' : '#e2e8f0',
-                                            padding: '0.4rem 0.8rem', borderRadius: '8px',
-                                            display: 'flex', alignItems: 'center', gap: 6,
-                                            fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem',
-                                            transition: 'all 0.2s'
+                                            padding: '0.5rem 1rem', borderRadius: '10px',
+                                            display: 'flex', alignItems: 'center', gap: 8,
+                                            fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem',
+                                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            boxShadow: completed ? '0 0 12px rgba(16, 185, 129, 0.2)' : 'none',
+                                            zIndex: 5
                                         }}
-                                        onMouseEnter={(e) => { if (!completed) e.currentTarget.style.borderColor = '#6366f1'; }}
-                                        onMouseLeave={(e) => { if (!completed) e.currentTarget.style.borderColor = '#64748b'; }}
+                                        className="habit-toggle-btn"
+                                        onMouseEnter={(e) => {
+                                            if (!completed) {
+                                                e.currentTarget.style.borderColor = '#6366f1';
+                                                e.currentTarget.style.background = 'rgba(99,102,241,0.1)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!completed) {
+                                                e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+                                                e.currentTarget.style.background = 'rgba(99,102,241,0.05)';
+                                            }
+                                        }}
                                     >
-                                        {completed ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                                        {completed ? 'Completed' : 'Mark Done'}
+                                        {completed ? <CheckCircle2 size={18} fill="rgba(16,185,129,0.1)" /> : <Circle size={18} />}
+                                        {completed ? 'Success!' : 'Mark Done'}
                                     </button>
                                 </div>
                             </div>
