@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Plus, Check, Trash2, Calendar, Star, Layout, ListTodo, Sun, Coffee, Brain, Sparkles, ChevronRight, X } from 'lucide-react';
+import { Target, Plus, Check, Trash2, Calendar, Star, Layout, ListTodo, Sun, Coffee, Brain, Sparkles, ChevronRight, X, AlertCircle } from 'lucide-react';
 import API from '../services/api';
 import toast from 'react-hot-toast';
 
 const DailyPlannerPage = () => {
     const [allTodos, setAllTodos] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Quick Add State
     const [newQuickTask, setNewQuickTask] = useState('');
+    const [quickPriority, setQuickPriority] = useState('Medium');
+    const [quickCategory, setQuickCategory] = useState('Study');
+
+    // Backlog Add State
     const [newBacklogTask, setNewBacklogTask] = useState('');
+    const [backlogPriority, setBacklogPriority] = useState('Medium');
+    const [backlogCategory, setBacklogCategory] = useState('Study');
+
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -51,11 +60,21 @@ const DailyPlannerPage = () => {
         } catch { toast.error('Update failed'); }
     };
 
+    const cyclePriority = async (todo) => {
+        const priorities = ['Low', 'Medium', 'High'];
+        const nextPriority = priorities[(priorities.indexOf(todo.priority) + 1) % priorities.length];
+        try {
+            const res = await API.put(`/todos/${todo._id}`, { priority: nextPriority });
+            setAllTodos(allTodos.map(t => t._id === todo._id ? res.data : t));
+            toast.success(`Priority set to ${nextPriority}`);
+        } catch { toast.error('Failed to change priority'); }
+    };
+
     const addQuickTask = async () => {
         if (!newQuickTask.trim()) return;
         setSaving(true);
         try {
-            const res = await API.post('/todos', { title: newQuickTask, dayPlan: true, priority: 'Medium', category: 'Study' });
+            const res = await API.post('/todos', { title: newQuickTask, dayPlan: true, priority: quickPriority, category: quickCategory });
             setAllTodos([res.data, ...allTodos]);
             setNewQuickTask('');
             toast.success('Quick task added for today!');
@@ -67,7 +86,7 @@ const DailyPlannerPage = () => {
         if (!newBacklogTask.trim()) return;
         setSaving(true);
         try {
-            const res = await API.post('/todos', { title: newBacklogTask, dayPlan: false, priority: 'Medium', category: 'Study' });
+            const res = await API.post('/todos', { title: newBacklogTask, dayPlan: false, priority: backlogPriority, category: backlogCategory });
             setAllTodos([res.data, ...allTodos]);
             setNewBacklogTask('');
             toast.success('Task added to backlog!');
@@ -81,6 +100,10 @@ const DailyPlannerPage = () => {
             setAllTodos(allTodos.filter(t => t._id !== id));
             toast.success('Deleted');
         } catch { toast.error('Failed to delete task'); }
+    };
+
+    const priorityColor = (priority) => {
+        return priority === 'High' ? '#ef4444' : priority === 'Medium' ? '#f59e0b' : '#10b981';
     };
 
     return (
@@ -109,20 +132,39 @@ const DailyPlannerPage = () => {
 
                         {/* Quick Task Input */}
                         <div className="quick-add-container">
-                            <div style={{ position: 'relative', flex: 1 }}>
-                                <input
-                                    className="input"
-                                    placeholder="Add task for today..."
-                                    style={{ padding: '0.8rem 1rem', paddingLeft: '2.8rem', fontSize: '1rem', background: 'rgba(15,15,26,0.95)' }}
-                                    value={newQuickTask}
-                                    onChange={e => setNewQuickTask(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && addQuickTask()}
-                                />
-                                <Target size={20} color="#6366f1" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', width: '100%' }}>
+                                <div style={{ position: 'relative', flex: 1 }}>
+                                    <input
+                                        className="input"
+                                        placeholder="Add task for today..."
+                                        style={{ padding: '0.8rem 1rem', paddingLeft: '2.8rem', fontSize: '1rem', background: 'rgba(15,15,26,0.95)' }}
+                                        value={newQuickTask}
+                                        onChange={e => setNewQuickTask(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && addQuickTask()}
+                                    />
+                                    <Target size={20} color="#6366f1" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                                </div>
+                                <button onClick={addQuickTask} disabled={saving} className="btn-primary quick-add-btn">
+                                    <Plus size={18} /> <span className="hide-on-mobile">Add</span>
+                                </button>
                             </div>
-                            <button onClick={addQuickTask} disabled={saving} className="btn-primary quick-add-btn">
-                                <Plus size={18} /> Add
-                            </button>
+
+                            {/* Customization toggles */}
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <select className="input custom-select" value={quickPriority} onChange={e => setQuickPriority(e.target.value)}>
+                                    <option value="High">🔴 High Priority</option>
+                                    <option value="Medium">🟡 Medium Priority</option>
+                                    <option value="Low">🟢 Low Priority</option>
+                                </select>
+                                <select className="input custom-select" value={quickCategory} onChange={e => setQuickCategory(e.target.value)}>
+                                    <option value="Study">📚 Study</option>
+                                    <option value="Assignment">📝 Assignment</option>
+                                    <option value="Personal">🏠 Personal</option>
+                                    <option value="College">🎓 College</option>
+                                    <option value="Project">💻 Project</option>
+                                    <option value="Other">📌 Other</option>
+                                </select>
+                            </div>
                         </div>
 
                         {/* The Plan List */}
@@ -138,7 +180,7 @@ const DailyPlannerPage = () => {
                             ) : dayPlanTasks.map((todo, idx) => (
                                 <div key={todo._id} className="glass-card fade-in task-card" style={{
                                     padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem',
-                                    borderLeft: `4px solid ${todo.priority === 'High' ? '#ef4444' : todo.priority === 'Medium' ? '#f59e0b' : '#10b981'}`,
+                                    borderLeft: `4px solid ${priorityColor(todo.priority)}`,
                                     animationDelay: `${idx * 0.05}s`
                                 }}>
                                     <button onClick={() => toggleComplete(todo)} className="checkbox-btn" aria-label="Mark completed">
@@ -146,9 +188,21 @@ const DailyPlannerPage = () => {
                                     </button>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <p style={{ fontWeight: 700, fontSize: '0.95rem', wordBreak: 'break-word' }}>{todo.title}</p>
-                                        <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8' }}>{todo.category}</span>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: todo.priority === 'High' ? '#ef4444' : '#94a3b8' }}>• {todo.priority} Priority</span>
+                                        <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: 4 }}>
+                                                {todo.category}
+                                            </span>
+                                            <span
+                                                onClick={() => cyclePriority(todo)}
+                                                title="Click to change priority"
+                                                style={{
+                                                    fontSize: '0.65rem', fontWeight: 600, color: priorityColor(todo.priority),
+                                                    cursor: 'pointer', background: `${priorityColor(todo.priority)}15`,
+                                                    padding: '2px 6px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 3
+                                                }}
+                                            >
+                                                {todo.priority} <AlertCircle size={10} />
+                                            </span>
                                         </div>
                                     </div>
                                     <button onClick={() => toggleDayPlan(todo)} title="Move back to backlog" className="remove-plan-btn">
@@ -161,7 +215,7 @@ const DailyPlannerPage = () => {
 
                     {/* Completed Today */}
                     {completedToday.length > 0 && (
-                        <div>
+                        <div className="fade-up">
                             <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#10b981', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Done Today 🎉</p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 {completedToday.map(todo => (
@@ -169,7 +223,9 @@ const DailyPlannerPage = () => {
                                         <div style={{ width: 22, height: 22, borderRadius: 6, background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                             <Check size={13} color="white" />
                                         </div>
-                                        <p style={{ fontSize: '0.88rem', textDecoration: 'line-through', color: '#94a3b8', flex: 1, wordBreak: 'break-word' }}>{todo.title}</p>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{ fontSize: '0.88rem', textDecoration: 'line-through', color: '#94a3b8', wordBreak: 'break-word' }}>{todo.title}</p>
+                                        </div>
                                         <button onClick={() => removeTask(todo._id)} className="delete-task-btn" title="Delete forever">
                                             <Trash2 size={15} />
                                         </button>
@@ -193,20 +249,39 @@ const DailyPlannerPage = () => {
 
                         {/* Backlog Task Input */}
                         <div className="quick-add-container" style={{ marginBottom: '1.5rem' }}>
-                            <div style={{ position: 'relative', flex: 1 }}>
-                                <input
-                                    className="input"
-                                    placeholder="Add task to backlog..."
-                                    style={{ padding: '0.8rem 1rem', paddingLeft: '2.8rem', fontSize: '0.9rem', background: 'rgba(15,15,26,0.5)' }}
-                                    value={newBacklogTask}
-                                    onChange={e => setNewBacklogTask(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && addBacklogTask()}
-                                />
-                                <Plus size={20} color="#a78bfa" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', width: '100%' }}>
+                                <div style={{ position: 'relative', flex: 1 }}>
+                                    <input
+                                        className="input"
+                                        placeholder="Add task to backlog..."
+                                        style={{ padding: '0.8rem 1rem', paddingLeft: '2.8rem', fontSize: '0.9rem', background: 'rgba(15,15,26,0.5)' }}
+                                        value={newBacklogTask}
+                                        onChange={e => setNewBacklogTask(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && addBacklogTask()}
+                                    />
+                                    <Plus size={20} color="#a78bfa" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                                </div>
+                                <button onClick={addBacklogTask} disabled={saving} className="btn-primary quick-add-btn" style={{ background: '#a78bfa', color: '#1a1a2e' }}>
+                                    Add
+                                </button>
                             </div>
-                            <button onClick={addBacklogTask} disabled={saving} className="btn-primary quick-add-btn" style={{ background: '#a78bfa', color: '#1a1a2e' }}>
-                                Add
-                            </button>
+
+                            {/* Customization toggles */}
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <select className="input custom-select" value={backlogPriority} onChange={e => setBacklogPriority(e.target.value)}>
+                                    <option value="High">🔴 High Priority</option>
+                                    <option value="Medium">🟡 Medium Priority</option>
+                                    <option value="Low">🟢 Low Priority</option>
+                                </select>
+                                <select className="input custom-select" value={backlogCategory} onChange={e => setBacklogCategory(e.target.value)}>
+                                    <option value="Study">📚 Study</option>
+                                    <option value="Assignment">📝 Assignment</option>
+                                    <option value="Personal">🏠 Personal</option>
+                                    <option value="College">🎓 College</option>
+                                    <option value="Project">💻 Project</option>
+                                    <option value="Other">📌 Other</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div style={{ maxHeight: '50vh', overflowY: 'auto', paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }} className="custom-scroll">
@@ -218,8 +293,21 @@ const DailyPlannerPage = () => {
                                 <div key={todo._id} className="glass-card backlog-card">
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <p style={{ fontSize: '0.88rem', fontWeight: 600, wordBreak: 'break-word', paddingRight: '8px' }}>{todo.title}</p>
-                                        <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-                                            <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{todo.category}</span>
+                                        <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.65rem', color: '#64748b', background: 'rgba(255,255,255,0.03)', padding: '2px 6px', borderRadius: 4 }}>
+                                                {todo.category}
+                                            </span>
+                                            <span
+                                                onClick={() => cyclePriority(todo)}
+                                                title="Click to change priority"
+                                                style={{
+                                                    fontSize: '0.65rem', color: priorityColor(todo.priority),
+                                                    cursor: 'pointer', background: `${priorityColor(todo.priority)}10`,
+                                                    padding: '2px 6px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 3
+                                                }}
+                                            >
+                                                {todo.priority} <AlertCircle size={10} />
+                                            </span>
                                             {todo.dueDate && (
                                                 <span style={{ fontSize: '0.65rem', color: (new Date(todo.dueDate) - new Date()) / 86400000 <= 1 ? '#ef4444' : '#64748b' }}>
                                                     • Due {new Date(todo.dueDate).toLocaleDateString()}
@@ -240,13 +328,13 @@ const DailyPlannerPage = () => {
                         </div>
                     </div>
 
-                    <div className="glass-card" style={{ padding: '1.25rem', background: 'linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(6,182,212,0.05) 100%)', border: '1px solid rgba(16,185,129,0.15)' }}>
+                    <div className="glass-card fade-in" style={{ padding: '1.25rem', background: 'linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(6,182,212,0.05) 100%)', border: '1px solid rgba(16,185,129,0.15)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                             <Sparkles size={16} color="#10b981" />
                             <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Pro Tip</h3>
                         </div>
                         <p style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                            Focus on "Deep Work" sessions. Use the <b>Pomodoro Timer</b> along with your daily plan to stay in the zone.
+                            Focus on "Deep Work" sessions. Click on any priority tag to cycle between High, Medium, and Low.
                         </p>
                     </div>
                 </div>
@@ -261,8 +349,21 @@ const DailyPlannerPage = () => {
 
                 .quick-add-container {
                     display: flex;
-                    gap: 0.5rem;
-                    align-items: stretch;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                }
+                
+                .custom-select {
+                    width: 140px;
+                    padding: 0.45rem 0.6rem;
+                    fontSize: 0.8rem;
+                    background: rgba(15,15,26,0.6);
+                    cursor: pointer;
+                    color: #e2e8f0;
+                }
+                .custom-select option {
+                    background: #1a1a2e;
+                    color: #fff;
                 }
 
                 .quick-add-btn {
@@ -343,10 +444,12 @@ const DailyPlannerPage = () => {
                     gap: 0.75rem;
                     border: 1px solid rgba(99,102,241,0.05);
                     transition: all 0.2s;
+                    border-left: 3px solid rgba(99, 102, 241, 0.2);
                 }
                 .backlog-card:hover {
                     background: rgba(99,102,241,0.05);
                     border-color: rgba(99, 102, 241, 0.1);
+                    border-left-color: rgba(99, 102, 241, 0.6);
                 }
 
                 .move-plan-btn {
@@ -385,12 +488,15 @@ const DailyPlannerPage = () => {
                 }
 
                 @media (max-width: 600px) {
-                    .quick-add-container {
-                        flex-direction: column;
+                    .hide-on-mobile {
+                        display: none;
                     }
                     .quick-add-btn {
-                        padding: 0.75rem;
-                        justify-content: center;
+                        padding: 0 0.75rem;
+                    }
+                    .custom-select {
+                        width: 48%;
+                        flex: 1;
                     }
                     .backlog-card {
                         flex-wrap: wrap;
