@@ -204,7 +204,7 @@ const GpaCalculatorPage = () => {
                             </div>
 
                             {/* Semester tabs for this year */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.75rem' }}>
                                 {[(y - 1) * 2 + 1, (y - 1) * 2 + 2].map(semNum => {
                                     const sem = semData[semNum - 1];
                                     const isActive = activeSem === semNum;
@@ -239,13 +239,13 @@ const GpaCalculatorPage = () => {
                                             {isActive && (
                                                 <div className="fade-in" style={{ padding: '0 1rem 1rem' }}>
                                                     {/* Column headers */}
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 56px 28px', gap: '0.4rem', marginBottom: '0.4rem', marginTop: '0.5rem' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(80px, 1fr) 70px 56px 28px', gap: '0.4rem', marginBottom: '0.4rem', marginTop: '0.5rem' }}>
                                                         {['Subject', 'Grade', 'Cr.', ''].map(h => (
                                                             <span key={h} style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{h}</span>
                                                         ))}
                                                     </div>
                                                     {currentSem.subjects.map((sub, idx) => (
-                                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 56px 28px', gap: '0.4rem', marginBottom: '0.35rem', alignItems: 'center' }}>
+                                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'minmax(80px, 1fr) 70px 56px 28px', gap: '0.4rem', marginBottom: '0.35rem', alignItems: 'center' }}>
                                                             <input className="input" placeholder="Subject name" value={sub.name}
                                                                 onChange={e => updateSubject(idx, 'name', e.target.value)}
                                                                 style={{ padding: '0.4rem 0.6rem', fontSize: '0.78rem' }} />
