@@ -11,7 +11,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import SubjectsPage from './pages/SubjectsPage';
-import AttendancePage from './pages/AttendancePage';
 import AssignmentsPage from './pages/AssignmentsPage';
 import CertificatesPage from './pages/CertificatesPage';
 import PomodoroPage from './pages/PomodoroPage';
@@ -22,6 +21,7 @@ import PortfolioPage from './pages/PortfolioPage';
 import NotesPage from './pages/NotesPage';
 import DailyPlannerPage from './pages/DailyPlannerPage';
 import HabitBuilderPage from './pages/HabitBuilderPage';
+
 const Layout = ({ children }) => (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
         <Sidebar />
@@ -43,7 +43,6 @@ const AppRoutes = () => {
 
             <Route path="/" element={<P><DashboardPage /></P>} />
             <Route path="/subjects" element={<P><SubjectsPage /></P>} />
-            <Route path="/attendance" element={<P><AttendancePage /></P>} />
             <Route path="/assignments" element={<P><AssignmentsPage /></P>} />
             <Route path="/certificates" element={<P><CertificatesPage /></P>} />
             <Route path="/pomodoro" element={<P><PomodoroPage /></P>} />

@@ -26,12 +26,6 @@ export const getSubjects = () => API.get('/subjects');
 export const addSubject = (data) => API.post('/subjects', data);
 export const deleteSubject = (id) => API.delete(`/subjects/${id}`);
 
-// Attendance
-export const markAttendance = (data) => API.post('/attendance', data);
-export const getAttendance = (sid) => API.get(`/attendance/${sid}`);
-export const getAttendanceSummary = () => API.get('/attendance/summary');
-export const deleteAttendance = (id) => API.delete(`/attendance/${id}`);
-
 // Assignments
 export const getAssignments = (params) => API.get('/assignments', { params });
 export const getUpcoming = () => API.get('/assignments/upcoming');
@@ -55,7 +49,7 @@ export const deleteNote = (id) => API.delete(`/notes/${id}`);
 
 // Habits
 export const getHabits = () => API.get('/habits');
-export const addHabit = (data) => API.post('/habits', data);
+export const createHabit = (data) => API.post('/habits', data);
 export const updateHabit = (id, data) => API.put(`/habits/${id}`, data);
 export const deleteHabit = (id) => API.delete(`/habits/${id}`);
 export const toggleHabit = (id, date) => API.post(`/habits/${id}/toggle`, { date });

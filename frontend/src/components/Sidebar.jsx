@@ -15,7 +15,6 @@ const mainLinks = [
 
 const workspaceLinks = [
     { to: '/subjects', icon: <Users size={18} />, label: 'Subjects' },
-    { to: '/attendance', icon: <ClipboardList size={18} />, label: 'Attendance' },
     { to: '/assignments', icon: <CheckSquare size={18} />, label: 'Assignments' },
     { to: '/timetable', icon: <Calendar size={18} />, label: 'Timetable' },
 ];
@@ -29,8 +28,8 @@ const performanceLinks = [
 const productivityLinks = [
     { to: '/pomodoro', icon: <Timer size={18} />, label: 'Pomodoro' },
     { to: '/journal', icon: <BookMarked size={18} />, label: 'Study Journal' },
-    { to: '/habits', icon: <Activity size={18} />, label: 'Habit Builder' },
     { to: '/notes', icon: <StickyNote size={18} />, label: 'Notes Wall' },
+    { to: '/habits', icon: <Activity size={18} />, label: 'Habit Builder' },
 ];
 
 const Sidebar = () => {

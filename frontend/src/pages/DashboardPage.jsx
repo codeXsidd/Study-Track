@@ -1,23 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import API, { getAttendanceSummary, getUpcoming } from '../services/api';
+import API, { getUpcoming } from '../services/api';
 import {
     BookOpen, Calendar, CheckCircle, AlertTriangle, TrendingUp, Clock,
     Award, Timer, GraduationCap, BookMarked, Code2, Users, ClipboardList,
-    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check, Activity
+    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check
 } from 'lucide-react';
 
 // ---------- helpers ----------
 const getHour = () => new Date().getHours();
 const greeting = () => getHour() < 12 ? '🌅 Good Morning' : getHour() < 17 ? '☀️ Good Afternoon' : '🌙 Good Evening';
 const getDaysLeft = (d) => Math.ceil((new Date(d) - new Date()) / 86400000);
-const attColor = (p) => p >= 75 ? '#10b981' : p >= 50 ? '#f59e0b' : '#ef4444';
-const getDateStr = (d = new Date()) => {
-    const p = new Date(d);
-    p.setMinutes(p.getMinutes() - p.getTimezoneOffset());
-    return p.toISOString().split('T')[0];
-};
 
 const todayName = () => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()];
 const currentTimeMinutes = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); };
@@ -58,13 +52,11 @@ const MiniStat = ({ label, value, color, icon }) => (
 // ---------- main ----------
 const DashboardPage = () => {
     const { user } = useAuth();
-    const [summary, setSummary] = useState([]);
     const [upcoming, setUpcoming] = useState([]);
     const [timetableSlots, setTimetableSlots] = useState([]);
     const [timetableConfig, setTimetableConfig] = useState(null);
     const [journalEntries, setJournalEntries] = useState([]);
     const [todos, setTodos] = useState([]);
-    const [habits, setHabits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [now, setNow] = useState(new Date());
 
@@ -79,21 +71,17 @@ const DashboardPage = () => {
     useEffect(() => {
         const fetchAll = async () => {
             try {
-                const [sumRes, upRes, ttRes, cfgRes, jRes, todosRes, habitsRes] = await Promise.all([
-                    getAttendanceSummary(),
+                const [upRes, ttRes, cfgRes, jRes, todosRes] = await Promise.all([
                     getUpcoming(),
                     API.get('/timetable'),
                     API.get('/timetable-config'),
                     API.get('/journal'),
-                    API.get('/todos'),
-                    API.get('/habits')
+                    API.get('/todos')
                 ]);
-                setSummary(sumRes.data);
                 setUpcoming(upRes.data);
                 setTimetableSlots(ttRes.data);
                 setTimetableConfig(cfgRes.data);
                 setJournalEntries(jRes.data);
-                setHabits(habitsRes.data);
 
                 const todayRes = new Date();
                 let staleTaskIds = [];
@@ -142,10 +130,6 @@ const DashboardPage = () => {
     const currentClass = todaySlots.find(s => s.startMins >= 0 && nowMins >= s.startMins && nowMins <= s.endMins);
     const nextClass = todaySlots.find(s => s.startMins > nowMins);
 
-    // Stats
-    const avgAtt = summary.length ? Math.round(summary.reduce((a, s) => a + s.percentage, 0) / summary.length) : 0;
-    const lowAtt = summary.filter(s => s.percentage < 75).length;
-
     // Journal streak
     const sortedDates = journalEntries.map(e => e.date).sort((a, b) => b.localeCompare(a));
     let streak = 0;
@@ -156,12 +140,6 @@ const DashboardPage = () => {
 
     const urgentCount = upcoming.filter(a => getDaysLeft(a.deadline) <= 2).length;
     const dashboardTodos = todos.filter(t => t.dayPlan && !t.completed);
-
-    // Habits Info
-    const todayStr = getDateStr(new Date());
-    const habitsCompleted = habits.filter(h => h.completedDates?.includes(todayStr)).length;
-    const habitsTotal = habits.length;
-    const habitsProgress = habitsTotal ? Math.round((habitsCompleted / habitsTotal) * 100) : 0;
 
     return (
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1.5rem' }}>
@@ -207,8 +185,6 @@ const DashboardPage = () => {
             {/* ── KEY STATS ROW ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem', marginBottom: '1.5rem' }}>
                 {[
-                    { label: 'Avg Attendance', value: `${avgAtt}%`, color: attColor(avgAtt), icon: <TrendingUp size={18} />, sub: avgAtt >= 75 ? '✅ Safe' : '⚠️ Low' },
-                    { label: 'Subjects', value: summary.length, color: '#6366f1', icon: <BookOpen size={18} />, sub: `${lowAtt} need attention` },
                     { label: 'Deadlines This Week', value: upcoming.length, color: '#f59e0b', icon: <Clock size={18} />, sub: `${urgentCount} urgent` },
                     { label: 'Study Streak', value: streak > 0 ? `🔥 ${streak}d` : '—', color: '#ef4444', icon: <Flame size={18} />, sub: streak > 0 ? 'Keep it up!' : 'Start journaling!' },
                     { label: 'Today\'s Classes', value: todaySlots.length, color: '#10b981', icon: <Calendar size={18} />, sub: currentClass ? '📍 Class now' : nextClass ? '⏭ Next coming' : 'All done!' }
@@ -364,40 +340,7 @@ const DashboardPage = () => {
                     )}
                 </div>
 
-                {/* ── Attendance Overview ── */}
-                <div className="glass-card" style={{ padding: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                        <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
-                            <ClipboardList size={16} color="#10b981" /> Attendance
-                        </h2>
-                        <Link to="/attendance" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Mark →</Link>
-                    </div>
-                    {summary.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No subjects yet.</p>
-                            <Link to="/subjects" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Add subjects →</Link>
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                            {summary.slice(0, 5).map(s => (
-                                <div key={s.subject._id}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>{s.subject.name}</span>
-                                        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: attColor(s.percentage) }}>{s.percentage}%</span>
-                                    </div>
-                                    <div style={{ height: 6, background: 'rgba(99,102,241,0.1)', borderRadius: 3, overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', width: `${s.percentage}%`, background: attColor(s.percentage), borderRadius: 3, transition: 'width 0.6s ease' }} />
-                                    </div>
-                                    {s.percentage < 75 && (
-                                        <p style={{ fontSize: '0.62rem', color: '#ef4444', marginTop: 2 }}>
-                                            ⚠ Need {Math.ceil((75 * s.total - 100 * s.attended) / 25)} more classes
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+
 
                 {/* ── Quick Actions ── */}
                 <div className="glass-card" style={{ padding: '1.25rem' }}>
@@ -406,7 +349,7 @@ const DashboardPage = () => {
                     </h2>
                     <div className="dashboard-grid-quick">
                         <QuickLink to="/planner" icon={<Target />} label="Plan My Day" color="#f59e0b" />
-                        <QuickLink to="/attendance" icon={<ClipboardList />} label="Mark Attendance" color="#10b981" />
+                        <QuickLink to="/habits" icon={<TrendingUp />} label="Habit Builder" color="#10b981" />
                         <QuickLink to="/assignments" icon={<CheckSquare />} label="Add Assignment" color="#6366f1" />
                         <QuickLink to="/pomodoro" icon={<Timer />} label="Start Pomodoro" color="#8b5cf6" />
                         <QuickLink to="/journal" icon={<BookMarked />} label="Log Study" color="#ef4444" />
@@ -444,52 +387,6 @@ const DashboardPage = () => {
                                     <span style={{ fontSize: '0.7rem', color: '#6366f1', fontWeight: 700 }}>{e.hoursStudied}h</span>
                                 </div>
                             ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* ── Habit Tracker ── */}
-                <div className="glass-card" style={{ padding: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                        <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
-                            <Activity size={16} color="#f59e0b" /> Daily Habits
-                        </h2>
-                        <Link to="/habits" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Track →</Link>
-                    </div>
-
-                    {habits.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No habits added.</p>
-                            <Link to="/habits" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Create Habit →</Link>
-                        </div>
-                    ) : (
-                        <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
-                                <span style={{ fontSize: '1.4rem', fontWeight: 800 }}>{habitsProgress}%</span>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{habitsCompleted}/{habitsTotal} Today</span>
-                            </div>
-                            <div style={{ height: 8, background: 'rgba(245,158,11,0.15)', borderRadius: 4, overflow: 'hidden', marginBottom: '1.25rem' }}>
-                                <div style={{ height: '100%', width: `${habitsProgress}%`, background: '#f59e0b', borderRadius: 4, transition: 'width 0.6s ease' }} />
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {habits.slice(0, 4).map(h => {
-                                    const isDone = h.completedDates?.includes(todayStr);
-                                    return (
-                                        <div key={h._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.6rem', border: `1px solid ${isDone ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)'}`, background: isDone ? 'rgba(16,185,129,0.05)' : 'rgba(15,15,26,0.3)', borderRadius: 8 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                {isDone ? <CheckCircle size={14} color="#10b981" /> : <div style={{ width: 14, height: 14, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)' }} />}
-                                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: isDone ? '#10b981' : '#e2e8f0' }}>{h.name}</span>
-                                            </div>
-                                            {h.streak > 0 && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#f59e0b' }}>
-                                                    <Flame size={12} /> <span style={{ fontSize: '0.7rem', fontWeight: 700 }}>{h.streak}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
                         </div>
                     )}
                 </div>

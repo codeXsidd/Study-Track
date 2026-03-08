@@ -1,109 +1,200 @@
 const express = require('express');
+const router = express.Router();
 const Habit = require('../models/Habit');
 const auth = require('../middleware/auth');
-const router = express.Router();
-router.use(auth);
+const mongoose = require('mongoose');
 
-// Helper function to get YYYY-MM-DD
-const getDateStr = (d = new Date()) => {
-    const p = new Date(d);
-    p.setMinutes(p.getMinutes() - p.getTimezoneOffset());
-    return p.toISOString().split('T')[0];
-};
-
-const updateStreak = (habit) => {
-    if (habit.completedDates.length === 0) {
-        habit.streak = 0;
-        return habit;
+// @route   GET /api/habits
+// @desc    Get all habits for logged in user
+// @access  Private
+router.get('/', auth, async (req, res) => {
+    try {
+        const habits = await Habit.find({ user: req.user.id }).sort({ createdAt: -1 });
+        res.json(habits);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
-    const sorted = [...habit.completedDates].sort((a, b) => b.localeCompare(a));
-    let streak = 0;
-    let d = new Date();
-    // Check if today is completed, if not check yesterday
-    if (sorted[0] === getDateStr(d)) {
-        streak++;
-        d.setDate(d.getDate() - 1);
-    } else if (sorted[0] !== getDateStr(new Date(new Date().setDate(new Date().getDate() - 1)))) {
-        // Did not complete today or yesterday -> streak broken
-        habit.streak = 0;
-        return habit;
-    }
+});
 
-    let curStr = getDateStr(d);
-    for (const date of sorted) {
-        if (sorted[0] === getDateStr(new Date()) && streak === 1 && date === sorted[0]) continue; // already counted today
+// @route   POST /api/habits
+// @desc    Create a new habit
+// @access  Private
+router.post('/', auth, async (req, res) => {
+    try {
+        const { name, goal, frequency } = req.body;
 
-        if (date === curStr) {
-            streak++;
-            d.setDate(d.getDate() - 1);
-            curStr = getDateStr(d);
-        } else if (date < curStr) {
-            break;
+        if (!name) {
+            return res.status(400).json({ msg: 'Name is required' });
         }
-    }
-    habit.streak = streak;
-    return habit;
-};
 
-router.get('/', async (req, res) => {
-    try {
-        const habits = await Habit.find({ user: req.userId }).sort({ createdAt: -1 });
+        const newHabit = new Habit({
+            user: req.user.id,
+            name,
+            goal,
+            frequency: frequency || 'daily'
+        });
 
-        // Update streaks automatically on fetch in case they missed days
-        const updatedHabits = await Promise.all(habits.map(async h => {
-            const beforeStreak = h.streak;
-            updateStreak(h);
-            if (beforeStreak !== h.streak) {
-                await h.save();
-            }
-            return h;
-        }));
-
-        res.json(updatedHabits);
-    } catch { res.status(500).json({ message: 'Server error' }); }
-});
-
-router.post('/', async (req, res) => {
-    try {
-        const habit = new Habit({ ...req.body, user: req.userId });
-        await habit.save();
-        res.status(201).json(habit);
-    } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-router.put('/:id', async (req, res) => {
-    try {
-        const habit = await Habit.findOneAndUpdate({ _id: req.params.id, user: req.userId }, req.body, { new: true });
+        const habit = await newHabit.save();
         res.json(habit);
-    } catch { res.status(500).json({ message: 'Server error' }); }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
-router.delete('/:id', async (req, res) => {
+// @route   PUT /api/habits/:id
+// @desc    Update a habit
+// @access  Private
+router.put('/:id', auth, async (req, res) => {
     try {
-        await Habit.findOneAndDelete({ _id: req.params.id, user: req.userId });
-        res.json({ message: 'Deleted' });
-    } catch { res.status(500).json({ message: 'Server error' }); }
+        const { name, goal, frequency } = req.body;
+
+        // Build habit object
+        const habitFields = {};
+        if (name !== undefined) habitFields.name = name;
+        if (goal !== undefined) habitFields.goal = goal;
+        if (frequency !== undefined) habitFields.frequency = frequency;
+
+        let habit = await Habit.findById(req.params.id);
+
+        if (!habit) return res.status(404).json({ msg: 'Habit not found' });
+
+        // Make sure user owns habit
+        if (habit.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Not authorized' });
+        }
+
+        habit = await Habit.findByIdAndUpdate(
+            req.params.id,
+            { $set: habitFields },
+            { new: true }
+        );
+
+        res.json(habit);
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Habit not found' });
+        }
+        res.status(500).send('Server Error');
+    }
 });
 
-router.post('/:id/toggle', async (req, res) => {
+// @route   DELETE /api/habits/:id
+// @desc    Delete a habit
+// @access  Private
+router.delete('/:id', auth, async (req, res) => {
     try {
-        const { date } = req.body;
-        if (!date) return res.status(400).json({ message: 'Date required' });
+        const habit = await Habit.findById(req.params.id);
 
-        const habit = await Habit.findOne({ _id: req.params.id, user: req.userId });
-        if (!habit) return res.status(404).json({ message: 'Not found' });
+        if (!habit) {
+            return res.status(404).json({ msg: 'Habit not found' });
+        }
 
-        const idx = habit.completedDates.indexOf(date);
-        if (idx > -1) {
-            habit.completedDates.splice(idx, 1);
+        // Make sure user owns habit
+        if (habit.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Not authorized' });
+        }
+
+        await habit.deleteOne();
+
+        res.json({ msg: 'Habit removed' });
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Habit not found' });
+        }
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   POST /api/habits/:id/toggle
+// @desc    Toggle completion status for today
+// @access  Private
+router.post('/:id/toggle', auth, async (req, res) => {
+    try {
+        const { date } = req.body; // ISO string date expected
+        const targetDate = date ? new Date(date) : new Date();
+        targetDate.setHours(0, 0, 0, 0); // Normalize to midnight
+
+        let habit = await Habit.findById(req.params.id);
+
+        if (!habit) return res.status(404).json({ msg: 'Habit not found' });
+
+        if (habit.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Not authorized' });
+        }
+
+        // Check if date is already in completedDates
+        const existingDateIndex = habit.completedDates.findIndex(d => {
+            const d1 = new Date(d);
+            d1.setHours(0, 0, 0, 0);
+            return d1.getTime() === targetDate.getTime();
+        });
+
+        if (existingDateIndex !== -1) {
+            // Already completed today -> unmark
+            habit.completedDates.splice(existingDateIndex, 1);
+            habit.totalCompleted = Math.max(0, habit.totalCompleted - 1);
         } else {
-            habit.completedDates.push(date);
+            // Not completed today -> mark
+            habit.completedDates.push(targetDate);
+            habit.totalCompleted += 1;
         }
 
-        updateStreak(habit);
+        // Calculate Streak
+        // Naive streak calculation: Sort dates descending, check continuity
+        if (habit.completedDates.length === 0) {
+            habit.streak = 0;
+        } else {
+            // Sort dates descending
+            const sortedDates = [...habit.completedDates].sort((a, b) => b - a);
+            let currentStreak = 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            let expectedDate = null;
+
+            // Check if played today or yesterday, else streak is broken
+            const mostRecentDate = new Date(sortedDates[0]);
+            mostRecentDate.setHours(0, 0, 0, 0);
+
+            if (mostRecentDate.getTime() === today.getTime()) {
+                expectedDate = today;
+            } else if (mostRecentDate.getTime() === yesterday.getTime()) {
+                expectedDate = yesterday;
+            }
+
+            if (expectedDate !== null) {
+                for (let i = 0; i < sortedDates.length; i++) {
+                    const d = new Date(sortedDates[i]);
+                    d.setHours(0, 0, 0, 0);
+
+                    if (d.getTime() === expectedDate.getTime()) {
+                        currentStreak++;
+                        expectedDate.setDate(expectedDate.getDate() - 1); // Expect previous day for next iteration
+                    } else {
+                        break; // Streak broken
+                    }
+                }
+            }
+
+            habit.streak = currentStreak;
+            if (habit.streak > habit.bestStreak) {
+                habit.bestStreak = habit.streak;
+            }
+        }
+
         await habit.save();
         res.json(habit);
-    } catch (err) { res.status(500).json({ message: err.message }); }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
 module.exports = router;
