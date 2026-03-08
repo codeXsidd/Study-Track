@@ -87,12 +87,12 @@ const PomodoroPage = () => {
 
     return (
         <div style={{ maxWidth: 700, margin: '0 auto', padding: '2rem 1.5rem' }}>
-            <div className="section-title">
+            <div className="section-title" style={{ justifyContent: 'center', textAlign: 'center' }}>
                 <Timer size={24} color="#6366f1" /> Pomodoro Study Timer
             </div>
 
             {/* Mode Tabs */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 {MODES.map((m, i) => (
                     <button key={i} onClick={() => switchMode(i)} style={{
                         display: 'flex', alignItems: 'center', gap: 6, padding: '0.5rem 1.1rem',
@@ -130,7 +130,7 @@ const PomodoroPage = () => {
                 </div>
 
                 {/* Controls */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem' }}>
                     <button onClick={reset} style={{
                         width: 48, height: 48, borderRadius: '50%', border: '1px solid rgba(99,102,241,0.3)',
                         background: 'rgba(99,102,241,0.1)', cursor: 'pointer', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -149,7 +149,7 @@ const PomodoroPage = () => {
             </div>
 
             {/* Stats */}
-            <div className="stats-grid" style={{ gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 {[
                     { label: 'Sessions', value: sessions, color: '#6366f1' },
                     { label: 'Focus Time', value: `${Math.floor(totalFocus / 60)}m`, color: '#10b981' },

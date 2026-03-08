@@ -21,7 +21,7 @@ import StudyJournalPage from './pages/StudyJournalPage';
 import PortfolioPage from './pages/PortfolioPage';
 import NotesPage from './pages/NotesPage';
 import DailyPlannerPage from './pages/DailyPlannerPage';
-
+import HabitBuilderPage from './pages/HabitBuilderPage';
 const Layout = ({ children }) => (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
         <Sidebar />
@@ -53,6 +53,7 @@ const AppRoutes = () => {
             <Route path="/portfolio" element={<P><PortfolioPage /></P>} />
             <Route path="/notes" element={<P><NotesPage /></P>} />
             <Route path="/planner" element={<P><DailyPlannerPage /></P>} />
+            <Route path="/habits" element={<P><HabitBuilderPage /></P>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

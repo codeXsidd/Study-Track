@@ -52,3 +52,10 @@ export const getNotes = () => API.get('/notes');
 export const addNote = (data) => API.post('/notes', data);
 export const updateNote = (id, data) => API.put(`/notes/${id}`, data);
 export const deleteNote = (id) => API.delete(`/notes/${id}`);
+
+// Habits
+export const getHabits = () => API.get('/habits');
+export const addHabit = (data) => API.post('/habits', data);
+export const updateHabit = (id, data) => API.put(`/habits/${id}`, data);
+export const deleteHabit = (id) => API.delete(`/habits/${id}`);
+export const toggleHabit = (id, date) => API.post(`/habits/${id}/toggle`, { date });

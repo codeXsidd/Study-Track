@@ -30,6 +30,7 @@ app.use('/api/semesters', require('./routes/semesters'));
 app.use('/api/journal', require('./routes/journal'));
 app.use('/api/portfolio', require('./routes/portfolio'));
 app.use('/api/todos', require('./routes/todos'));
+app.use('/api/habits', require('./routes/habits'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
 
