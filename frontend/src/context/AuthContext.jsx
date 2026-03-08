@@ -28,9 +28,12 @@ export const AuthProvider = ({ children }) => {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setUser(res.data);
-                } catch {
-                    localStorage.removeItem('token');
-                    setToken(null);
+                } catch (error) {
+                    if (error.response && error.response.status === 401) {
+                        localStorage.removeItem('token');
+                        setToken(null);
+                    }
+                    // For other errors (like 5xx or Network Errors on backend cold start), we keep the token so the user stays authenticated
                 }
             }
             setLoading(false);

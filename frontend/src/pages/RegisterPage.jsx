@@ -100,8 +100,8 @@ const RegisterPage = () => {
             </div>
 
             {/* Right panel — form */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', position: 'relative', zIndex: 1 }}>
-                <div className="glass-card fade-in" style={{ width: '100%', maxWidth: 400, padding: '2.25rem' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', position: 'relative', zIndex: 1 }}>
+                <div className="glass-card fade-in" style={{ width: '100%', maxWidth: 460, padding: '2rem 1.75rem' }}>
                     {/* Mobile logo */}
                     <div className="hide-desktop" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                         <div style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>

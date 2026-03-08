@@ -9,7 +9,11 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    // Add timeouts to prevent hanging if SMTP connection fails or is blocked
+    connectionTimeout: 10000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
 });
 
 const router = express.Router();
@@ -122,6 +126,14 @@ router.post('/forgot-password', async (req, res) => {
         const resetUrl = `https://studytrack-hub.vercel.app/reset-password/${resetToken}`;
 
         try {
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+                console.warn("Email credentials missing in .env. Reset link generated but not sent via email.");
+                return res.json({
+                    message: "Email configuration is missing on the server. Please check environment variables.",
+                    resetLink: resetUrl // Expose it here so it doesn't just hang in production without env vars
+                });
+            }
+
             await transporter.sendMail({
                 from: `"StudyTrack" <${process.env.EMAIL_USER}>`,
                 to: user.email,
@@ -144,7 +156,7 @@ router.post('/forgot-password', async (req, res) => {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpiry = undefined;
             await user.save({ validateBeforeSave: false });
-            return res.status(500).json({ message: 'Error sending email. Please try again later.' });
+            return res.status(500).json({ message: 'Error sending email. Please try again or check server configuration.' });
         }
     } catch (err) {
         console.error('FORGOT PASSWORD ERROR:', err.message);

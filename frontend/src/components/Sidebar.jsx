@@ -147,7 +147,8 @@ const Sidebar = () => {
                         border-top: 1px solid rgba(99,102,241,0.12);
                         z-index: 999;
                         overflow-x: auto;
-                        padding: 0.5rem !important;
+                        padding: 0.2rem 1rem !important;
+                        white-space: nowrap;
                     }
                     .hide-mobile { display: none !important; }
                     .sidebar-header, .sidebar-user, .sidebar-bottom { display: none !important; }
@@ -157,24 +158,27 @@ const Sidebar = () => {
                         display: flex !important;
                         flex-direction: row !important;
                         padding: 0 !important;
-                        gap: 0.5rem;
+                        gap: 0.1rem;
                         align-items: center;
                         height: 100%;
+                        justify-content: flex-start;
+                        min-width: min-content;
                     }
                     aside div.hide-scrollbar > div {
                         margin: 0 !important;
                         display: flex;
-                        gap: 0.5rem;
+                        gap: 0.1rem;
                     }
                     aside div.hide-scrollbar > div > p {
                         display: none !important;
                     }
                     aside div.hide-scrollbar > div > div {
                         flex-direction: row !important;
-                        gap: 0.5rem !important;
+                        gap: 0.25rem !important;
                     }
                     aside a {
-                        padding: 0.5rem !important;
+                        padding: 0.6rem 0.8rem !important;
+                        border-radius: 99px !important;
                     }
                 }
             `}</style>
