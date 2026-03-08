@@ -142,7 +142,7 @@ const HabitBuilderPage = () => {
             </div>
 
             {/* Dashboard Stats */}
-            <div className="stats-grid" style={{ marginBottom: '2rem', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+            <div className="stats-grid" style={{ marginBottom: '2rem', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))' }}>
                 <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Target size={24} color="#6366f1" />
@@ -182,7 +182,7 @@ const HabitBuilderPage = () => {
                     <button className="btn-primary" onClick={() => openModal('add')}>Create Your First Habit</button>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.5rem' }}>
                     {habits.map(habit => {
                         const completed = isCompletedToday(habit.completedDates);
                         return (
