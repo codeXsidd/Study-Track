@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import API, { getUpcoming } from '../services/api';
+import API, { getUpcoming, getHabits, toggleHabit } from '../services/api';
 import {
     BookOpen, Calendar, CheckCircle, AlertTriangle, TrendingUp, Clock,
     Award, Timer, GraduationCap, BookMarked, Code2, Users, ClipboardList,
-    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check
+    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check, Activity, Circle, CheckCircle2
 } from 'lucide-react';
 
 // ---------- helpers ----------
@@ -57,10 +57,51 @@ const DashboardPage = () => {
     const [timetableConfig, setTimetableConfig] = useState(null);
     const [journalEntries, setJournalEntries] = useState([]);
     const [todos, setTodos] = useState([]);
+    const [habits, setHabits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [now, setNow] = useState(new Date());
 
     const priorityColor = (priority) => priority === 'High' ? '#ef4444' : priority === 'Medium' ? '#f59e0b' : '#10b981';
+
+    const isHabitCompletedToday = (completedDates) => {
+        if (!completedDates || completedDates.length === 0) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return completedDates.some(d => {
+            const date = new Date(d);
+            date.setHours(0, 0, 0, 0);
+            return date.getTime() === today.getTime();
+        });
+    };
+
+    const toggleDashHabit = async (habit) => {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            setHabits(habits.map(h => {
+                if (h._id === habit._id) {
+                    const completed = isHabitCompletedToday(h.completedDates);
+                    let newDates = [...(h.completedDates || [])];
+                    let newStreak = h.streak;
+                    if (completed) {
+                        newDates = newDates.filter(d => {
+                            const date = new Date(d);
+                            date.setHours(0, 0, 0, 0);
+                            return date.getTime() !== today.getTime();
+                        });
+                        newStreak = Math.max(0, newStreak - 1);
+                    } else {
+                        newDates.push(today);
+                        newStreak += 1;
+                    }
+                    return { ...h, completedDates: newDates, streak: newStreak };
+                }
+                return h;
+            }));
+            await toggleHabit(habit._id, today.toISOString());
+        } catch { }
+    };
 
     // Live clock
     useEffect(() => {
@@ -71,17 +112,19 @@ const DashboardPage = () => {
     useEffect(() => {
         const fetchAll = async () => {
             try {
-                const [upRes, ttRes, cfgRes, jRes, todosRes] = await Promise.all([
+                const [upRes, ttRes, cfgRes, jRes, todosRes, habRes] = await Promise.all([
                     getUpcoming(),
                     API.get('/timetable'),
                     API.get('/timetable-config'),
                     API.get('/journal'),
-                    API.get('/todos')
+                    API.get('/todos'),
+                    getHabits()
                 ]);
                 setUpcoming(upRes.data);
                 setTimetableSlots(ttRes.data);
                 setTimetableConfig(cfgRes.data);
                 setJournalEntries(jRes.data);
+                setHabits(habRes.data);
 
                 const todayRes = new Date();
                 let staleTaskIds = [];
@@ -340,9 +383,56 @@ const DashboardPage = () => {
                     )}
                 </div>
 
-
-
-                {/* ── Quick Actions ── */}
+                {/* ── Habit Tracker Widget ── */}
+                <div className="glass-card" style={{ padding: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <Activity size={16} color="#ec4899" /> Daily Habits
+                        </h2>
+                        <Link to="/habits" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Manage →</Link>
+                    </div>
+                    {loading ? (
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>Loading...</p>
+                    ) : habits.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                            <p style={{ fontSize: '1.8rem', marginBottom: 6 }}>🌱</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No habits added yet.</p>
+                            <Link to="/habits" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Build a habit →</Link>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {habits.slice(0, 5).map(habit => {
+                                const completed = isHabitCompletedToday(habit.completedDates);
+                                return (
+                                    <div key={habit._id} style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.8rem',
+                                        borderRadius: 10, background: 'rgba(15,15,26,0.5)', border: `1px solid ${completed ? '#10b98133' : 'rgba(99,102,241,0.07)'}`,
+                                        borderLeft: `3px solid ${completed ? '#10b981' : '#ec4899'}`, transition: 'all 0.2s'
+                                    }}>
+                                        <div style={{ flex: 1, minWidth: 0, paddingRight: '1rem' }}>
+                                            <p style={{ fontWeight: 600, fontSize: '0.82rem', color: completed ? '#10b981' : '#e2e8f0', textDecoration: completed ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {habit.name}
+                                            </p>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {habit.streak > 0 && (
+                                                <span style={{ fontSize: '0.65rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                    <Flame size={10} /> {habit.streak}
+                                                </span>
+                                            )}
+                                            <button onClick={() => toggleDashHabit(habit)} title={completed ? "Undo" : "Mark as Done"} style={{
+                                                background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: completed ? '#10b981' : '#64748b', transition: 'all 0.2s'
+                                            }} onMouseEnter={e => !completed && (e.currentTarget.style.color = '#ec4899')} onMouseLeave={e => !completed && (e.currentTarget.style.color = '#64748b')}>
+                                                {completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>                {/* ── Quick Actions ── */}
                 <div className="glass-card" style={{ padding: '1.25rem' }}>
                     <h2 style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 7 }}>
                         <Zap size={16} color="#f59e0b" /> Quick Actions
