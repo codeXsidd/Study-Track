@@ -10,6 +10,7 @@ const todoSchema = new mongoose.Schema({
     completedAt: { type: Date, default: null },
     pinned: { type: Boolean, default: false },
     dayPlan: { type: Boolean, default: false },
+    dayPlanDate: { type: Date, default: null },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 

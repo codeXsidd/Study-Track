@@ -23,7 +23,32 @@ const DailyPlannerPage = () => {
         const fetch = async () => {
             try {
                 const res = await API.get('/todos');
-                setAllTodos(res.data);
+                let fetchedTodos = res.data;
+
+                // Auto-erase planner logic: if a task was planned for a previous day and is uncompleted, move it to backlog
+                const today = new Date();
+                let staleTaskIds = [];
+
+                const updatedTodos = fetchedTodos.map(t => {
+                    if (t.dayPlan && !t.completed) {
+                        const planDate = t.dayPlanDate ? new Date(t.dayPlanDate) : new Date(t.createdAt);
+                        const isToday = planDate.getDate() === today.getDate() &&
+                            planDate.getMonth() === today.getMonth() &&
+                            planDate.getFullYear() === today.getFullYear();
+                        if (!isToday) {
+                            staleTaskIds.push(t._id);
+                            return { ...t, dayPlan: false, dayPlanDate: null };
+                        }
+                    }
+                    return t;
+                });
+
+                setAllTodos(updatedTodos);
+
+                // Update the stale tasks in the background cleanly
+                staleTaskIds.forEach(id => {
+                    API.put(`/todos/${id}`, { dayPlan: false, dayPlanDate: null }).catch(() => { });
+                });
             }
             catch { toast.error('Failed to load tasks'); }
             setLoading(false);
