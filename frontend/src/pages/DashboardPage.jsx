@@ -63,21 +63,21 @@ const DashboardPage = () => {
 
     const priorityColor = (priority) => priority === 'High' ? '#ef4444' : priority === 'Medium' ? '#f59e0b' : '#10b981';
 
+    const getDateStr = (d = new Date()) => {
+        const date = new Date(d);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
     const isHabitCompletedToday = (completedDates) => {
         if (!completedDates || completedDates.length === 0) return false;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return completedDates.some(d => {
-            const date = new Date(d);
-            date.setHours(0, 0, 0, 0);
-            return date.getTime() === today.getTime();
-        });
+        const todayStr = getDateStr();
+        return completedDates.some(d => getDateStr(d) === todayStr);
     };
 
     const toggleDashHabit = async (habit) => {
         try {
             const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const todayStr = getDateStr(today);
 
             setHabits(habits.map(h => {
                 if (h._id === habit._id) {
@@ -85,14 +85,10 @@ const DashboardPage = () => {
                     let newDates = [...(h.completedDates || [])];
                     let newStreak = h.streak;
                     if (completed) {
-                        newDates = newDates.filter(d => {
-                            const date = new Date(d);
-                            date.setHours(0, 0, 0, 0);
-                            return date.getTime() !== today.getTime();
-                        });
+                        newDates = newDates.filter(d => getDateStr(d) !== todayStr);
                         newStreak = Math.max(0, newStreak - 1);
                     } else {
-                        newDates.push(today);
+                        newDates.push(today.toISOString());
                         newStreak += 1;
                     }
                     return { ...h, completedDates: newDates, streak: newStreak };

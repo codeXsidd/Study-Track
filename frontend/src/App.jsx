@@ -23,9 +23,9 @@ import DailyPlannerPage from './pages/DailyPlannerPage';
 import HabitBuilderPage from './pages/HabitBuilderPage';
 
 const Layout = ({ children }) => (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
         <Sidebar />
-        <main className="main-content">
+        <main className="main-content" style={{ flex: 1, overflowY: 'auto' }}>
             {children}
         </main>
     </div>

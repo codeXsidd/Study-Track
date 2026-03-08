@@ -74,7 +74,7 @@ const Sidebar = () => {
             width: collapsed ? '80px' : '260px',
             background: 'rgba(8,8,18,0.95)',
             borderRight: '1px solid rgba(99,102,241,0.12)',
-            height: '100vh', position: 'sticky', top: 0,
+            height: '100%', position: 'sticky', top: 0,
             display: 'flex', flexDirection: 'column',
             transition: 'width 0.3s ease',
             zIndex: 100
@@ -113,7 +113,7 @@ const Sidebar = () => {
             )}
 
             {/* Navigation links */}
-            <div style={{ padding: '1.25rem', flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
+            <div style={{ padding: '1.25rem', flex: 1, overflowY: 'auto' }} className="hide-scrollbar">
                 <NavGroup title="Main" links={mainLinks} />
                 <NavGroup title="Workspace" links={workspaceLinks} />
                 <NavGroup title="Productivity" links={productivityLinks} />
@@ -131,7 +131,7 @@ const Sidebar = () => {
             </div>
 
             <style>{`
-                .hide-scrollbar::-webkit-scrollbar { display: none; }
+                /* .hide-scrollbar::-webkit-scrollbar { display: none; } */
                 
                 @media (max-width: 768px) {
                     aside {

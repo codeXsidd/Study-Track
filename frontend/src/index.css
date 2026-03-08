@@ -26,15 +26,16 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow: hidden;
+  height: 100%;
 }
 
 body {
   font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
   width: 100%;
   /* Subtle animated background */
   background-image:
@@ -357,7 +358,7 @@ select.input {
   min-height: 100vh;
   display: flex;
   background: #050510;
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
@@ -416,6 +417,7 @@ textarea {
   padding: 1.5rem;
   overflow-y: auto;
   position: relative;
+  height: 100%;
 }
 
 .dashboard-grid {
