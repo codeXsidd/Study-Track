@@ -132,7 +132,7 @@ const HabitBuilderPage = () => {
 
     return (
         <div className="page-container fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div className="section-title" style={{ marginBottom: 0 }}>
                     <Activity size={26} color="#ec4899" /> Habit Builder
                 </div>
@@ -209,7 +209,7 @@ const HabitBuilderPage = () => {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                                     <span className={`badge ${habit.frequency === 'daily' ? 'badge-primary' : 'badge-warning'}`}>
                                         {habit.frequency}
                                     </span>
