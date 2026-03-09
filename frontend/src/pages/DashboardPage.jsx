@@ -154,11 +154,11 @@ const DashboardPage = () => {
         setInsightLoading(true);
         try {
             const context = `Student has ${urgentCount} urgent deadlines, ${dashboardTodos.length} focus tasks, and ${currentClass ? `is in class ${currentClass.subject}` : 'is free right now'}. Current time: ${now.toLocaleTimeString()}.`;
-            const prompt = `Give me one short (max 15 words), high-energy, personalized productivity sentence for my dashboard. If there are urgent deadlines, focus on them. If free, suggest starting a Pomodoro or reviewing a habit. Mention a specific tool from: [Focus Room, Pomodoro, Planner, Habits, Journal] if relevant.`;
+            const prompt = `Give me one short (max 15 words), high-energy, personalized productivity sentence for my dashboard. Mention a specific tool from: [Focus Room, Pomodoro, Planner, Habits, Journal] if relevant.`;
             const res = await aiChat({ message: prompt, context });
             setAiInsight(res.data.reply);
         } catch {
-            setAiInsight("Consistency is the key to mastery. Try breaking your current focus into 15-minute sprints!");
+            setAiInsight("Consistency is the key to mastery. Open the **AI Assistant** to deep dive into your study plan!");
         }
         setInsightLoading(false);
     };
@@ -262,13 +262,13 @@ const DashboardPage = () => {
             {(urgentCount > 0 || aiInsight) && (
                 <div className="glass-card animate-slide-scale" style={{
                     marginBottom: '1.5rem',
-                    padding: '1.5rem',
+                    padding: '1.25rem 1.5rem',
                     display: 'flex',
-                    alignItems: 'flex-start',
+                    alignItems: 'center',
                     gap: '1.25rem',
                     background: urgentCount > 0
-                        ? 'linear-gradient(90deg, rgba(239,68,68,0.12), rgba(139,92,246,0.05))'
-                        : 'linear-gradient(90deg, rgba(16,185,129,0.12), rgba(99,102,241,0.05))',
+                        ? 'linear-gradient(90deg, rgba(239,68,68,0.12), rgba(13,11,26,0.5))'
+                        : 'linear-gradient(90deg, rgba(16,185,129,0.12), rgba(13,11,26,0.5))',
                     borderLeft: `4px solid ${urgentCount > 0 ? '#ef4444' : '#10b981'}`,
                     position: 'relative',
                     overflow: 'hidden'
@@ -280,41 +280,52 @@ const DashboardPage = () => {
                         <Bot size={24} color={urgentCount > 0 ? '#ef4444' : '#10b981'} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                            <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.2rem' }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                 AI Smart Suggestion
                             </h4>
                             {insightLoading && <div className="spinner-small" />}
                         </div>
-                        <div style={{ fontSize: '0.95rem', color: '#cbd5e1', lineHeight: 1.6, fontWeight: 500 }}>
+                        <div style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.5, fontWeight: 500 }}>
                             {insightLoading ? (
                                 <span style={{ opacity: 0.7, fontStyle: 'italic' }}>Thinking...</span>
-                            ) : aiInsight || (
-                                <>You have <b>{urgentCount} urgent deadline{urgentCount > 1 ? 's' : ''}</b>. I highly recommend heading to the <Link to="/focus-room" style={{ color: '#a78bfa', fontWeight: 700 }}>Deep Focus Room</Link> to tackle your priorities.</>
-                            )}
+                            ) : (
+                                <Link to="/ai-chat" style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    {aiInsight || (
+                                        <>You have <b>{urgentCount} urgent deadline{urgentCount > 1 ? 's' : ''}</b>. Click to chat about a study strategy!</>
+                                    )}
+                                </Link>
+                            ) || "Ready for a productivity boost? Click to chat with your AI buddy!"}
                         </div>
                     </div>
-                    <button
-                        onClick={fetchAiInsight}
-                        disabled={insightLoading}
-                        style={{
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            cursor: 'pointer',
-                            color: '#94a3b8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 36, height: 36,
-                            borderRadius: '50%',
-                            transition: 'all 0.3s'
-                        }}
-                        title="Refresh Brain"
-                        onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-                        onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
-                    >
-                        <RotateCcw size={16} style={{ animation: insightLoading ? 'spin 1s linear infinite' : 'none' }} />
-                    </button>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <Link to="/ai-chat" style={{
+                            padding: '0.4rem 0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '8px', fontSize: '0.7rem', fontWeight: 700, color: '#e2e8f0', textDecoration: 'none',
+                            display: 'flex', alignItems: 'center', gap: 6, transition: 'var(--transition)'
+                        }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                            Talk to Buddy <ArrowRight size={12} />
+                        </Link>
+                        <button
+                            onClick={fetchAiInsight}
+                            disabled={insightLoading}
+                            style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                cursor: 'pointer',
+                                color: '#94a3b8',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 32, height: 32,
+                                borderRadius: '50%',
+                                transition: 'all 0.3s'
+                            }}
+                            title="Refresh Brain"
+                        >
+                            <RotateCcw size={14} style={{ animation: insightLoading ? 'spin 1s linear infinite' : 'none' }} />
+                        </button>
+                    </div>
                 </div>
             )}
 

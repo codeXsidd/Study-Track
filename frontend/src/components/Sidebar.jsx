@@ -10,6 +10,7 @@ import {
 
 const mainLinks = [
     { to: '/', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
+    { to: '/ai-chat', icon: <Sparkles size={18} />, label: 'AI Assistant' },
     { to: '/planner', icon: <Target size={18} />, label: 'Daily Planner' },
 ];
 

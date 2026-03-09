@@ -23,6 +23,7 @@ import DailyPlannerPage from './pages/DailyPlannerPage';
 import HabitBuilderPage from './pages/HabitBuilderPage';
 import FocusRoomPage from './pages/FocusRoomPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import AiChatPage from './pages/AiChatPage';
 
 const Layout = ({ children }) => (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
@@ -57,6 +58,7 @@ const AppRoutes = () => {
             <Route path="/habits" element={<P><HabitBuilderPage /></P>} />
             <Route path="/focus-room" element={<P><FocusRoomPage /></P>} />
             <Route path="/analytics" element={<P><AnalyticsPage /></P>} />
+            <Route path="/ai-chat" element={<P><AiChatPage /></P>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

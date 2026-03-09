@@ -69,6 +69,9 @@ const GpaCalculatorPage = () => {
     );
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [targetCgpa, setTargetCgpa] = useState(9.0);
+    const [aiAnalysis, setAiAnalysis] = useState(null);
+    const [analyzing, setAnalyzing] = useState(false);
 
     useEffect(() => {
         const fetchSems = async () => {
@@ -121,6 +124,27 @@ const GpaCalculatorPage = () => {
             toast.success(`Semester ${activeSem} saved! SGPA: ${res.data.sgpa}`);
         } catch { toast.error('Failed to save'); }
         setSaving(false);
+    };
+
+    const handleAiAnalysis = async () => {
+        setAnalyzing(true);
+        try {
+            const savedSemsCount = semData.filter(s => s.saved).length;
+            const remainingSems = 8 - savedSemsCount;
+            const currentCgpa = calcCGPA(semData);
+
+            const prompt = `Student current CGPA is ${currentCgpa} after ${savedSemsCount} semesters. 
+            Their target CGPA is ${targetCgpa}. 
+            There are ${remainingSems} semesters remaining. 
+            Calculate what average SGPA they need in remaining semesters. 
+            Give a motivational 2-sentence breakdown and specific grade targets (e.g. "You need mostly A+ grades"). 
+            Return EXACTLY a JSON: {"requiredSgpa": "9.2", "advice": "...", "difficulty": "Hard/Moderate/Easy"}`;
+
+            const res = await API.post('/ai/chat', { message: prompt });
+            setAiAnalysis(JSON.parse(res.data.reply.replace(/```json/g, '').replace(/```/g, '').trim()));
+            toast.success('Strategy generated!');
+        } catch { toast.error('Failed to analyze. Check your API key.'); }
+        setAnalyzing(false);
     };
 
     const clearSem = async () => {
@@ -307,17 +331,71 @@ const GpaCalculatorPage = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                     {/* Final CGPA big card */}
-                    <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', borderTop: `3px solid ${getGpaColor(finalCGPA)}` }}>
-                        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
-                            Final CGPA
+                    <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', borderTop: `4px solid ${getGpaColor(finalCGPA)}`, background: 'rgba(99,102,241,0.05)' }}>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                            <Award size={14} color="#6366f1" /> Current CGPA
                         </p>
-                        <div style={{ fontSize: '4.5rem', fontWeight: 900, color: getGpaColor(finalCGPA), lineHeight: 1 }}>
+                        <div style={{ fontSize: '4.5rem', fontWeight: 900, color: getGpaColor(finalCGPA), lineHeight: 1, textShadow: `0 0 20px ${getGpaColor(finalCGPA)}33` }}>
                             {finalCGPA || '—'}
                         </div>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>out of 10.0</p>
-                        <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', fontWeight: 600, color: getGpaColor(finalCGPA) }}>
+                        <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 10, fontWeight: 600 }}>{finalCGPA ? 'STREAKING HIGH!' : 'READY TO START'}</p>
+                        <div style={{ marginTop: '1rem', fontSize: '0.82rem', fontWeight: 800, padding: '0.4rem', borderRadius: 8, background: 'rgba(255,255,255,0.03)', color: getGpaColor(finalCGPA) }}>
                             {getClassification(finalCGPA)}
                         </div>
+                    </div>
+
+                    {/* AI Predictor Tool */}
+                    <div className="glass-card" style={{ padding: '1.25rem', border: '1px solid rgba(236,72,153,0.2)', background: 'linear-gradient(135deg, rgba(236,72,153,0.05), rgba(139,92,246,0.05))', position: 'relative' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+                            <RefreshCw size={16} color="#ec4899" />
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase' }}>Target Predictor</h4>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>SET YOUR TARGET CGPA</label>
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                <input
+                                    type="number" className="input" step={0.1} min={0} max={10}
+                                    value={targetCgpa} onChange={e => setTargetCgpa(e.target.value)}
+                                    style={{ flex: 1, padding: '0.5rem', fontSize: '1.1rem', fontWeight: 800, textAlign: 'center', borderRadius: 10 }}
+                                />
+                                <button
+                                    onClick={handleAiAnalysis} disabled={analyzing}
+                                    className="btn-primary"
+                                    style={{ flex: 1.5, background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', border: 'none', fontSize: '0.75rem' }}
+                                >
+                                    {analyzing ? <div className="spinner-small" /> : 'Predict Path 🚀'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {aiAnalysis && (
+                            <div className="fade-in" style={{ padding: '0.85rem', background: 'rgba(0,0,0,0.2)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>REQUIRED SGPA:</span>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ec4899' }}>{aiAnalysis.requiredSgpa}</span>
+                                </div>
+                                <div style={{ marginBottom: 8 }}>
+                                    <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
+                                        <div style={{
+                                            height: '100%', borderRadius: 2, background: '#ec4899',
+                                            width: `${Math.min((aiAnalysis.requiredSgpa / 10) * 100, 100)}%`
+                                        }} />
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: '0.75rem', color: '#cbd5e1', lineHeight: 1.4, fontWeight: 500 }}>
+                                    {aiAnalysis.advice}
+                                </p>
+                                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
+                                    <span style={{
+                                        fontSize: '0.6rem', padding: '2px 8px', borderRadius: 10, fontWeight: 800,
+                                        background: aiAnalysis.difficulty === 'Hard' ? '#ef4444' : aiAnalysis.difficulty === 'Moderate' ? '#f59e0b' : '#10b981',
+                                        color: '#fff', textTransform: 'uppercase'
+                                    }}>
+                                        {aiAnalysis.difficulty} Difficulty
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Per-year CGPA */}
