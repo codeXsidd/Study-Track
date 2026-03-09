@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getHabits, createHabit, updateHabit, deleteHabit, toggleHabit } from '../services/api';
 import toast from 'react-hot-toast';
-import { Activity, Plus, Edit2, Trash2, CheckCircle2, Circle, Flame, Target, Trophy, X } from 'lucide-react';
+import { Activity, Plus, Edit2, Trash2, CheckCircle2, Circle, Flame, Target, Trophy, X, Zap } from 'lucide-react';
 
 const HabitBuilderPage = () => {
     const [habits, setHabits] = useState([]);
@@ -10,6 +10,19 @@ const HabitBuilderPage = () => {
     const [modalMode, setModalMode] = useState('add');
     const [selectedId, setSelectedId] = useState(null);
     const [formData, setFormData] = useState({ name: '', goal: '', frequency: 'daily' });
+
+    const [tipOfDay] = useState(() => {
+        const tips = [
+            "Focus on one habit at a time. Multi-tasking a behavior change rarely works.",
+            "Missing one day is not failure. Missing two days is the start of a new (bad) habit.",
+            "Pair a new habit with an existing one. (e.g., 'After I brush my teeth, I will meditate')",
+            "Make it easy. Reduce friction for good habits and increase it for bad ones.",
+            "Track your progress daily. What gets measured gets managed.",
+            "Start small. A 2-minute version of your habit is better than zero minutes.",
+            "Your environment is stronger than willpower. Design your space for success!"
+        ];
+        return tips[new Date().getDay() % tips.length];
+    });
 
     useEffect(() => {
         fetchHabits();
@@ -136,6 +149,17 @@ const HabitBuilderPage = () => {
                 </button>
             </div>
 
+            {/* Productivity Tip */}
+            <div className="glass-card fade-in" style={{ marginBottom: '1.5rem', padding: '1.25rem', display: 'flex', alignItems: 'flex-start', gap: '1rem', background: 'linear-gradient(90deg, rgba(99,102,241,0.1), rgba(139,92,246,0.05))', borderLeft: '4px solid #8b5cf6' }}>
+                <div style={{ background: 'rgba(139,92,246,0.2)', padding: '0.5rem', borderRadius: '50%' }}>
+                    <Zap size={20} color="#a78bfa" />
+                </div>
+                <div>
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.25rem', color: '#e2e8f0' }}>Productivity Tip of the Day</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-soft)', lineHeight: 1.5 }}>{tipOfDay}</p>
+                </div>
+            </div>
+
             {/* Dashboard Stats */}
             <div className="stats-grid" style={{ marginBottom: '2rem', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))' }}>
                 <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -181,15 +205,21 @@ const HabitBuilderPage = () => {
                     {habits.map(habit => {
                         const completed = isCompletedToday(habit.completedDates);
 
-                        // Last 7 days progress
-                        const last7Days = [];
-                        for (let i = 6; i >= 0; i--) {
-                            const d = new Date();
-                            d.setDate(d.getDate() - i);
-                            last7Days.push({
+                        // Current month progress
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = now.getMonth();
+                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                        const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+                        const currentMonthDays = [];
+                        for (let i = 1; i <= daysInMonth; i++) {
+                            const d = new Date(year, month, i);
+                            currentMonthDays.push({
                                 dateStr: getDateStr(d),
-                                dayName: d.toLocaleDateString('en-US', { weekday: 'narrow' }),
-                                completed: isCompletedOnDate(habit.completedDates, getDateStr(d))
+                                dayNum: i,
+                                completed: isCompletedOnDate(habit.completedDates, getDateStr(d)),
+                                isToday: getDateStr(d) === getDateStr(now)
                             });
                         }
 
@@ -211,20 +241,30 @@ const HabitBuilderPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Goals & Progress */}
-                                <div style={{ marginBottom: '1.25rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                                        {last7Days.map((day, idx) => (
-                                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                                                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: day.dateStr === getDateStr() ? '#818cf8' : 'var(--text-muted)' }}>{day.dayName}</span>
-                                                <div style={{
-                                                    width: 22, height: 22, borderRadius: '6px',
-                                                    background: day.completed ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)',
-                                                    border: day.completed ? '1px solid #10b981' : '1px solid rgba(99,102,241,0.1)',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                }}>
-                                                    {day.completed && <CheckCircle2 size={12} color="#10b981" />}
-                                                </div>
+                                {/* Goals & Progress - Monthly Calendar */}
+                                <div style={{ marginBottom: '1.25rem', background: 'rgba(0,0,0,0.1)', padding: '0.75rem', borderRadius: '12px' }}>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.75rem', textAlign: 'center' }}>
+                                        {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} Tracker
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.3rem' }}>
+                                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                                            <div key={`head-${i}`} style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>{day}</div>
+                                        ))}
+                                        {/* Blank spaces for first day */}
+                                        {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                                            <div key={`blank-${i}`} />
+                                        ))}
+                                        {currentMonthDays.map((day, idx) => (
+                                            <div key={idx} style={{
+                                                width: '100%', aspectRatio: '1', borderRadius: '6px',
+                                                background: day.completed ? 'rgba(16,185,129,0.2)' : (day.isToday ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'),
+                                                border: day.completed ? '1px solid rgba(16,185,129,0.5)' : (day.isToday ? '1px solid rgba(129,140,248,0.5)' : '1px solid transparent'),
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: '0.7rem', color: day.completed ? '#10b981' : (day.isToday ? '#818cf8' : 'var(--text-disabled, #475569)'),
+                                                fontWeight: day.completed || day.isToday ? '700' : '500',
+                                                transition: 'all 0.2s'
+                                            }} title={`${day.dateStr} ${day.completed ? '(Completed)' : ''}`}>
+                                                {day.dayNum}
                                             </div>
                                         ))}
                                     </div>

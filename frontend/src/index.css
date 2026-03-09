@@ -484,6 +484,11 @@ textarea {
     padding: 0.55rem 1rem;
     font-size: 0.82rem;
   }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -502,5 +507,9 @@ textarea {
   /* Force stack small dashboard cards if needed */
   .dashboard-grid-quick {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }
