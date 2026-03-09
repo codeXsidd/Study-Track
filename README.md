@@ -1,82 +1,76 @@
-# StudyTrack - Personal Student Workspace 🚀
+# StudyTrack - Premium AI-Powered Student Workspace 🚀
 
-StudyTrack is an all-in-one personal student workspace designed to help students track their academic progress visually and easily. Never miss a class, forget an assignment deadline, or lose track of your CGPA again.
+StudyTrack is an all-in-one, ultra-premium personal student workspace designed to transform academic chaos into peak productivity. Powered by **Google Gemini AI**, it goes beyond simple tracking—it acts as your personal tutor, scheduler, and motivator.
 
-![StudyTrack Banner](frontend/public/vite.svg) {/* Optional: Update with actual screenshot */}
+## 💎 Premium Experience
+- **Ultra-Modern UI:** Sleek glassmorphism, fluid animations (Slide-Scale & Fade-Up), and a mobile-first side-swiping UX.
+- **Deep Focus Room:** A dedicated distraction-free zone with an integrated **AI Tutor** and background ambience.
+- **Gamified Progress:** Earn XP, level up, and maintain streaks with the Activity Heartmap and Habit Tracker.
 
-## ✨ Features
+---
 
-- **Attendance Tracker:** Mark daily attendance and track whether your percentage meets the required thresholds (e.g., 75%). Visual warnings for low attendance.
-- **Smart Timetable:** Interactive weekly timetable customized by number of periods and schedule. See "Today's Classes" directly on your dashboard.
-- **Assignment & Deadlines Tracker:** Keep a to-do list with color-coded urgency based on impending deadlines.
-- **GPA / CGPA Calculator:** Track your performance across all semesters dynamically.
-- **Study Journal:** Log your daily study hours and mood to build a heatmap/streak of pure academic grinding.
-- **Pomodoro Timer:** Built-in productivity timer tailored to study intervals.
-- **Portfolio & Certificates Management:** Safely upload your achievements and manage projects in a single hub.
-- **Mobile Responsive Design:** The entire platform is built with a mobile-first, side-swiping UX so it works beautifully on your phone or your dorm PC.
+## ✨ Key AI & Productivity Features
+
+### 🧠 Google Gemini AI Intelligence
+- **AI Task Breakdown:** Instantly convert large study goals into small, actionable 15-30 minute subtasks.
+- **AI Flashcards:** Generate interactive testing material directly from your study notes.
+- **AI Tutor Chat:** Get instant explanations and analogies for complex concepts while you're in the Focus Room.
+- **AI Journal Summarizer:** condense long lecture notes or reading materials into concise bullet points.
+- **AI Strategy Scheduler:** Analyzing your class timetable and tasks to find the best deep-work windows today.
+
+### 📅 Core Study Suite
+- **Dynamic Habit Builder:** A full 31-day visual calendar tracker for building consistency.
+- **Interactive Timetable:** Period-based weekly schedule with a "Class Now" dashboard indicator.
+- **GPA/CGPA Suite:** Multi-semester performance tracking with live progression charts.
+- **Study Journal:** Track study hours, mood, and achievements with a visual activity heatmap.
+- **Pomodoro Timer:** Focused work cycles with automated rest intervals and XP rewards.
+- **Portfolio & Certificates:** A central hub to host and showcase your academic achievements.
+
+---
 
 ## 🛠️ Tech Stack
 
 **Frontend:**
-- React (Vite)
-- Tailwind CSS (via pure vanilla integrations and utility plugins)
-- React Router DOM for easy SPA navigation
-- Lucide React (Icons)
-- Chart.js / React-ChartJS-2 (Visual Data)
-- Axios (API Client)
+- **React (Vite):** Core framework for speed and modularity.
+- **Tailwind CSS:** Professional styling utilities.
+- **Lucide Icons:** Clean, modern iconography.
+- **Chart.js:** Dynamic data visualization for GPA and attendance.
+- **Google Fonts (Inter & Plus Jakarta Sans):** Premium typography.
 
 **Backend:**
-- Node.js & Express
-- MongoDB (Mongoose ORM)
-- JWT Authentication (JSON Web Tokens)
-- Nodemailer (Password recovery with configured timeouts)
+- **Node.js & Express:** Scalable API architecture.
+- **MongoDB (Atlas):** Secure cloud database storing tasks, grades, and habits.
+- **Google Generative AI SDK:** powers the Gemini 1.5-Flash intelligence.
+- **JWT Auth:** Secure user sessions and session persistence.
+- **Brevo API:** Powers the "Forgot Password" secure email reset engine.
 
-## 💻 Getting Started
+---
 
-### Prerequisites
-Make sure you have Node.js and npm installed on your device. You will also need a MongoDB URI if you plan on running your own disconnected instance.
+## 💻 Setup & Deployment
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/codeXsidd/Student-Management.git
-cd Student-Management
-```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/codeXsidd/Student-Management.git
+   cd Student-Management
+   ```
 
-### 2. Configure Environment Variables
-Create a `.env` file in the root folder with the following keys:
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_super_secret_jwt_key
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_google_app_password
-NODE_ENV=development
-```
+2. **Environment Configuration:**
+   Create a `.env` file in the root directory (refer to `.env.example`):
+   ```env
+   PORT=5000
+   MONGODB_URI=your_mongodb_atlas_string
+   JWT_SECRET=your_random_string
+   GEMINI_API_KEY=your_google_ai_studio_key
+   BREVO_API_KEY=your_brevo_api_key
+   ```
 
-### 3. Install Dependencies & Run (Locally)
-To run both the backend API and the Vite React frontend simultaneously:
+3. **Install & Run:**
+   - **Backend:** `npm run dev`
+   - **Frontend:** `cd frontend && npm run dev`
 
-Open **two** terminals.
-Terminal 1 (Backend):
-```bash
-npm install
-npm run dev
-```
+---
 
-Terminal 2 (Frontend):
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## 📜 License & Contribution
+This project is open-source and designed to help students worldwide. Contributions to UI improvements or new AI modules (like OCR note scanning!) are highly welcome.
 
-Your app should now be running locally at `http://localhost:5173/`.
-
-### 4. Production Build
-If you wish to deploy the system, remember to configure Vercel for the frontend, and run standard Node build scripts for your backend host (like Render, Railway, or Heroku).
-
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome! If you'd like to improve the UI or add a new module (like a Flashcard system!), feel free to fork this repository.
-
-## 📜 License
-This project is open-source and free to be adapted for educational and personal use.
+**Built with ❤️ for students who want to master their time.**
