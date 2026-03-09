@@ -6,7 +6,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const getAIModel = (modelName, key) => {
     try {
         const genAI = new GoogleGenerativeAI(key);
-        return genAI.getGenerativeModel({ model: modelName });
+        // Force stable v1 to avoid regional v1beta 404s
+        return genAI.getGenerativeModel({ model: modelName }, { apiVersion: 'v1' });
     } catch (err) {
         return null;
     }
@@ -19,24 +20,25 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     const fullPrompt = `${systemInstruction}\n\nStudent Input: ${prompt}`;
 
-    // Priority list: Try standard names first, then prefix as fallback
-    const modelBases = [
-        "gemini-1.5-flash",
+    // Priority list: Flash 1.5 is the most reliable and fastest
+    const models = [
         "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro-latest",
         "gemini-1.5-pro",
         "gemini-pro"
     ];
 
     let lastError = null;
 
-    for (const baseName of modelBases) {
-        // Try both forms: 'model-name' and 'models/model-name'
-        const variations = [baseName, `models/${baseName}`];
+    for (const modelName of models) {
+        // variations: Try with and without prefix for each model
+        const variations = [modelName, `models/${modelName}`];
 
-        for (const modelName of variations) {
+        for (const variant of variations) {
             try {
-                process.stdout.write(`🤖 AI Attempt: ${modelName}\n`);
-                const activeModel = getAIModel(modelName, key);
+                console.log(`🤖 AI Attempt: ${variant}`);
+                const activeModel = getAIModel(variant, key);
                 if (!activeModel) continue;
 
                 const result = await activeModel.generateContent(fullPrompt);
@@ -44,12 +46,13 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
                 const text = response.text();
 
                 if (text) {
-                    process.stdout.write(`✅ AI Success: ${modelName}\n`);
+                    console.log(`✅ AI Success: ${variant}`);
                     return text;
                 }
             } catch (err) {
                 lastError = err;
-                process.stdout.write(`⚠️ ${modelName} failed: ${err.message}\n`);
+                console.warn(`⚠️ ${variant} failed:`, err.message);
+                // If it's a 404, we definitely want to try the next variation/model
                 continue;
             }
         }
