@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
         const sem = await Semester.findOneAndUpdate(
             { user: req.userId, semNumber },
             { subjects, sgpa },
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
         res.status(201).json(sem);
     } catch (err) {

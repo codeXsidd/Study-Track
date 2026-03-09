@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
         const slot = await Timetable.findOneAndUpdate(
             { user: req.userId, day, period },
             { subject, teacher: teacher || '', room: room || '', color: color || '#6366f1', startTime: startTime || '', endTime: endTime || '' },
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
         res.status(201).json(slot);
     } catch (err) {

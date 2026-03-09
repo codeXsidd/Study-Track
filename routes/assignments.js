@@ -89,7 +89,7 @@ router.put('/:id', async (req, res) => {
         const assignment = await Assignment.findOneAndUpdate(
             { _id: req.params.id, user: req.userId },
             updates,
-            { new: true }
+            { returnDocument: 'after' }
         ).populate('subject', 'name color');
 
         if (!assignment) {

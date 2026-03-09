@@ -68,7 +68,7 @@ router.put('/:id', auth, async (req, res) => {
         habit = await Habit.findByIdAndUpdate(
             req.params.id,
             { $set: habitFields },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         res.json(habit);

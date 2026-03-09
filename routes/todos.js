@@ -28,7 +28,7 @@ router.put('/:id', async (req, res) => {
         else if (update.completed === false) update.completedAt = null;
         if (update.dayPlan === true) update.dayPlanDate = new Date();
         else if (update.dayPlan === false) update.dayPlanDate = null;
-        const todo = await Todo.findOneAndUpdate({ _id: req.params.id, user: req.userId }, update, { new: true });
+        const todo = await Todo.findOneAndUpdate({ _id: req.params.id, user: req.userId }, update, { returnDocument: 'after' });
         res.json(todo);
     } catch { res.status(500).json({ message: 'Server error.' }); }
 });

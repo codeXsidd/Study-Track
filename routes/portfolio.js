@@ -19,7 +19,7 @@ router.post('/projects', async (req, res) => {
 });
 router.put('/projects/:id', async (req, res) => {
     try {
-        const p = await Project.findOneAndUpdate({ _id: req.params.id, user: req.userId }, req.body, { new: true });
+        const p = await Project.findOneAndUpdate({ _id: req.params.id, user: req.userId }, req.body, { returnDocument: 'after' });
         res.json(p);
     } catch { res.status(500).json({ message: 'Server error.' }); }
 });

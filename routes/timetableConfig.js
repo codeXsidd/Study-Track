@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
         const config = await TimetableConfig.findOneAndUpdate(
             { user: req.userId },
             { totalPeriods, periods },
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
         res.json(config);
     } catch (err) {
