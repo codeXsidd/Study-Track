@@ -205,22 +205,33 @@ const HabitBuilderPage = () => {
                     {habits.map(habit => {
                         const completed = isCompletedToday(habit.completedDates);
 
-                        // Current month progress
-                        const now = new Date();
-                        const year = now.getFullYear();
-                        const month = now.getMonth();
-                        const daysInMonth = new Date(year, month + 1, 0).getDate();
-                        const firstDayOfMonth = new Date(year, month, 1).getDay();
+                        // Year progress heatmap logic
+                        const currentYear = new Date().getFullYear();
+                        const startOfYear = new Date(currentYear, 0, 1);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
 
-                        const currentMonthDays = [];
-                        for (let i = 1; i <= daysInMonth; i++) {
-                            const d = new Date(year, month, i);
-                            currentMonthDays.push({
-                                dateStr: getDateStr(d),
-                                dayNum: i,
-                                completed: isCompletedOnDate(habit.completedDates, getDateStr(d)),
-                                isToday: getDateStr(d) === getDateStr(now)
+                        // Generate days for the heatmap
+                        // We'll show the last 365 days or current year?
+                        // User said "year calendar", so let's do current year.
+                        const daysArr = [];
+                        const tempDate = new Date(startOfYear);
+
+                        // Move to the first Sunday/Monday of the year to align grid
+                        const firstDayOffset = tempDate.getDay();
+                        tempDate.setDate(tempDate.getDate() - firstDayOffset);
+
+                        // Fill roughly 53 weeks to cover the year
+                        for (let i = 0; i < 53 * 7; i++) {
+                            const d = new Date(tempDate);
+                            const ds = getDateStr(d);
+                            daysArr.push({
+                                dateStr: ds,
+                                isInYear: d.getFullYear() === currentYear,
+                                completed: isCompletedOnDate(habit.completedDates, ds),
+                                isToday: ds === getDateStr(today)
                             });
+                            tempDate.setDate(tempDate.getDate() + 1);
                         }
 
                         return (
@@ -241,32 +252,42 @@ const HabitBuilderPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Goals & Progress - Monthly Calendar */}
-                                <div style={{ marginBottom: '1.25rem', background: 'rgba(0,0,0,0.1)', padding: '0.75rem', borderRadius: '12px' }}>
-                                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.75rem', textAlign: 'center' }}>
-                                        {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} Tracker
+                                {/* Goals & Progress - Year Heatmap */}
+                                <div style={{ marginBottom: '1.25rem', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '12px' }}>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span>{currentYear} Consistency</span>
+                                        <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>{habit.totalCompleted} Total Hits</span>
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.3rem' }}>
-                                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                                            <div key={`head-${i}`} style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>{day}</div>
+
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(53, 1fr)',
+                                        gridTemplateRows: 'repeat(7, 1fr)',
+                                        gap: '2px',
+                                        height: '80px'
+                                    }}>
+                                        {daysArr.map((day, idx) => (
+                                            <div
+                                                key={idx}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    borderRadius: '1px',
+                                                    background: !day.isInYear ? 'transparent' : (day.completed ? '#10b981' : (day.isToday ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)')),
+                                                    opacity: day.completed ? 1 : 0.6,
+                                                    border: day.isToday ? '1px solid #818cf8' : 'none'
+                                                }}
+                                                title={`${day.dateStr} ${day.completed ? '(DONE)' : ''}`}
+                                            />
                                         ))}
-                                        {/* Blank spaces for first day */}
-                                        {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                                            <div key={`blank-${i}`} />
-                                        ))}
-                                        {currentMonthDays.map((day, idx) => (
-                                            <div key={idx} style={{
-                                                width: '100%', aspectRatio: '1', borderRadius: '6px',
-                                                background: day.completed ? 'rgba(16,185,129,0.2)' : (day.isToday ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'),
-                                                border: day.completed ? '1px solid rgba(16,185,129,0.5)' : (day.isToday ? '1px solid rgba(129,140,248,0.5)' : '1px solid transparent'),
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontSize: '0.7rem', color: day.completed ? '#10b981' : (day.isToday ? '#818cf8' : 'var(--text-disabled, #475569)'),
-                                                fontWeight: day.completed || day.isToday ? '700' : '500',
-                                                transition: 'all 0.2s'
-                                            }} title={`${day.dateStr} ${day.completed ? '(Completed)' : ''}`}>
-                                                {day.dayNum}
-                                            </div>
-                                        ))}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.55rem', color: '#64748b', fontWeight: 600 }}>
+                                        <span>JAN</span>
+                                        <span>MAR</span>
+                                        <span>MAY</span>
+                                        <span>JUL</span>
+                                        <span>SEP</span>
+                                        <span>NOV</span>
                                     </div>
                                 </div>
 
