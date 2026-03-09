@@ -14,12 +14,14 @@ StudyTrack is an all-in-one, ultra-premium personal student workspace designed t
 ### 🧠 Google Gemini AI Intelligence
 - **AI Task Breakdown:** Instantly convert large study goals into small, actionable 15-30 minute subtasks.
 - **AI Flashcards:** Generate interactive testing material directly from your study notes.
-- **AI Tutor Chat:** Get instant explanations and analogies for complex concepts while you're in the Focus Room.
-- **AI Journal Summarizer:** condense long lecture notes or reading materials into concise bullet points.
+- **AI Tutor Chat:** Get instant explanations and analogies for complex concepts while you're in the Focus Room or AI Assistant page.
+- **AI GPA Predictor:** Predictive analysis of required SGPA to hit your target CGPA, including difficulty level and strategy advice.
+- **AI Journal Summarizer:** Condense long lecture notes or reading materials into concise bullet points.
 - **AI Strategy Scheduler:** Analyzing your class timetable and tasks to find the best deep-work windows today.
 
 ### 📅 Core Study Suite
-- **Dynamic Habit Builder:** A full 31-day visual calendar tracker for building consistency.
+- **Productivity Score Graph:** A multi-dimensional chart that tracks your "Productivity Score" (weighted Study Hours + Tasks) to visualize your true academic output.
+- **Dynamic Habit Builder:** A monthly visual calendar tracker with streak visualization and year-wide scroll.
 - **Interactive Timetable:** Period-based weekly schedule with a "Class Now" dashboard indicator.
 - **GPA/CGPA Suite:** Multi-semester performance tracking with live progression charts.
 - **Study Journal:** Track study hours, mood, and achievements with a visual activity heatmap.

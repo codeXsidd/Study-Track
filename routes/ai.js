@@ -3,17 +3,13 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const getAIModel = (modelName = "gemini-1.5-flash", systemText = "") => {
+const getAIModel = (modelName = "gemini-1.5-flash") => {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return null;
     try {
         const genAI = new GoogleGenerativeAI(key);
-        // Use v1beta explicitly if system instructions are used, otherwise v1
-        const config = { model: modelName };
-        if (systemText) {
-            config.systemInstruction = systemText;
-        }
-        return genAI.getGenerativeModel(config, { apiVersion: 'v1beta' });
+        // Standard initialization (works for v1 by default)
+        return genAI.getGenerativeModel({ model: modelName });
     } catch (err) {
         console.error(`❌ AI Init Error (${modelName}):`, err.message);
         return null;
@@ -24,26 +20,28 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     const key = process.env.GEMINI_API_KEY;
     if (!key) throw new Error("API_KEY_MISSING");
 
-    // Sequential fallbacks for maximum reliability
-    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+    // Include system instructions at the start of the prompt for best compatibility
+    const fullPrompt = `${systemInstruction}\n\nStudent Input: ${prompt}`;
+
+    // Sequential fallbacks
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro", "gemini-1.0-pro"];
     let lastError = null;
 
     for (const modelName of models) {
         try {
             console.log(`🤖 Attempting AI call with: ${modelName}`);
-            const activeModel = getAIModel(modelName, systemInstruction);
+            const activeModel = getAIModel(modelName);
             if (!activeModel) continue;
 
-            const result = await activeModel.generateContent(prompt);
+            const result = await activeModel.generateContent(fullPrompt);
             const response = await result.response;
-            return response.text();
+            const text = response.text();
+            if (text) return text;
         } catch (err) {
             lastError = err;
             console.warn(`⚠️ Model ${modelName} failed:`, err.message);
-            // If it's not a 404/not found, it might be a quota or safety error, which usually affects all models
-            if (!err.message.includes('404') && !err.message.includes('not found')) {
-                break;
-            }
+            // Try next model for any error (quota, safety, or 404)
+            continue;
         }
     }
 
@@ -117,7 +115,7 @@ router.post('/chat', auth, async (req, res) => {
             const responseText = await callAI(prompt, "You are a concise, highly knowledgeable, friendly tutor helping a university student in a Deep Focus Room. Keep answers under 3-4 short paragraphs. Explain concepts simply through analogies if possible.");
             res.json({ reply: responseText.trim() });
         } catch (e) {
-            console.error('AI Chat Error:', e.message);
+            console.error('❌ AI Chat Detailed Error:', e);
             // Professional Fallback
             if (e.message === 'API_KEY_MISSING') {
                 res.json({ reply: "I'm currently in **Demonstration Mode**. To enable my full AI capabilities, please ensure the `GEMINI_API_KEY` is set in the server environment settings." });
