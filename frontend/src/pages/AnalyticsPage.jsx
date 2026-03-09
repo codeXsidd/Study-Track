@@ -231,13 +231,48 @@ const AnalyticsPage = () => {
                     )}
                 </div>
 
-                {/* 30-Day Activity Overview (Heatmap replacement/complement) */}
+                {/* Daily Productivity Score Trend */}
+                <div className="glass-card" style={{ padding: '1.5rem', gridColumn: '1 / -1' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <TrendingUp size={18} color="#10b981" /> Productivity Score Trend
+                    </h3>
+                    <div style={{ height: '200px' }}>
+                        <Line
+                            data={{
+                                labels: last14Days.map(d => new Date(d).toLocaleDateString('default', { day: 'numeric', month: 'short' })),
+                                datasets: [{
+                                    label: 'Productivity Score',
+                                    data: last14Days.map(d => {
+                                        const hours = journal.filter(j => j.date === d).reduce((s, e) => s + (e.hoursStudied || 0), 0);
+                                        const tasks = todos.filter(t => t.completedAt && t.completedAt.split('T')[0] === d).length;
+                                        return (hours * 10) + (tasks * 20); // Balanced score
+                                    }),
+                                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                    borderColor: '#10b981',
+                                    borderWidth: 3,
+                                    pointBackgroundColor: '#10b981',
+                                    fill: true,
+                                    tension: 0.3
+                                }]
+                            }}
+                            options={{
+                                ...chartOptions,
+                                plugins: { ...chartOptions.plugins, legend: { display: true, labels: { color: '#94a3b8' } } }
+                            }}
+                        />
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1rem', textAlign: 'center' }}>
+                        Score = (Study Hours × 10) + (Completed Tasks × 20). Mix both to skyrocket your productivity! 🚀
+                    </p>
+                </div>
+
+                {/* 30-Day Activity Overview */}
                 <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(99,102,241,0.05) 100%)' }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                         <CalendarIcon size={18} color="#10b981" /> 30-Day Pulse
                     </h3>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>High-density overview of your daily consistency.</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '0.4rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(15, 1fr)', gap: '0.4rem' }}>
                         {Array.from({ length: 30 }).map((_, i) => {
                             const d = new Date(); d.setDate(d.getDate() - (29 - i));
                             const ds = d.toISOString().split('T')[0];
@@ -250,8 +285,30 @@ const AnalyticsPage = () => {
                             );
                         })}
                     </div>
-                    <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                        <Link to="/journal" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981', textDecoration: 'none' }}>Log Today's Work →</Link>
+                </div>
+
+                {/* Weekly Goal Status */}
+                <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                    <Trophy size={40} color="#f59e0b" style={{ marginBottom: '1rem' }} />
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>Weekly Champion</h3>
+                    <p style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5, marginTop: '0.5rem' }}>
+                        You've studied <b>{journal.filter(j => {
+                            const d = new Date(j.date);
+                            const now = new Date();
+                            const weekAgo = new Date(); weekAgo.setDate(now.getDate() - 7);
+                            return d >= weekAgo;
+                        }).reduce((s, e) => s + (e.hoursStudied || 0), 0).toFixed(1)} hours</b> in the last 7 days.
+                    </p>
+                    <div style={{ marginTop: '1.5rem', width: '100%' }}>
+                        <div style={{ height: 10, background: 'rgba(255,255,255,0.05)', borderRadius: 5, overflow: 'hidden' }}>
+                            <div style={{
+                                width: `${Math.min((totalHours / 40) * 100, 100)}%`,
+                                height: '100%',
+                                background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+                                borderRadius: 5
+                            }} />
+                        </div>
+                        <p style={{ fontSize: '0.7rem', color: '#71717a', marginTop: 8, fontWeight: 700 }}>PROGRESS TOWARDS 40H WEEKLY GOAL</p>
                     </div>
                 </div>
             </div>

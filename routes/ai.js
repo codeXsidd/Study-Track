@@ -8,50 +8,46 @@ const getAIModel = (modelName = "gemini-1.5-flash", systemText = "") => {
     if (!key) return null;
     try {
         const genAI = new GoogleGenerativeAI(key);
+        // Use v1beta explicitly if system instructions are used, otherwise v1
         const config = { model: modelName };
         if (systemText) {
             config.systemInstruction = systemText;
         }
-        return genAI.getGenerativeModel(config);
+        return genAI.getGenerativeModel(config, { apiVersion: 'v1beta' });
     } catch (err) {
         console.error(`❌ AI Init Error (${modelName}):`, err.message);
         return null;
     }
 };
 
-// Simplified callAI that handles its own model instantiation to allow different system instructions
 const callAI = async (prompt, systemInstruction = "You are a helpful AI study assistant.") => {
     const key = process.env.GEMINI_API_KEY;
     if (!key) throw new Error("API_KEY_MISSING");
 
-    // Try gemini-1.5-flash first (cheaper/faster/better)
-    let currentModelName = "gemini-1.5-flash";
+    // Sequential fallbacks for maximum reliability
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+    let lastError = null;
 
-    try {
-        const activeModel = getAIModel(currentModelName, systemInstruction);
-        if (!activeModel) throw new Error("INIT_FAILED");
+    for (const modelName of models) {
+        try {
+            console.log(`🤖 Attempting AI call with: ${modelName}`);
+            const activeModel = getAIModel(modelName, systemInstruction);
+            if (!activeModel) continue;
 
-        const result = await activeModel.generateContent(prompt);
-        return result.response.text();
-    } catch (err) {
-        console.warn(`⚠️ Attempt with ${currentModelName} failed:`, err.message);
-
-        // If 404 or specific error, try gemma/pro fallback
-        if (err.message.includes('404') || err.message.includes('not found')) {
-            console.warn('🔄 Attempting fallback to gemini-1.5-pro...');
-            try {
-                const fallbackModel = getAIModel("gemini-1.5-pro", systemInstruction);
-                if (fallbackModel) {
-                    const result = await fallbackModel.generateContent(prompt);
-                    return result.response.text();
-                }
-            } catch (fallbackErr) {
-                console.error('❌ Fallback failed:', fallbackErr.message);
-                throw fallbackErr;
+            const result = await activeModel.generateContent(prompt);
+            const response = await result.response;
+            return response.text();
+        } catch (err) {
+            lastError = err;
+            console.warn(`⚠️ Model ${modelName} failed:`, err.message);
+            // If it's not a 404/not found, it might be a quota or safety error, which usually affects all models
+            if (!err.message.includes('404') && !err.message.includes('not found')) {
+                break;
             }
         }
-        throw err;
     }
+
+    throw lastError || new Error("ALL_MODELS_FAILED");
 };
 
 
