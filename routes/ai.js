@@ -6,8 +6,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const getAIModel = (modelName, key) => {
     try {
         const genAI = new GoogleGenerativeAI(key);
-        // We let the SDK handle the default version, but provide a stable configuration
-        return genAI.getGenerativeModel({ model: modelName });
+        // FORCE stable v1 to avoid the v1beta 404 errors shown in logs
+        return genAI.getGenerativeModel({ model: modelName }, { apiVersion: 'v1' });
     } catch (err) {
         return null;
     }
@@ -17,29 +17,27 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     let key = process.env.GEMINI_API_KEY;
     if (!key || key.trim() === "") throw new Error("API_KEY_MISSING");
 
-    // Aggressive cleaning: trim whitespace and remove common paste-errors like extra quotes
+    // Aggressive cleaning to remove quotes or erratic whitespace from paste errors
     key = key.trim().replace(/^["']|["']$/g, '');
 
     const fullPrompt = `${systemInstruction}\n\nStudent Input: ${prompt}`;
 
-    // Expanded fallback roster for better regional coverage
+    // Prioritized list: 1.5-flash is the most widely available stable model
     const models = [
         "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
         "gemini-1.5-pro",
-        "gemini-2.0-flash-exp",
         "gemini-1.0-pro"
     ];
 
     let lastError = null;
 
     for (const m of models) {
-        // Try both raw and prefixed variants
+        // We try both standard and prefixed to cover all SDK possibilities
         const variants = [m, `models/${m}`];
 
         for (const variant of variants) {
             try {
-                console.log(`🤖 AI Attempt: ${variant}`);
+                console.log(`🤖 AI Attempt: ${variant} (v1)`);
                 const activeModel = getAIModel(variant, key);
                 if (!activeModel) continue;
 
@@ -54,14 +52,23 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
             } catch (err) {
                 lastError = err;
                 console.warn(`⚠️ Model ${variant} failed:`, err.message);
-                // Continue to next available fallback
+
+                // If the key specifically is invalid, no point in trying other models
+                if (err.message.toLowerCase().includes('api key not valid') ||
+                    err.message.toLowerCase().includes('apikey_invalid')) {
+                    throw new Error("The API Key provided in Render appears to be invalid. Please check for extra spaces or incorrect characters.");
+                }
+
+                // If it's a model not found error (404), we continue to the next fallback
                 continue;
             }
         }
     }
 
+    // Comprehensive error if everything failed
     console.error("❌ CRITICAL: ALL AI MODELS FAILED.");
-    throw lastError || new Error("ALL_MODELS_FAILED");
+    const finalErrorMessage = lastError ? lastError.message : "Connection failed to all Gemini models.";
+    throw new Error(`${finalErrorMessage}. (Check that your API key is correct and your Render region has access to Google AI)`);
 };
 
 // Helper to extract JSON from AI response safely
