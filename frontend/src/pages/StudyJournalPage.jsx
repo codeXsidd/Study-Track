@@ -64,13 +64,13 @@ const StudyJournalPage = () => {
             toast.error("Paste some text in the notes first to summarize it!");
             return;
         }
-        const loadingToast = toast.loading('AI is reading and summarizing...');
+        const loadingToast = toast.loading('🧠 AI is analyzing and summarizing your notes...');
         try {
             const res = await summarizeText({ text: form.notes });
-            setForm({ ...form, notes: form.notes + '\n\n--- AI Summary ---\n' + res.data.summary });
-            toast.success('Text summarized!', { id: loadingToast });
+            setForm({ ...form, notes: form.notes + '\n\n✨ AI SUMMARY ✨\n' + res.data.summary + '\n------------------' });
+            toast.success('Notes processed successfully!', { id: loadingToast });
         } catch (error) {
-            toast.error('Failed to summarize', { id: loadingToast });
+            toast.error('AI brain is currently busy. Try again in a moment.', { id: loadingToast });
         }
     };
 

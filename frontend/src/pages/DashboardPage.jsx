@@ -154,9 +154,12 @@ const DashboardPage = () => {
         setInsightLoading(true);
         try {
             const context = `Student has ${urgentCount} urgent deadlines, ${dashboardTodos.length} focus tasks, and ${currentClass ? `is in class ${currentClass.subject}` : 'is free right now'}. Current time: ${now.toLocaleTimeString()}.`;
-            const res = await aiChat({ message: "Give me one short, high-energy, personalized productivity sentence for my dashboard.", context });
+            const prompt = `Give me one short (max 15 words), high-energy, personalized productivity sentence for my dashboard. If there are urgent deadlines, focus on them. If free, suggest starting a Pomodoro or reviewing a habit. Mention a specific tool from: [Focus Room, Pomodoro, Planner, Habits, Journal] if relevant.`;
+            const res = await aiChat({ message: prompt, context });
             setAiInsight(res.data.reply);
-        } catch { }
+        } catch {
+            setAiInsight("Consistency is the key to mastery. Try breaking your current focus into 15-minute sprints!");
+        }
         setInsightLoading(false);
     };
 
@@ -257,26 +260,60 @@ const DashboardPage = () => {
 
             {/* AI Smart Suggestion Banner */}
             {(urgentCount > 0 || aiInsight) && (
-                <div className="glass-card animate-slide-scale" style={{ marginBottom: '1.5rem', padding: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '1.25rem', background: 'linear-gradient(90deg, rgba(236,72,153,0.1), rgba(139,92,246,0.05))', borderLeft: '4px solid #ec4899', position: 'relative', overflow: 'hidden' }}>
-                    <div className="ai-icon-pulse" style={{ background: 'rgba(236,72,153,0.2)', padding: '0.6rem', borderRadius: '50%', flexShrink: 0 }}>
-                        <Bot size={24} color="#ec4899" />
+                <div className="glass-card animate-slide-scale" style={{
+                    marginBottom: '1.5rem',
+                    padding: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '1.25rem',
+                    background: urgentCount > 0
+                        ? 'linear-gradient(90deg, rgba(239,68,68,0.12), rgba(139,92,246,0.05))'
+                        : 'linear-gradient(90deg, rgba(16,185,129,0.12), rgba(99,102,241,0.05))',
+                    borderLeft: `4px solid ${urgentCount > 0 ? '#ef4444' : '#10b981'}`,
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                    <div className="ai-icon-pulse" style={{
+                        background: urgentCount > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
+                        padding: '0.6rem', borderRadius: '50%', flexShrink: 0
+                    }}>
+                        <Bot size={24} color={urgentCount > 0 ? '#ef4444' : '#10b981'} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '0.4rem', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            AI Smart Suggestion
-                        </h4>
-                        <div style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.6, fontWeight: 500 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                            <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                AI Smart Suggestion
+                            </h4>
+                            {insightLoading && <div className="spinner-small" />}
+                        </div>
+                        <div style={{ fontSize: '0.95rem', color: '#cbd5e1', lineHeight: 1.6, fontWeight: 500 }}>
                             {insightLoading ? (
-                                <span className="flex items-center gap-2 animate-pulse text-indigo-300">
-                                    Analyzing your academic progress...
-                                </span>
+                                <span style={{ opacity: 0.7, fontStyle: 'italic' }}>Thinking...</span>
                             ) : aiInsight || (
                                 <>You have <b>{urgentCount} urgent deadline{urgentCount > 1 ? 's' : ''}</b>. I highly recommend heading to the <Link to="/focus-room" style={{ color: '#a78bfa', fontWeight: 700 }}>Deep Focus Room</Link> to tackle your priorities.</>
                             )}
                         </div>
                     </div>
-                    <button onClick={fetchAiInsight} disabled={insightLoading} style={{ background: 'rgba(236,72,153,0.1)', border: 'none', cursor: 'pointer', color: '#ec4899', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: '50%', transition: 'all 0.3s' }} title="Refresh Suggestion">
-                        <RotateCcw size={18} style={{ animation: insightLoading ? 'spin 1s linear infinite' : 'none' }} />
+                    <button
+                        onClick={fetchAiInsight}
+                        disabled={insightLoading}
+                        style={{
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            cursor: 'pointer',
+                            color: '#94a3b8',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 36, height: 36,
+                            borderRadius: '50%',
+                            transition: 'all 0.3s'
+                        }}
+                        title="Refresh Brain"
+                        onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                    >
+                        <RotateCcw size={16} style={{ animation: insightLoading ? 'spin 1s linear infinite' : 'none' }} />
                     </button>
                 </div>
             )}

@@ -607,3 +607,22 @@ textarea {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(236, 72, 153, 0.5);
 }
+
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #ec4899;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

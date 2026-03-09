@@ -3,59 +3,53 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const getAIModel = (modelName = "gemini-1.5-flash") => {
+const getAIModel = (modelName = "gemini-1.5-flash", systemText = "") => {
     const key = process.env.GEMINI_API_KEY;
     if (!key) return null;
     try {
         const genAI = new GoogleGenerativeAI(key);
-        return genAI.getGenerativeModel({ model: modelName });
+        const config = { model: modelName };
+        if (systemText) {
+            config.systemInstruction = systemText;
+        }
+        return genAI.getGenerativeModel(config);
     } catch (err) {
         console.error(`❌ AI Init Error (${modelName}):`, err.message);
         return null;
     }
 };
 
-let model = getAIModel();
-
-// Helper to reliably interact with AI with automatic fallback
+// Simplified callAI that handles its own model instantiation to allow different system instructions
 const callAI = async (prompt, systemInstruction = "You are a helpful AI study assistant.") => {
-    try {
-        if (!model) {
-            model = getAIModel();
-            if (!model) throw new Error("API_KEY_MISSING");
-        }
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error("API_KEY_MISSING");
 
-        try {
-            const result = await model.generateContent({
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                systemInstruction: { role: "system", parts: [{ text: systemInstruction }] },
-                generationConfig: { temperature: 0.7 }
-            });
-            return result.response.text();
-        } catch (innerErr) {
-            console.error(`⚠️ Initial AI attempt (${model.model}) failed:`, innerErr.message);
-            // Fallback to gemini-1.5-pro or gemini-1.5-flash-8b if the first one fails
-            if (innerErr.message.includes('404') || innerErr.message.includes('not found') || innerErr.message.includes('Failed to fetch')) {
-                console.warn('⚠️ primary model failed, attempting fallback to gemini-1.5-pro...');
-                const fallbackModel = getAIModel("gemini-1.5-pro");
-                if (fallbackModel) {
-                    try {
-                        const result = await fallbackModel.generateContent({
-                            contents: [{ role: "user", parts: [{ text: prompt }] }],
-                            generationConfig: { temperature: 0.7 }
-                        });
-                        return result.response.text();
-                    } catch (fallbackErr) {
-                        console.error(`⚠️ Fallback also failed:`, fallbackErr.message);
-                        throw fallbackErr;
-                    }
-                }
-            }
-            throw innerErr;
-        }
+    // Try gemini-1.5-flash first (cheaper/faster/better)
+    let currentModelName = "gemini-1.5-flash";
+
+    try {
+        const activeModel = getAIModel(currentModelName, systemInstruction);
+        if (!activeModel) throw new Error("INIT_FAILED");
+
+        const result = await activeModel.generateContent(prompt);
+        return result.response.text();
     } catch (err) {
-        console.error('--- AI Request Failed ---');
-        console.error('Error:', err.message);
+        console.warn(`⚠️ Attempt with ${currentModelName} failed:`, err.message);
+
+        // If 404 or specific error, try gemma/pro fallback
+        if (err.message.includes('404') || err.message.includes('not found')) {
+            console.warn('🔄 Attempting fallback to gemini-1.5-pro...');
+            try {
+                const fallbackModel = getAIModel("gemini-1.5-pro", systemInstruction);
+                if (fallbackModel) {
+                    const result = await fallbackModel.generateContent(prompt);
+                    return result.response.text();
+                }
+            } catch (fallbackErr) {
+                console.error('❌ Fallback failed:', fallbackErr.message);
+                throw fallbackErr;
+            }
+        }
         throw err;
     }
 };
@@ -132,7 +126,7 @@ router.post('/chat', auth, async (req, res) => {
             if (e.message === 'API_KEY_MISSING') {
                 res.json({ reply: "I'm currently in **Demonstration Mode**. To enable my full AI capabilities, please ensure the `GEMINI_API_KEY` is set in the server environment settings." });
             } else {
-                res.json({ reply: "I'm experiencing high traffic right now, but here's a quick productivity tip: Try using the Pomodoro technique (25 mins work, 5 mins break) to maintain focus and avoid burnout!" });
+                res.json({ reply: "I'm currently having trouble connecting to my central brain. Let me try to help based on my local knowledge: Consistency is the key to mastering any subject. Try breaking your current focus into 15-minute sprints!" });
             }
         }
     } catch (err) {
