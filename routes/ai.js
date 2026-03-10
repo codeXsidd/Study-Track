@@ -1,13 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 
-const getAIModel = (modelName, key, version = 'v1') => {
+const getAIModel = (key) => {
     try {
-        const genAI = new GoogleGenerativeAI(key);
-        // Default to v1, but allow v1beta as fallback for older models if needed
-        return genAI.getGenerativeModel({ model: modelName }, { apiVersion: version });
+        return new GoogleGenAI({ apiKey: key });
     } catch (err) {
         return null;
     }
@@ -24,10 +22,11 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     // Valid model names for the current Gemini API
     const models = [
-        "gemini-3.0-flash",
         "gemini-3-flash-preview",
+        "gemini-3.1-flash",
+        "gemini-3.1-pro",
+        "gemini-2.0-flash",
         "gemini-1.5-flash",
-        "gemini-2-flash",
         "gemini-1.5-pro"
     ];
 
@@ -36,13 +35,17 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     // Try each model
     for (const modelName of models) {
         try {
-            console.log(`🤖 AI Attempt: ${modelName} (v1)`);
-            const activeModel = getAIModel(modelName, key, 'v1');
-            if (!activeModel) continue;
+            console.log(`🤖 AI Attempt: ${modelName}`);
+            const ai = getAIModel(key);
+            if (!ai) continue;
 
-            const result = await activeModel.generateContent(fullPrompt);
-            const response = await result.response;
-            const text = response.text();
+            const response = await ai.models.generateContent({
+                model: modelName,
+                systemInstruction: systemInstruction,
+                contents: prompt
+            });
+
+            const text = response.text;
 
             if (text) {
                 console.log(`✅ AI Success: ${modelName}`);
@@ -50,30 +53,14 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
             }
         } catch (err) {
             lastError = err;
-            console.warn(`⚠️ Model ${modelName} failed on v1:`, err.message);
+            console.warn(`⚠️ Model ${modelName} failed:`, err.message);
 
             // If the key specifically is invalid, no point in trying other models
             if (err.message.toLowerCase().includes('api key') ||
                 err.message.toLowerCase().includes('apikey_invalid')) {
-                throw new Error("The API Key provided in Render appears to be invalid. Please check for extra spaces or incorrect characters.");
+                throw new Error("The API Key provided appears to be invalid. Please check for extra spaces or incorrect characters.");
             }
-
-            // If it's a 404 or unsupported on v1, we might try it once more on v1beta for robustness
-            if (err.message.includes('404') || err.message.includes('not found')) {
-                try {
-                    console.log(`🔄 AI Retry: ${modelName} (v1beta)`);
-                    const betaModel = getAIModel(modelName, key, 'v1beta');
-                    const betaResult = await betaModel.generateContent(fullPrompt);
-                    const betaResponse = await betaResult.response;
-                    const betaText = betaResponse.text();
-                    if (betaText) {
-                        console.log(`✅ AI Success: ${modelName} (v1beta)`);
-                        return betaText.trim();
-                    }
-                } catch (betaErr) {
-                    console.warn(`⚠️ Model ${modelName} also failed on v1beta:`, betaErr.message);
-                }
-            }
+            
             // Continue to next model if this one failed
             continue;
         }
