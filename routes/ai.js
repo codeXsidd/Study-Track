@@ -221,13 +221,14 @@ router.post('/summarize', auth, async (req, res) => {
 // 5. Timetable Optimization
 router.post('/optimize', auth, async (req, res) => {
     try {
-        const { timetable, focus } = req.body;
-        const prompt = `Optimize this student timetable for ${focus || 'overall productivity'}. 
-        Timetable Data: ${JSON.stringify(timetable)}
+        const { slots, todoCount } = req.body;
+        const prompt = `Optimize this student timetable. They have ${todoCount} pending tasks.
+        Current Timetable Slots: ${JSON.stringify(slots)}
         
-        Return EXACTLY this JSON format:
+        Return EXACTLY this JSON format (no markdown):
         {
-          "suggestions": ["suggestion 1", "suggestion 2"],
+          "advice": "General strategy for the week...",
+          "suggestions": ["Specific tip 1", "Specific tip 2"],
           "score": 85
         }`;
 
@@ -237,6 +238,7 @@ router.post('/optimize', auth, async (req, res) => {
         } catch (e) {
             console.error('AI Optimize Error:', e.message);
             res.json({
+                advice: "Focus on your core subjects during your peak energy hours.",
                 suggestions: [
                     "Consider moving heavy subjects to your peak morning hours.",
                     "Ensure you have at least 15-minute breaks between back-to-back classes.",

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import API, { getUpcoming, getHabits, toggleHabit, aiChat } from '../services/api';
+import API, { getUpcoming, getHabits, toggleHabit, aiChat, addXP } from '../services/api';
+import toast from 'react-hot-toast';
 import {
     BookOpen, Calendar, CheckCircle, AlertTriangle, TrendingUp, Clock,
     Award, Timer, GraduationCap, BookMarked, Code2, Users, ClipboardList,
@@ -51,7 +52,7 @@ const MiniStat = ({ label, value, color, icon }) => (
 
 // ---------- main ----------
 const DashboardPage = () => {
-    const { user } = useAuth();
+    const { user, updateUserXP } = useAuth();
     const [upcoming, setUpcoming] = useState([]);
     const [timetableSlots, setTimetableSlots] = useState([]);
     const [timetableConfig, setTimetableConfig] = useState(null);
@@ -98,6 +99,16 @@ const DashboardPage = () => {
                 return h;
             }));
             await toggleHabit(habit._id, today.toISOString());
+            
+            // Gamification: 5 XP for habit
+            if (!isHabitCompletedToday(habit.completedDates)) {
+                addXP({ xpToAdd: 5 }).then(res => {
+                    const { xp, level, leveledUp } = res.data;
+                    updateUserXP(xp, level);
+                    if (leveledUp) toast.success(`🎉 Level Up! You are Level ${level}!`, { icon: '🏆' });
+                    else toast.success('+5 XP for Habit!', { icon: '🌱' });
+                }).catch(() => { });
+            }
         } catch { }
     };
 
@@ -169,8 +180,19 @@ const DashboardPage = () => {
 
     const toggleComplete = async (todo) => {
         try {
-            const res = await API.put(`/todos/${todo._id}`, { completed: !todo.completed, dayPlan: false });
+            const isMarkingDone = !todo.completed;
+            const res = await API.put(`/todos/${todo._id}`, { completed: isMarkingDone, dayPlan: false });
             setTodos(todos.map(t => t._id === todo._id ? res.data : t));
+
+            if (isMarkingDone) {
+                // Gamification: 10 XP for todo
+                addXP({ xpToAdd: 10 }).then(res => {
+                    const { xp, level, leveledUp } = res.data;
+                    updateUserXP(xp, level);
+                    if (leveledUp) toast.success(`🎉 Level Up! You are Level ${level}!`, { icon: '🏆' });
+                    else toast.success('+10 XP for Task!', { icon: '🎯' });
+                }).catch(() => { });
+            }
         } catch { }
     };
 

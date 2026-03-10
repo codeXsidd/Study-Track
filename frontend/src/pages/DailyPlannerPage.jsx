@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Plus, Check, Trash2, Calendar, Star, Layout, ListTodo, Sun, Coffee, Brain, Sparkles, ChevronRight, X, AlertCircle, Bot } from 'lucide-react';
-import API from '../services/api';
+import API, { addXP } from '../services/api';
 import { breakDownTask } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const DailyPlannerPage = () => {
+    const { updateUserXP } = useAuth();
     const [allTodos, setAllTodos] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -80,9 +82,19 @@ const DailyPlannerPage = () => {
 
     const toggleComplete = async (todo) => {
         try {
-            const res = await API.put(`/todos/${todo._id}`, { completed: !todo.completed, dayPlan: false });
+            const isMarkingDone = !todo.completed;
+            const res = await API.put(`/todos/${todo._id}`, { completed: isMarkingDone, dayPlan: false });
             setAllTodos(allTodos.map(t => t._id === todo._id ? res.data : t));
-            if (!todo.completed) toast.success('Awesome! Task done! ✅');
+            
+            if (isMarkingDone) {
+                toast.success('Awesome! Task done! +10 XP ✅');
+                // Gamification
+                addXP({ xpToAdd: 10 }).then(res => {
+                    const { xp, level, leveledUp } = res.data;
+                    updateUserXP(xp, level);
+                    if (leveledUp) toast.success(`🎉 Level Up! You are Level ${level}!`, { icon: '🏆' });
+                }).catch(() => { });
+            }
         } catch { toast.error('Update failed'); }
     };
 

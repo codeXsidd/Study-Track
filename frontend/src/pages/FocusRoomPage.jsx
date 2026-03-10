@@ -140,7 +140,7 @@ const FocusRoomPage = () => {
     const secs = String(seconds % 60).padStart(2, '0');
 
     return (
-        <div style={{ height: 'calc(100vh - 40px)', margin: '-1.5rem', background: '#050510', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ minHeight: 'calc(100vh - 40px)', margin: '-1.5rem', background: '#050510', position: 'relative', overflowY: 'auto', paddingBottom: '80px' }}>
             {/* Ambient Background - Lofi video iframe (No controls, looping) */}
             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.2, pointerEvents: 'none', zIndex: 0 }}>
                 {/* Embedded Lofi Girl Radio or Similar */}
@@ -162,12 +162,12 @@ const FocusRoomPage = () => {
             {/* Main Content */}
             <div style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '3rem', opacity: 0.8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '2rem', marginTop: '1rem', opacity: 0.8 }}>
                     <Zap size={24} color="#ec4899" />
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#e2e8f0' }}>Deep Focus Room</h1>
+                    <h1 style={{ fontSize: 'clamp(1rem, 5vw, 1.5rem)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#e2e8f0' }}>Deep Focus Room</h1>
                 </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2rem', width: '100%', maxWidth: 900 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1.5rem', width: '100%', maxWidth: 1000 }}>
 
                     {/* Timer Panel */}
                     <div className="glass-card fade-up" style={{ padding: '3rem', borderRadius: 24, textAlign: 'center', flex: 1, minWidth: 320, background: 'rgba(10,10,20,0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -184,7 +184,7 @@ const FocusRoomPage = () => {
                             ))}
                         </div>
 
-                        <div style={{ fontSize: '6rem', fontWeight: 900, letterSpacing: '-4px', margin: '0 0 2rem 0', color: mode.color, textShadow: `0 0 40px ${mode.color}44`, fontVariantNumeric: 'tabular-nums' }}>
+                        <div style={{ fontSize: 'clamp(4rem, 15vw, 6.5rem)', fontWeight: 900, letterSpacing: '-4px', margin: '0 0 1.5rem 0', color: mode.color, textShadow: `0 0 40px ${mode.color}44`, fontVariantNumeric: 'tabular-nums' }}>
                             {mins}:{secs}
                         </div>
 
