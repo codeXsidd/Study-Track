@@ -24,10 +24,13 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     // Valid model names for the current Gemini API
     const models = [
-        "gemini-3.0-flash",
+        "gemini-3.1-flash",
+        "gemini-3.1-pro",
         "gemini-3-flash-preview",
+        "gemini-2.0-flash",
         "gemini-1.5-flash",
-        "gemini-2-flash",
+        "gemini-1.5-pro",
+        "gemini-2.0-flash"  // ← optional: add newer model
         "gemini-1.5-pro"
     ];
 
