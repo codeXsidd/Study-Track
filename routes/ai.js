@@ -7,12 +7,11 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     let key = process.env.GEMINI_API_KEY;
     if (!key || key.trim() === "") throw new Error("API_KEY_MISSING");
 
-    // Aggressive cleaning to remove quotes or erratic whitespace
     key = key.trim().replace(/^["']|["']$/g, '');
 
-    const ai = new GoogleGenAI({ apiKey: key });
+    const client = new GoogleGenAI({ apiKey: key });
 
-    // We prioritize gemini-3-flash-preview as requested, with fallbacks to stable models
+    // Models to try in order. Gemini 3 is the priority but preview models can be unstable.
     const models = [
         "gemini-3-flash-preview",
         "gemini-2.0-flash",
@@ -24,36 +23,61 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     for (const modelName of models) {
         try {
-            console.log(`🤖 AI Attempt: ${modelName}`);
+            console.log(`🤖 AI Attempt (${modelName}) using Interactions API`);
             
-            const response = await ai.models.generateContent({
+            // Prepend system instruction to the input to ensure it's followed regardless of API version support for system_instruction param
+            const combinedInput = `${systemInstruction}\n\nSTUDENT REQUEST: ${prompt}`;
+
+            const interaction = await client.interactions.create({
                 model: modelName,
-                systemInstruction: systemInstruction,
-                contents: prompt
+                input: combinedInput
             });
 
-            if (response && response.text) {
-                console.log(`✅ AI Success: ${modelName}`);
-                return response.text.trim();
+            if (interaction && interaction.outputs && interaction.outputs.length > 0) {
+                const text = interaction.outputs[interaction.outputs.length - 1].text;
+                if (text) {
+                    console.log(`✅ AI Success: ${modelName}`);
+                    return text.trim();
+                }
             }
         } catch (err) {
             lastError = err;
             console.warn(`⚠️ Model ${modelName} failed:`, err.message);
 
-            // If it's an API key error, don't bother with other models
-            if (err.message.toLowerCase().includes('api key') || 
-                err.message.toLowerCase().includes('invalid')) {
-                throw new Error("Invalid API Key. Please check your GEMINI_API_KEY in the environment settings.");
+            // Handle 404 (not found) - might happen if the new API isn't enabled for certain older models
+            if (err.message.includes('404')) {
+                // Try one more time with generateContent if interactions.create isn't supported for this specific model
+                try {
+                    console.log(`🔄 Retrying with generateContent for ${modelName}`);
+                    const response = await client.models.generateContent({
+                        model: modelName,
+                        systemInstruction: systemInstruction,
+                        contents: prompt
+                    });
+                    if (response && response.text) {
+                        console.log(`✅ AI Success (Fallback API): ${modelName}`);
+                        return response.text.trim();
+                    }
+                } catch (fallbackErr) {
+                    console.warn(`⚠️ fallback generateContent also failed for ${modelName}`);
+                }
+            }
+
+            // Handle 429 (rate limit)
+            if (err.message.includes('429')) {
+                console.log(`⏳ Rate limited on ${modelName}, switching...`);
+                continue;
+            }
+
+            if (err.message.toLowerCase().includes('api key') || err.message.toLowerCase().includes('invalid')) {
+                throw new Error("Invalid API Key. Please check your GEMINI_API_KEY.");
             }
             
             continue;
         }
     }
 
-    // Comprehensive error if everything failed
-    console.error("❌ CRITICAL: ALL AI MODELS FAILED.");
-    const finalErrorMessage = lastError ? lastError.message : "Connection failed to all Gemini models.";
-    throw new Error(`${finalErrorMessage}. (Check your API key and region settings)`);
+    throw new Error(lastError ? lastError.message : "Connect failed to all models.");
 };
 
 // Helper to extract JSON from AI response safely
