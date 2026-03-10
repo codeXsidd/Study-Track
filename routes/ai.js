@@ -24,12 +24,11 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     // Valid model names for the current Gemini API
     const models = [
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite-preview-02-05",
+        "gemini-3.0-flash",
+        "gemini-3-flash-preview",
         "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
-        "gemini-1.5-pro",
-        "gemini-pro"
+        "gemini-2-flash",
+        "gemini-1.5-pro"
     ];
 
     let lastError = null;
