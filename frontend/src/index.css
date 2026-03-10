@@ -647,3 +647,43 @@ textarea {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
   }
 }
+
+@media (max-width: 500px) {
+  .gpa-subject-header {
+    display: none !important;
+  }
+
+  .gpa-subject-row {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 0.6rem !important;
+    padding: 1rem;
+    margin-bottom: 0.75rem !important;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+  }
+
+  .gpa-subject-row input[placeholder="Name"] {
+    grid-column: span 2;
+    padding: 0.6rem 0.8rem !important;
+  }
+
+  .gpa-subject-row select {
+    grid-column: 1;
+  }
+
+  .gpa-subject-row input[type="number"] {
+    grid-column: 2;
+  }
+
+  .gpa-subject-row .btn-danger {
+    position: absolute;
+    top: -0.4rem;
+    right: -0.4rem;
+    padding: 0.35rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 5;
+  }
+}

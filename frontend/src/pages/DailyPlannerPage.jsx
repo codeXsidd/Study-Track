@@ -184,15 +184,29 @@ const DailyPlannerPage = () => {
                                 <div style={{ position: 'relative', flex: 1 }}>
                                     <input
                                         className="input"
-                                        placeholder="Add task for today..."
-                                        style={{ padding: '0.8rem 1rem', paddingLeft: '2.8rem', fontSize: '1rem', background: 'rgba(15,15,26,0.95)' }}
+                                        placeholder="Enter a large goal or task..."
+                                        style={{ padding: '0.8rem 1rem', paddingLeft: '2.8rem', fontSize: '1rem', background: 'rgba(15,15,26,0.95)', border: '1px solid rgba(99,102,241,0.3)' }}
                                         value={newQuickTask}
                                         onChange={e => setNewQuickTask(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && addQuickTask()}
                                     />
                                     <Target size={20} color="#6366f1" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
                                 </div>
-                                <button onClick={handleAIBreakdown} disabled={saving} className="btn-primary" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', border: 'none', padding: '0 0.8rem', borderRadius: 9, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <button 
+                                    onClick={handleAIBreakdown} 
+                                    disabled={saving || !newQuickTask.trim()} 
+                                    className="btn-primary" 
+                                    style={{ 
+                                        background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', 
+                                        border: 'none', 
+                                        padding: '0 1rem', 
+                                        borderRadius: 9, 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: 6,
+                                        boxShadow: '0 4px 12px rgba(236, 72, 153, 0.2)'
+                                    }}
+                                >
                                     <Bot size={18} /> <span className="hide-on-mobile">AI Breakdown</span>
                                 </button>
                                 <button onClick={addQuickTask} disabled={saving} className="btn-primary quick-add-btn">
@@ -230,34 +244,35 @@ const DailyPlannerPage = () => {
                                 </div>
                             ) : dayPlanTasks.map((todo, idx) => (
                                 <div key={todo._id} className="glass-card fade-in task-card" style={{
-                                    padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem',
-                                    borderLeft: `4px solid ${priorityColor(todo.priority)}`,
-                                    animationDelay: `${idx * 0.05}s`
+                                    padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem',
+                                    borderLeft: `5px solid ${priorityColor(todo.priority)}`,
+                                    animationDelay: `${idx * 0.05}s`,
+                                    background: 'rgba(255, 255, 255, 0.02)'
                                 }}>
-                                    <button onClick={() => toggleComplete(todo)} className="checkbox-btn" aria-label="Mark completed">
-                                        <Check size={16} color="white" className="check-icon" />
+                                    <button onClick={() => toggleComplete(todo)} className="checkbox-btn" aria-label="Mark completed" style={{ width: 32, height: 32 }}>
+                                        <Check size={20} color="white" className="check-icon" />
                                     </button>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ fontWeight: 700, fontSize: '0.95rem', wordBreak: 'break-word' }}>{todo.title}</p>
-                                        <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: 4 }}>
+                                        <p style={{ fontWeight: 700, fontSize: '1rem', wordBreak: 'break-word', color: '#f8fafc' }}>{todo.title}</p>
+                                        <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: 6, textTransform: 'uppercase' }}>
                                                 {todo.category}
                                             </span>
                                             <span
                                                 onClick={() => cyclePriority(todo)}
                                                 title="Click to change priority"
                                                 style={{
-                                                    fontSize: '0.65rem', fontWeight: 600, color: priorityColor(todo.priority),
+                                                    fontSize: '0.68rem', fontWeight: 700, color: priorityColor(todo.priority),
                                                     cursor: 'pointer', background: `${priorityColor(todo.priority)}15`,
-                                                    padding: '2px 6px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 3
+                                                    padding: '3px 8px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4
                                                 }}
                                             >
-                                                {todo.priority} <AlertCircle size={10} />
+                                                {todo.priority} <Star size={11} fill={priorityColor(todo.priority)} />
                                             </span>
                                         </div>
                                     </div>
-                                    <button onClick={() => toggleDayPlan(todo)} title="Move back to backlog" className="remove-plan-btn">
-                                        <X size={15} />
+                                    <button onClick={() => toggleDayPlan(todo)} title="Move back to backlog" className="remove-plan-btn" style={{ padding: '0.5rem' }}>
+                                        <X size={18} />
                                     </button>
                                 </div>
                             ))}

@@ -269,28 +269,28 @@ const GpaCalculatorPage = () => {
                                             {/* Expandable subject entry */}
                                             {isActive && (
                                                 <div className="fade-in" style={{ padding: '0 1rem 1rem' }}>
-                                                    {/* Column headers */}
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 80px 60px 32px', gap: '0.5rem', marginBottom: '0.5rem', marginTop: '0.5rem', overflowX: 'auto' }}>
+                                                    {/* Column headers - Visible only on larger screens */}
+                                                    <div className="gpa-subject-header" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 60px 32px', gap: '0.5rem', marginBottom: '0.5rem', marginTop: '1rem' }}>
                                                         {['Subject', 'Grade', 'Credits', ''].map(h => (
-                                                            <span key={h} style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</span>
+                                                            <span key={h} style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
                                                         ))}
                                                     </div>
                                                     {currentSem.subjects.map((sub, idx) => (
-                                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 80px 60px 32px', gap: '0.5rem', marginBottom: '0.4rem', alignItems: 'center' }}>
-                                                            <input className="input" placeholder="Subject name" value={sub.name}
+                                                        <div key={idx} className="gpa-subject-row" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 60px 32px', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                                            <input className="input" placeholder="Name" value={sub.name}
                                                                 onChange={e => updateSubject(idx, 'name', e.target.value)}
-                                                                style={{ padding: '0.4rem 0.6rem', fontSize: '0.78rem' }} />
+                                                                style={{ padding: '0.5rem 0.75rem', fontSize: '0.82rem' }} />
                                                             <select className="input" value={sub.grade}
                                                                 onChange={e => updateSubject(idx, 'grade', e.target.value)}
-                                                                style={{ padding: '0.4rem', fontSize: '0.78rem', textAlign: 'center', color: GRADE_COLORS[sub.grade], appearance: 'none' }}>
+                                                                style={{ padding: '0.5rem', fontSize: '0.82rem', textAlign: 'center', color: GRADE_COLORS[sub.grade], appearance: 'none' }}>
                                                                 {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                                             </select>
-                                                            <input type="number" className="input" min={1} max={6} value={sub.credits}
+                                                            <input type="number" className="input" min={1} max={10} value={sub.credits}
                                                                 onChange={e => updateSubject(idx, 'credits', e.target.value)}
-                                                                style={{ padding: '0.4rem', fontSize: '0.78rem', textAlign: 'center' }} />
+                                                                style={{ padding: '0.5rem', fontSize: '0.82rem', textAlign: 'center' }} />
                                                             <button onClick={() => currentSem.subjects.length > 1 && removeSubject(idx)}
-                                                                className="btn-danger" style={{ padding: '0.3rem 0.4rem', opacity: currentSem.subjects.length === 1 ? 0.3 : 1 }}>
-                                                                <Trash2 size={11} />
+                                                                className="btn-danger" style={{ padding: '0.45rem', opacity: currentSem.subjects.length === 1 ? 0.3 : 1, borderRadius: '8px' }}>
+                                                                <Trash2 size={13} />
                                                             </button>
                                                         </div>
                                                     ))}
