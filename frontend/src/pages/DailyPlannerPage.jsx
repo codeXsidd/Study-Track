@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Plus, Check, Trash2, Calendar, Star, Layout, ListTodo, Sun, Coffee, Brain, Sparkles, ChevronRight, X, AlertCircle, Bot } from 'lucide-react';
-import API, { addXP } from '../services/api';
+import API from '../services/api';
 import { breakDownTask } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const DailyPlannerPage = () => {
-    const { updateUserXP } = useAuth();
     const [allTodos, setAllTodos] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -22,44 +20,41 @@ const DailyPlannerPage = () => {
 
     const [saving, setSaving] = useState(false);
 
-    const fetchTasks = async (silent = false) => {
-        if (!silent) setLoading(true);
-        try {
-            const res = await API.get('/todos');
-            let fetchedTodos = res.data;
-            const today = new Date();
-            let staleTaskIds = [];
-
-            const updatedTodos = fetchedTodos.map(t => {
-                if (t.dayPlan && !t.completed) {
-                    const planDate = t.dayPlanDate ? new Date(t.dayPlanDate) : new Date(t.createdAt);
-                    const isToday = planDate.getDate() === today.getDate() &&
-                        planDate.getMonth() === today.getMonth() &&
-                        planDate.getFullYear() === today.getFullYear();
-                    if (!isToday) {
-                        staleTaskIds.push(t._id);
-                        return { ...t, dayPlan: false, dayPlanDate: null };
-                    }
-                }
-                return t;
-            });
-
-            setAllTodos(updatedTodos);
-            staleTaskIds.forEach(id => {
-                API.put(`/todos/${id}`, { dayPlan: false, dayPlanDate: null }).catch(() => { });
-            });
-        } catch { 
-            if (!silent) toast.error('Failed to load tasks'); 
-        } finally {
-            if (!silent) setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchTasks();
-        const handleFocus = () => fetchTasks(true);
-        window.addEventListener('focus', handleFocus);
-        return () => window.removeEventListener('focus', handleFocus);
+        const fetch = async () => {
+            try {
+                const res = await API.get('/todos');
+                let fetchedTodos = res.data;
+
+                // Auto-erase planner logic: if a task was planned for a previous day and is uncompleted, move it to backlog
+                const today = new Date();
+                let staleTaskIds = [];
+
+                const updatedTodos = fetchedTodos.map(t => {
+                    if (t.dayPlan && !t.completed) {
+                        const planDate = t.dayPlanDate ? new Date(t.dayPlanDate) : new Date(t.createdAt);
+                        const isToday = planDate.getDate() === today.getDate() &&
+                            planDate.getMonth() === today.getMonth() &&
+                            planDate.getFullYear() === today.getFullYear();
+                        if (!isToday) {
+                            staleTaskIds.push(t._id);
+                            return { ...t, dayPlan: false, dayPlanDate: null };
+                        }
+                    }
+                    return t;
+                });
+
+                setAllTodos(updatedTodos);
+
+                // Update the stale tasks in the background cleanly
+                staleTaskIds.forEach(id => {
+                    API.put(`/todos/${id}`, { dayPlan: false, dayPlanDate: null }).catch(() => { });
+                });
+            }
+            catch { toast.error('Failed to load tasks'); }
+            setLoading(false);
+        };
+        fetch();
     }, []);
 
     const isCompletedToday = (t) => {
@@ -85,19 +80,9 @@ const DailyPlannerPage = () => {
 
     const toggleComplete = async (todo) => {
         try {
-            const isMarkingDone = !todo.completed;
-            const res = await API.put(`/todos/${todo._id}`, { completed: isMarkingDone, dayPlan: false });
+            const res = await API.put(`/todos/${todo._id}`, { completed: !todo.completed, dayPlan: false });
             setAllTodos(allTodos.map(t => t._id === todo._id ? res.data : t));
-            
-            if (isMarkingDone) {
-                toast.success('Awesome! Task done! +10 XP ✅');
-                // Gamification
-                addXP({ xpToAdd: 10 }).then(res => {
-                    const { xp, level, leveledUp } = res.data;
-                    updateUserXP(xp, level);
-                    if (leveledUp) toast.success(`🎉 Level Up! You are Level ${level}!`, { icon: '🏆' });
-                }).catch(() => { });
-            }
+            if (!todo.completed) toast.success('Awesome! Task done! ✅');
         } catch { toast.error('Update failed'); }
     };
 
@@ -173,70 +158,61 @@ const DailyPlannerPage = () => {
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1.5rem' }}>
 
             {/* ── HEADER ── */}
-            <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <Sun size={28} color="#f59e0b" className="float" />
-                    <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.04em' }}>Daily Planner</h1>
+            <div style={{ marginBottom: '2.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <div className="ai-icon-pulse" style={{ background: 'rgba(245,158,11,0.15)', padding: '0.6rem', borderRadius: '12px' }}>
+                        <Sun size={28} color="#f59e0b" />
+                    </div>
+                    <div>
+                        <h1 className="hero-title" style={{ fontSize: '2.25rem', marginBottom: 0 }}>Daily Planner</h1>
+                        <p style={{ color: 'var(--text-soft)', fontSize: '0.95rem', fontWeight: 600 }}>
+                            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })} · Master your day.
+                        </p>
+                    </div>
                 </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                    {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })} · Plan your wins for today.
-                </p>
             </div>
 
             <div className="dashboard-grid-hero" style={{ gap: '2rem' }}>
 
                 {/* ── LEFT COLUMN: THE ACTIVE DAY PLAN ── */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div className="glass-card glow-anim" style={{ padding: '1.5rem', background: 'rgba(99,102,241,0.08)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
-                            <Target size={22} color="#6366f1" />
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Today's Focus</h2>
+                    <div className="glass-card dashboard-hero" style={{ padding: '2rem', minHeight: 'auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '2rem' }}>
+                            <div style={{ background: 'rgba(99,102,241,0.2)', padding: '0.5rem', borderRadius: '8px' }}>
+                                <Target size={24} color="#6366f1" />
+                            </div>
+                            <h2 className="card-title" style={{ fontSize: '1.25rem' }}>Today's Focus</h2>
                         </div>
 
                         {/* Quick Task Input */}
-                        <div className="quick-add-container">
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', width: '100%' }}>
+                        <div className="quick-add-container" style={{ gap: '1rem' }}>
+                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'stretch', width: '100%' }}>
                                 <div style={{ position: 'relative', flex: 1 }}>
                                     <input
-                                        className="input"
-                                        placeholder="Enter a large goal or task..."
-                                        style={{ padding: '0.8rem 1rem', paddingLeft: '2.8rem', fontSize: '1rem', background: 'rgba(15,15,26,0.95)', border: '1px solid rgba(99,102,241,0.3)' }}
+                                        className="quick-add-input"
+                                        placeholder="What's the main goal for today?"
                                         value={newQuickTask}
                                         onChange={e => setNewQuickTask(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && addQuickTask()}
                                     />
-                                    <Target size={20} color="#6366f1" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                                    <Sparkles size={18} color="#6366f1" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
                                 </div>
-                                <button 
-                                    onClick={handleAIBreakdown} 
-                                    disabled={saving || !newQuickTask.trim()} 
-                                    className="btn-primary" 
-                                    style={{ 
-                                        background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', 
-                                        border: 'none', 
-                                        padding: '0 1rem', 
-                                        borderRadius: 9, 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: 6,
-                                        boxShadow: '0 4px 12px rgba(236, 72, 153, 0.2)'
-                                    }}
-                                >
-                                    <Bot size={18} /> <span className="hide-on-mobile">AI Breakdown</span>
+                                <button onClick={handleAIBreakdown} disabled={saving} className="btn-primary" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', border: 'none', padding: '0 1.25rem', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Bot size={20} /> <span className="hide-on-mobile">AI Breakdown</span>
                                 </button>
-                                <button onClick={addQuickTask} disabled={saving} className="btn-primary quick-add-btn">
-                                    <Plus size={18} /> <span className="hide-on-mobile">Add</span>
+                                <button onClick={addQuickTask} disabled={saving} className="btn-primary" style={{ borderRadius: 10, padding: '0 1.5rem' }}>
+                                    <Plus size={20} /> <span className="hide-on-mobile">Add</span>
                                 </button>
                             </div>
 
                             {/* Customization toggles */}
-                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <select className="input custom-select" value={quickPriority} onChange={e => setQuickPriority(e.target.value)}>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                <select className="input custom-select" style={{ borderRadius: 10, border: '1px solid var(--border)' }} value={quickPriority} onChange={e => setQuickPriority(e.target.value)}>
                                     <option value="High">🔴 High Priority</option>
                                     <option value="Medium">🟡 Medium Priority</option>
                                     <option value="Low">🟢 Low Priority</option>
                                 </select>
-                                <select className="input custom-select" value={quickCategory} onChange={e => setQuickCategory(e.target.value)}>
+                                <select className="input custom-select" style={{ borderRadius: 10, border: '1px solid var(--border)' }} value={quickCategory} onChange={e => setQuickCategory(e.target.value)}>
                                     <option value="Study">📚 Study</option>
                                     <option value="Assignment">📝 Assignment</option>
                                     <option value="Personal">🏠 Personal</option>
@@ -258,35 +234,32 @@ const DailyPlannerPage = () => {
                                     <p style={{ fontSize: '0.78rem', marginTop: 4 }}>Add a task above or pick from backlog →</p>
                                 </div>
                             ) : dayPlanTasks.map((todo, idx) => (
-                                <div key={todo._id} className="glass-card fade-in task-card" style={{
-                                    padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem',
-                                    borderLeft: `5px solid ${priorityColor(todo.priority)}`,
-                                    animationDelay: `${idx * 0.05}s`,
-                                    background: 'rgba(255, 255, 255, 0.02)'
+                                <div key={todo._id} className="task-card animate-slide-scale" style={{
+                                    borderLeft: `4px solid ${priorityColor(todo.priority)}`,
+                                    animationDelay: `${idx * 0.05}s`, borderRadius: 12
                                 }}>
-                                    <button onClick={() => toggleComplete(todo)} className="checkbox-btn" aria-label="Mark completed" style={{ width: 32, height: 32 }}>
-                                        <Check size={20} color="white" className="check-icon" />
+                                    <button onClick={() => toggleComplete(todo)} className="checkbox-btn" aria-label="Mark completed">
+                                        <div className="check-icon" style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--accent)' }} />
                                     </button>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ fontWeight: 700, fontSize: '1rem', wordBreak: 'break-word', color: '#f8fafc' }}>{todo.title}</p>
-                                        <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: 6, textTransform: 'uppercase' }}>
+                                        <p style={{ fontWeight: 700, fontSize: '1rem', color: '#f8fafc' }}>{todo.title}</p>
+                                        <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                                            <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
                                                 {todo.category}
                                             </span>
                                             <span
                                                 onClick={() => cyclePriority(todo)}
-                                                title="Click to change priority"
+                                                className="badge"
                                                 style={{
-                                                    fontSize: '0.68rem', fontWeight: 700, color: priorityColor(todo.priority),
-                                                    cursor: 'pointer', background: `${priorityColor(todo.priority)}15`,
-                                                    padding: '3px 8px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4
+                                                    color: priorityColor(todo.priority),
+                                                    cursor: 'pointer', background: `${priorityColor(todo.priority)}15`
                                                 }}
                                             >
-                                                {todo.priority} <Star size={11} fill={priorityColor(todo.priority)} />
+                                                {todo.priority}
                                             </span>
                                         </div>
                                     </div>
-                                    <button onClick={() => toggleDayPlan(todo)} title="Move back to backlog" className="remove-plan-btn" style={{ padding: '0.5rem' }}>
+                                    <button onClick={() => toggleDayPlan(todo)} title="Move back to backlog" className="remove-plan-btn">
                                         <X size={18} />
                                     </button>
                                 </div>

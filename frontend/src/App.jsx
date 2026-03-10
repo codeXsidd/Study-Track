@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -66,10 +66,23 @@ const AppRoutes = () => {
 };
 
 
+const AutoReloader = () => {
+    const location = useLocation();
+    const lastPath = useRef(location.pathname);
+    useEffect(() => {
+        if (lastPath.current !== location.pathname) {
+            // User requested full auto reload on navigation to ensure fresh state
+            window.location.reload();
+        }
+    }, [location]);
+    return null;
+};
+
 function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
+                <AutoReloader />
                 <AppRoutes />
                 <Toaster position="top-right" toastOptions={{
                     style: { background: '#1a1a2e', color: '#e2e8f0', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem' },

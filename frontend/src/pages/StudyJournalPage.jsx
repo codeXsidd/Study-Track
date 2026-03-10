@@ -139,27 +139,38 @@ const StudyJournalPage = () => {
     return (
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: '2rem 1.5rem' }}>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.5rem', fontWeight: 700 }}>
-                    <BookOpen size={26} color="#6366f1" /> Study Journal
-                </h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
+                <div>
+                    <h2 className="section-title" style={{ marginBottom: '0.5rem' }}>
+                        <BookOpen size={28} color="#6366f1" /> Academic Journal
+                    </h2>
+                    <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem' }}>Document your learning journey and track your focus.</p>
+                </div>
                 <button className="btn-primary" onClick={() => { setForm({ date: todayStr(), section: activeSection !== 'All' ? activeSection : 'Study Session', subjects: '', topics: '', hoursStudied: 1, mood: '⚡', notes: '' }); setShowForm(true); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Plus size={15} /> Log Session
+                    style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', borderRadius: 12 }}>
+                    <Plus size={18} /> New Entry
                 </button>
             </div>
 
             {/* Stats row */}
-            <div className="stats-grid" style={{ marginBottom: '1.25rem' }}>
+            <div className="stats-grid" style={{ marginBottom: '2rem', gap: '1.25rem' }}>
                 {[
-                    { label: 'Study Streak', value: streak > 0 ? `🔥 ${streak}d` : '—', color: '#ef4444' },
-                    { label: 'Total Hours', value: `${totalHours}h`, color: '#6366f1' },
-                    { label: 'Days Logged', value: totalDays, color: '#10b981' },
-                    { label: 'Avg per Day', value: totalDays ? `${(totalHours / totalDays).toFixed(1)}h` : '—', color: '#f59e0b' }
-                ].map(s => (
-                    <div key={s.label} className="glass-card" style={{ padding: '1rem', textAlign: 'center' }}>
-                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: s.color }}>{s.value}</p>
-                        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</p>
+                    { label: 'Current Streak', value: streak > 0 ? `${streak} Days` : '—', icon: '🔥', color: '#ef4444', sub: 'Keep it going!' },
+                    { label: 'Focus Time', value: `${totalHours}h`, icon: '⏱️', color: '#6366f1', sub: 'Total learning' },
+                    { label: 'Journal Logs', value: totalDays, icon: '📅', color: '#10b981', sub: 'Consistency' },
+                    { label: 'Daily Average', value: totalDays ? `${(totalHours / totalDays).toFixed(1)}h` : '—', icon: '📊', color: '#f59e0b', sub: 'Productivity level' }
+                ].map((s, idx) => (
+                    <div key={s.label} className="glass-card dashboard-stat-card animate-slide-scale" style={{ animationDelay: `${idx * 0.1}s` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.75rem', background: `${s.color}15`, borderRadius: 12, color: s.color, fontSize: '1.5rem' }}>
+                                {s.icon}
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 900, color: s.color }}>{s.value}</p>
+                                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{s.label}</p>
+                            </div>
+                        </div>
+                        <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-soft)', fontWeight: 600 }}>{s.sub}</p>
                     </div>
                 ))}
             </div>
@@ -265,29 +276,31 @@ const StudyJournalPage = () => {
                                 {activeSection !== 'All' ? `No ${activeSection} entries yet.` : 'No journal entries yet. Start logging!'}
                             </p>
                         </div>
-                    ) : filtered.map(entry => {
+                    ) : filtered.map((entry, idx) => {
                         const col = SECTION_COLORS[entry.section] || '#6366f1';
                         return (
-                            <div key={entry._id} className="glass-card fade-in" style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.85rem', borderLeft: `3px solid ${col}` }}>
-                                <div style={{ fontSize: '1.6rem', flexShrink: 0, marginTop: 2 }}>{entry.mood}</div>
+                            <div key={entry._id} className="task-card animate-slide-scale" style={{ padding: '1.25rem', display: 'flex', alignItems: 'flex-start', gap: '1.25rem', borderLeft: `4px solid ${col}`, borderRadius: 16, animationDelay: `${idx * 0.05}s` }}>
+                                <div style={{ fontSize: '2rem', flexShrink: 0, padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: 12 }}>{entry.mood}</div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
-                                        <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.15rem 0.55rem', background: `${col}22`, color: col, borderRadius: 12, border: `1px solid ${col}33` }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+                                        <span className="badge" style={{ background: `${col}15`, color: col, border: `1px solid ${col}30`, padding: '0.2rem 0.6rem' }}>
                                             {SECTION_ICONS[entry.section]} {entry.section}
                                         </span>
-                                        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{fmt(entry.date)}</span>
-                                        <span style={{ fontSize: '0.72rem', color: '#6366f1', fontWeight: 600, padding: '0.1rem 0.5rem', background: 'rgba(99,102,241,0.1)', borderRadius: 10 }}>
-                                            <Clock size={10} style={{ marginRight: 3, verticalAlign: 'middle' }} />{entry.hoursStudied}h
+                                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc' }}>{fmt(entry.date)}</span>
+                                        <span className="badge" style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8', fontWeight: 800 }}>
+                                            <Clock size={12} style={{ marginRight: 4 }} /> {entry.hoursStudied}h focus
                                         </span>
-                                        {entry.subjects?.map(s => (
-                                            <span key={s} style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', background: 'rgba(16,185,129,0.1)', color: '#10b981', borderRadius: 8, border: '1px solid rgba(16,185,129,0.2)' }}>{s}</span>
-                                        ))}
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            {entry.subjects?.map(s => (
+                                                <span key={s} style={{ fontSize: '0.65rem', fontWeight: 800, padding: '0.15rem 0.5rem', background: 'rgba(16,185,129,0.1)', color: '#10b981', borderRadius: 8, border: '1px solid rgba(16,185,129,0.15)' }}>{s}</span>
+                                            ))}
+                                        </div>
                                     </div>
-                                    {entry.topics && <p style={{ fontSize: '0.78rem', color: '#94a3b8' }}>📝 {entry.topics}</p>}
-                                    {entry.notes && <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2, lineHeight: 1.5 }}>{entry.notes}</p>}
+                                    {entry.topics && <p style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600, marginBottom: 4 }}>{entry.topics}</p>}
+                                    {entry.notes && <p style={{ fontSize: '0.8rem', color: 'var(--text-soft)', lineHeight: 1.6 }}>{entry.notes}</p>}
                                 </div>
-                                <button onClick={() => deleteEntry(entry._id)} className="btn-danger" style={{ padding: '0.3rem 0.5rem', flexShrink: 0 }}>
-                                    <Trash2 size={13} />
+                                <button onClick={() => deleteEntry(entry._id)} className="glass-card" style={{ padding: '0.5rem', color: '#ef4444', background: 'rgba(239,68,68,0.05)', borderRadius: 10, border: '1px solid rgba(239,68,68,0.1)' }}>
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
                         );

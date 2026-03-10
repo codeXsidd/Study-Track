@@ -8,9 +8,9 @@ router.use(auth);
 const GRADE_POINTS = { 'O': 10, 'A+': 9, 'A': 8, 'B+': 7, 'B': 6, 'C': 5, 'D': 4, 'F': 0 };
 
 const calcSGPA = (subjects) => {
-    const totalCredits = subjects.reduce((a, s) => a + Number(s.credits), 0);
+    const totalCredits = subjects.reduce((a, s) => a + s.credits, 0);
     if (!totalCredits) return 0;
-    const weighted = subjects.reduce((a, s) => a + (GRADE_POINTS[s.grade] || 0) * Number(s.credits), 0);
+    const weighted = subjects.reduce((a, s) => a + (GRADE_POINTS[s.grade] || 0) * s.credits, 0);
     return parseFloat((weighted / totalCredits).toFixed(2));
 };
 

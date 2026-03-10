@@ -223,11 +223,12 @@ router.post('/add-xp', require('../middleware/auth'), async (req, res) => {
 
         user.xp = (user.xp || 0) + xpToAdd;
 
-        // Level up logic (each level takes level * 100 XP)
+        // Level up logic (rough curve: each level takes 100 * level XP)
+        const xpThreshold = user.level * 100;
         let leveledUp = false;
-        while (user.xp >= (user.level * 100)) {
-            user.xp -= (user.level * 100);
+        if (user.xp >= xpThreshold) {
             user.level += 1;
+            user.xp = user.xp - xpThreshold;
             leveledUp = true;
         }
 

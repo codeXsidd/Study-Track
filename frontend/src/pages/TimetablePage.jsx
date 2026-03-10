@@ -19,10 +19,9 @@ const TimetablePage = () => {
     const [slots, setSlots] = useState([]);
     const [config, setConfig] = useState({ totalPeriods: 8, periods: DEFAULT_PERIODS(8) });
     const [loading, setLoading] = useState(true);
-    const [modal, setModal] = useState(null); // {day, period}
+    const [modal, setModal] = useState(null);
     const [form, setForm] = useState({ subject: '', teacher: '', room: '', color: '#6366f1' });
     const [saving, setSaving] = useState(false);
-    const [selectedDay, setSelectedDay] = useState(todayName()); // For mobile view
     const [showConfig, setShowConfig] = useState(false);
     const [draftConfig, setDraftConfig] = useState(null);
     const [savingConfig, setSavingConfig] = useState(false);
@@ -30,30 +29,22 @@ const TimetablePage = () => {
     const [optimizing, setOptimizing] = useState(false);
     const today = todayName();
 
-    const loadData = async (silent = false) => {
-        if (!silent) setLoading(true);
-        try {
-            const [slotsRes, configRes] = await Promise.all([API.get('/timetable'), API.get('/timetable-config')]);
-            setSlots(slotsRes.data);
-            const cfg = configRes.data;
-            const periods = Array.from({ length: cfg.totalPeriods }, (_, i) => {
-                const existing = cfg.periods?.find(p => p.number === i + 1);
-                return existing || { number: i + 1, label: `P${i + 1}`, startTime: '', endTime: '' };
-            });
-            setConfig({ totalPeriods: cfg.totalPeriods, periods });
-        } catch { 
-            if (!silent) toast.error('Failed to load timetable'); 
-        } finally {
-            if (!silent) setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        loadData();
-        
-        const handleFocus = () => loadData(true);
-        window.addEventListener('focus', handleFocus);
-        return () => window.removeEventListener('focus', handleFocus);
+        const load = async () => {
+            try {
+                const [slotsRes, configRes] = await Promise.all([API.get('/timetable'), API.get('/timetable-config')]);
+                setSlots(slotsRes.data);
+                const cfg = configRes.data;
+                // Ensure periods array matches totalPeriods
+                const periods = Array.from({ length: cfg.totalPeriods }, (_, i) => {
+                    const existing = cfg.periods?.find(p => p.number === i + 1);
+                    return existing || { number: i + 1, label: `P${i + 1}`, startTime: '', endTime: '' };
+                });
+                setConfig({ totalPeriods: cfg.totalPeriods, periods });
+            } catch { toast.error('Failed to load timetable'); }
+            setLoading(false);
+        };
+        load();
     }, []);
 
     const openConfig = () => {
@@ -152,32 +143,9 @@ const TimetablePage = () => {
                         background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)',
                         borderRadius: 8, cursor: 'pointer', color: '#818cf8', fontSize: '0.82rem', fontWeight: 600
                     }}>
-                        <Settings size={14} /> <span className="hide-on-mobile">Configure</span>
+                        <Settings size={14} /> Customize Periods
                     </button>
                 </div>
-            </div>
-
-            {/* Day Selector for Mobile */}
-            <div className="mobile-only" style={{ display: 'none', gap: '0.5rem', overflowX: 'auto', marginBottom: '1.5rem', paddingBottom: '0.5rem' }}>
-                {DAYS.map(day => (
-                    <button
-                        key={day}
-                        onClick={() => setSelectedDay(day)}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            borderRadius: '20px',
-                            border: 'none',
-                            background: selectedDay === day ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                            color: selectedDay === day ? 'white' : '#94a3b8',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            whiteSpace: 'nowrap',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {day.slice(0, 3)}
-                    </button>
-                ))}
             </div>
 
             {aiAdvice && (
@@ -199,134 +167,86 @@ const TimetablePage = () => {
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading...</div>
             ) : (
-                <>
-                    {/* Desktop Table View */}
-                    <div className="desktop-only" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '0.5rem' }}>
-                        <div style={{ minWidth: 700 }}>
-                            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px' }}>
-                                <thead>
-                                    <tr>
-                                        <th style={{ padding: '0.65rem 0.75rem', background: 'rgba(15,15,26,0.9)', borderRadius: 8, fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', textAlign: 'left', minWidth: 85, whiteSpace: 'nowrap' }}>
-                                            Period / Time
+                <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '0.5rem' }}>
+                    <div style={{ minWidth: 700 }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px' }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ padding: '0.65rem 0.75rem', background: 'rgba(15,15,26,0.9)', borderRadius: 8, fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', textAlign: 'left', minWidth: 85, whiteSpace: 'nowrap' }}>
+                                        Period / Time
+                                    </th>
+                                    {DAYS.map(day => (
+                                        <th key={day} style={{
+                                            padding: '0.65rem 0.5rem', fontSize: '0.78rem', textAlign: 'center', fontWeight: 700, borderRadius: 8,
+                                            background: day === today ? 'rgba(99,102,241,0.18)' : 'rgba(15,15,26,0.6)',
+                                            color: day === today ? '#818cf8' : '#94a3b8',
+                                            borderBottom: day === today ? '2px solid #6366f1' : 'none', minWidth: 100
+                                        }}>
+                                            {day.slice(0, 3)}
+                                            {day === today && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#6366f1', margin: '3px auto 0' }} />}
                                         </th>
-                                        {DAYS.map(day => (
-                                            <th key={day} style={{
-                                                padding: '0.65rem 0.5rem', fontSize: '0.78rem', textAlign: 'center', fontWeight: 700, borderRadius: 8,
-                                                background: day === today ? 'rgba(99,102,241,0.18)' : 'rgba(15,15,26,0.6)',
-                                                color: day === today ? '#818cf8' : '#94a3b8',
-                                                borderBottom: day === today ? '2px solid #6366f1' : 'none', minWidth: 100
-                                            }}>
-                                                {day.slice(0, 3)}
-                                                {day === today && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#6366f1', margin: '3px auto 0' }} />}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {config.periods.map(period => (
-                                        <tr key={period.number}>
-                                            <td style={{
-                                                padding: '0.4rem 0.75rem', background: 'rgba(15,15,26,0.5)', borderRadius: 7,
-                                                verticalAlign: 'middle'
-                                            }}>
-                                                <div style={{ fontWeight: 700, color: '#818cf8', fontSize: '0.8rem' }}>
-                                                    {period.label || `P${period.number}`}
-                                                </div>
-                                                {(period.startTime || period.endTime) && (
-                                                    <div style={{ fontSize: '0.62rem', color: '#475569', display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
-                                                        <Clock size={9} /> {period.startTime}{period.endTime ? `–${period.endTime}` : ''}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            {DAYS.map(day => {
-                                                const slot = getSlot(day, period.number);
-                                                const isToday = day === today;
-                                                return (
-                                                    <td key={day}
-                                                        onClick={() => openModal(day, period.number)}
-                                                        style={{
-                                                            padding: '0.25rem', borderRadius: 7, cursor: 'pointer',
-                                                            background: isToday ? 'rgba(99,102,241,0.04)' : 'rgba(15,15,26,0.3)',
-                                                            height: 62, verticalAlign: 'top', transition: 'background 0.15s'
-                                                        }}
-                                                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.1)'}
-                                                        onMouseLeave={e => e.currentTarget.style.background = isToday ? 'rgba(99,102,241,0.04)' : 'rgba(15,15,26,0.3)'}
-                                                    >
-                                                        {slot ? (
-                                                            <div style={{
-                                                                background: slot.color + '22', border: `1px solid ${slot.color}55`,
-                                                                borderLeft: `3px solid ${slot.color}`, borderRadius: 6,
-                                                                padding: '0.3rem 0.4rem', height: '100%', position: 'relative'
-                                                            }}>
-                                                                <p style={{ fontSize: '0.73rem', fontWeight: 700, color: slot.color, lineHeight: 1.2 }}>{slot.subject}</p>
-                                                                {slot.teacher && <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 1 }}>{slot.teacher}</p>}
-                                                                {slot.room && <p style={{ fontSize: '0.58rem', color: '#64748b' }}>📍 {slot.room}</p>}
-                                                                <button onClick={(e) => deleteSlot(slot, e)} style={{
-                                                                    position: 'absolute', top: 2, right: 2, width: 15, height: 15,
-                                                                    border: 'none', background: 'rgba(239,68,68,0.2)', borderRadius: 3,
-                                                                    cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
-                                                                }}><X size={8} /></button>
-                                                            </div>
-                                                        ) : (
-                                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0 }} className="add-hint">
-                                                                <Plus size={14} color="#6366f1" />
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
                                     ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Mobile Card View (List by selected day) */}
-                    <div className="mobile-only" style={{ display: 'none', flexDirection: 'column', gap: '0.75rem' }}>
-                        {config.periods.map(period => {
-                            const slot = getSlot(selectedDay, period.number);
-                            return (
-                                <div
-                                    key={period.number}
-                                    onClick={() => openModal(selectedDay, period.number)}
-                                    className="glass-card"
-                                    style={{
-                                        padding: '1rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '1rem',
-                                        borderLeft: slot ? `4px solid ${slot.color}` : '4px solid transparent',
-                                        background: slot ? `${slot.color}08` : 'rgba(255,255,255,0.02)'
-                                    }}
-                                >
-                                    <div style={{ width: 45, textAlign: 'center' }}>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: 800, color: slot ? slot.color : '#64748b' }}>{period.label || `P${period.number}`}</div>
-                                        {period.startTime && <div style={{ fontSize: '0.6rem', color: '#475569', marginTop: 2 }}>{period.startTime}</div>}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        {slot ? (
-                                            <>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: slot.color }}>{slot.subject}</h4>
-                                                    <button onClick={(e) => deleteSlot(slot, e)} style={{ background: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: 4, padding: 4, color: '#ef4444' }}>
-                                                        <Trash2 size={12} />
-                                                    </button>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {config.periods.map(period => (
+                                    <tr key={period.number}>
+                                        <td style={{
+                                            padding: '0.4rem 0.75rem', background: 'rgba(15,15,26,0.5)', borderRadius: 7,
+                                            verticalAlign: 'middle'
+                                        }}>
+                                            <div style={{ fontWeight: 700, color: '#818cf8', fontSize: '0.8rem' }}>
+                                                {period.label || `P${period.number}`}
+                                            </div>
+                                            {(period.startTime || period.endTime) && (
+                                                <div style={{ fontSize: '0.62rem', color: '#475569', display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+                                                    <Clock size={9} /> {period.startTime}{period.endTime ? `–${period.endTime}` : ''}
                                                 </div>
-                                                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                                                    {slot.teacher && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>👤 {slot.teacher}</span>}
-                                                    {slot.room && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>📍 {slot.room}</span>}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div style={{ fontSize: '0.85rem', color: '#475569', fontStyle: 'italic' }}>Free Period (Tap to add)</div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                            )}
+                                        </td>
+                                        {DAYS.map(day => {
+                                            const slot = getSlot(day, period.number);
+                                            const isToday = day === today;
+                                            return (
+                                                <td key={day}
+                                                    onClick={() => openModal(day, period.number)}
+                                                    style={{
+                                                        padding: '0.25rem', borderRadius: 7, cursor: 'pointer',
+                                                        background: isToday ? 'rgba(99,102,241,0.04)' : 'rgba(15,15,26,0.3)',
+                                                        height: 62, verticalAlign: 'top', transition: 'background 0.15s'
+                                                    }}
+                                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.1)'}
+                                                    onMouseLeave={e => e.currentTarget.style.background = isToday ? 'rgba(99,102,241,0.04)' : 'rgba(15,15,26,0.3)'}
+                                                >
+                                                    {slot ? (
+                                                        <div style={{
+                                                            background: slot.color + '22', border: `1px solid ${slot.color}55`,
+                                                            borderLeft: `3px solid ${slot.color}`, borderRadius: 6,
+                                                            padding: '0.3rem 0.4rem', height: '100%', position: 'relative'
+                                                        }}>
+                                                            <p style={{ fontSize: '0.73rem', fontWeight: 700, color: slot.color, lineHeight: 1.2 }}>{slot.subject}</p>
+                                                            {slot.teacher && <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 1 }}>{slot.teacher}</p>}
+                                                            {slot.room && <p style={{ fontSize: '0.58rem', color: '#64748b' }}>📍 {slot.room}</p>}
+                                                            <button onClick={(e) => deleteSlot(slot, e)} style={{
+                                                                position: 'absolute', top: 2, right: 2, width: 15, height: 15,
+                                                                border: 'none', background: 'rgba(239,68,68,0.2)', borderRadius: 3,
+                                                                cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
+                                                            }}><X size={8} /></button>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0 }} className="add-hint">
+                                                            <Plus size={14} color="#6366f1" />
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                </>
+                </div>
             )}
 
             {/* Config Panel */}
@@ -427,20 +347,7 @@ const TimetablePage = () => {
                     </div>
                 </div>
             )}
-            <style>{`
-                tr:hover .add-hint { opacity: 1 !important; }
-                
-                @media (max-width: 768px) {
-                    .desktop-only { display: none !important; }
-                    .mobile-only { display: flex !important; }
-                    .hide-on-mobile { display: none !important; }
-                    
-                    /* Adjust padding for the container */
-                    div[style*="padding: '2rem 1.5rem'"] {
-                        padding: 1rem !important;
-                    }
-                }
-            `}</style>
+            <style>{`tr:hover .add-hint { opacity: 1 !important; }`}</style>
         </div>
     );
 };

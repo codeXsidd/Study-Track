@@ -1,18 +1,39 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Import all models for holistic analysis
+const Todo = require('../models/Todo');
+const Habit = require('../models/Habit');
+const JournalEntry = require('../models/JournalEntry');
+const Semester = require('../models/Semester');
+const Assignment = require('../models/Assignment');
+const Subject = require('../models/Subject');
+
+const getAIModel = (modelName, key, version = 'v1') => {
+    try {
+        const genAI = new GoogleGenerativeAI(key);
+        // Default to v1, but allow v1beta as fallback for older models if needed
+        return genAI.getGenerativeModel({ model: modelName }, { apiVersion: version });
+    } catch (err) {
+        return null;
+    }
+};
 
 const callAI = async (prompt, systemInstruction = "You are a helpful AI study assistant.") => {
     let key = process.env.GEMINI_API_KEY;
     if (!key || key.trim() === "") throw new Error("API_KEY_MISSING");
 
+    // Aggressive cleaning to remove quotes or erratic whitespace
     key = key.trim().replace(/^["']|["']$/g, '');
 
-    const client = new GoogleGenAI({ apiKey: key });
+    const fullPrompt = `${systemInstruction}\n\nStudent Input: ${prompt}`;
 
-    // Models to try in order. Gemini 3 is the priority but preview models can be unstable.
+    // Valid model names for the current Gemini API
     const models = [
+        "gemini-3.1-flash",
+        "gemini-3.1-pro",
         "gemini-3-flash-preview",
         "gemini-2.0-flash",
         "gemini-1.5-flash",
@@ -21,63 +42,56 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     let lastError = null;
 
+    // Try each model
     for (const modelName of models) {
         try {
-            console.log(`🤖 AI Attempt (${modelName}) using Interactions API`);
-            
-            // Prepend system instruction to the input to ensure it's followed regardless of API version support for system_instruction param
-            const combinedInput = `${systemInstruction}\n\nSTUDENT REQUEST: ${prompt}`;
+            console.log(`🤖 AI Attempt: ${modelName} (v1)`);
+            const activeModel = getAIModel(modelName, key, 'v1');
+            if (!activeModel) continue;
 
-            const interaction = await client.interactions.create({
-                model: modelName,
-                input: combinedInput
-            });
+            const result = await activeModel.generateContent(fullPrompt);
+            const response = await result.response;
+            const text = response.text();
 
-            if (interaction && interaction.outputs && interaction.outputs.length > 0) {
-                const text = interaction.outputs[interaction.outputs.length - 1].text;
-                if (text) {
-                    console.log(`✅ AI Success: ${modelName}`);
-                    return text.trim();
-                }
+            if (text) {
+                console.log(`✅ AI Success: ${modelName}`);
+                return text.trim();
             }
         } catch (err) {
             lastError = err;
-            console.warn(`⚠️ Model ${modelName} failed:`, err.message);
+            console.warn(`⚠️ Model ${modelName} failed on v1:`, err.message);
 
-            // Handle 404 (not found) - might happen if the new API isn't enabled for certain older models
-            if (err.message.includes('404')) {
-                // Try one more time with generateContent if interactions.create isn't supported for this specific model
+            // If the key specifically is invalid, no point in trying other models
+            if (err.message.toLowerCase().includes('api key') ||
+                err.message.toLowerCase().includes('apikey_invalid')) {
+                throw new Error("The API Key provided in Render appears to be invalid. Please check for extra spaces or incorrect characters.");
+            }
+
+            // If it's a 404 or unsupported on v1, we might try it once more on v1beta for robustness
+            if (err.message.includes('404') || err.message.includes('not found')) {
                 try {
-                    console.log(`🔄 Retrying with generateContent for ${modelName}`);
-                    const response = await client.models.generateContent({
-                        model: modelName,
-                        systemInstruction: systemInstruction,
-                        contents: prompt
-                    });
-                    if (response && response.text) {
-                        console.log(`✅ AI Success (Fallback API): ${modelName}`);
-                        return response.text.trim();
+                    console.log(`🔄 AI Retry: ${modelName} (v1beta)`);
+                    const betaModel = getAIModel(modelName, key, 'v1beta');
+                    const betaResult = await betaModel.generateContent(fullPrompt);
+                    const betaResponse = await betaResult.response;
+                    const betaText = betaResponse.text();
+                    if (betaText) {
+                        console.log(`✅ AI Success: ${modelName} (v1beta)`);
+                        return betaText.trim();
                     }
-                } catch (fallbackErr) {
-                    console.warn(`⚠️ fallback generateContent also failed for ${modelName}`);
+                } catch (betaErr) {
+                    console.warn(`⚠️ Model ${modelName} also failed on v1beta:`, betaErr.message);
                 }
             }
-
-            // Handle 429 (rate limit)
-            if (err.message.includes('429')) {
-                console.log(`⏳ Rate limited on ${modelName}, switching...`);
-                continue;
-            }
-
-            if (err.message.toLowerCase().includes('api key') || err.message.toLowerCase().includes('invalid')) {
-                throw new Error("Invalid API Key. Please check your GEMINI_API_KEY.");
-            }
-            
+            // Continue to next model if this one failed
             continue;
         }
     }
 
-    throw new Error(lastError ? lastError.message : "Connect failed to all models.");
+    // Comprehensive error if everything failed
+    console.error("❌ CRITICAL: ALL AI MODELS FAILED.");
+    const finalErrorMessage = lastError ? lastError.message : "Connection failed to all Gemini models.";
+    throw new Error(`${finalErrorMessage}. (Check your API key and region settings)`);
 };
 
 // Helper to extract JSON from AI response safely
@@ -215,14 +229,13 @@ router.post('/summarize', auth, async (req, res) => {
 // 5. Timetable Optimization
 router.post('/optimize', auth, async (req, res) => {
     try {
-        const { slots, todoCount } = req.body;
-        const prompt = `Optimize this student timetable. They have ${todoCount} pending tasks.
-        Current Timetable Slots: ${JSON.stringify(slots)}
+        const { timetable, focus } = req.body;
+        const prompt = `Optimize this student timetable for ${focus || 'overall productivity'}. 
+        Timetable Data: ${JSON.stringify(timetable)}
         
-        Return EXACTLY this JSON format (no markdown):
+        Return EXACTLY this JSON format:
         {
-          "advice": "General strategy for the week...",
-          "suggestions": ["Specific tip 1", "Specific tip 2"],
+          "suggestions": ["suggestion 1", "suggestion 2"],
           "score": 85
         }`;
 
@@ -232,7 +245,6 @@ router.post('/optimize', auth, async (req, res) => {
         } catch (e) {
             console.error('AI Optimize Error:', e.message);
             res.json({
-                advice: "Focus on your core subjects during your peak energy hours.",
                 suggestions: [
                     "Consider moving heavy subjects to your peak morning hours.",
                     "Ensure you have at least 15-minute breaks between back-to-back classes.",
@@ -270,6 +282,65 @@ router.post('/gpa-strategy', auth, async (req, res) => {
         }
     } catch (err) {
         res.status(500).json({ message: "AI Error", error: err.message });
+    }
+});
+
+// 7. Holistic User Analysis (Performance, Productivity, AI Study)
+router.post('/analyze-user', auth, async (req, res) => {
+    try {
+        const { mode } = req.body;
+        const userId = req.user.id;
+
+        // Fetch data based on mode
+        let userData = {};
+        
+        if (mode === 'productivity' || mode === 'study' || mode === 'holistic') {
+            userData.todos = await Todo.find({ user: userId, completed: false }).lean();
+            userData.completedToday = await Todo.find({ 
+                user: userId, 
+                completed: true, 
+                completedAt: { $gte: new Date().setHours(0,0,0,0) } 
+            }).lean();
+            userData.habits = await Habit.find({ user: userId }).lean();
+        }
+        
+        if (mode === 'performance' || mode === 'study' || mode === 'holistic') {
+            userData.journal = await JournalEntry.find({ user: userId }).sort({ date: -1 }).limit(10).lean();
+            userData.semesters = await Semester.find({ user: userId }).lean();
+        }
+
+        if (mode === 'study' || mode === 'holistic') {
+            userData.assignments = await Assignment.find({ user: userId, completed: false }).lean();
+            userData.subjects = await Subject.find({ user: userId }).lean();
+        }
+
+        let systemMsg = "You are a professional AI Study Coach. ";
+        let prompt = `Provide a detailed ${mode} analysis for the student. `;
+        
+        if (mode === 'workspace') {
+            systemMsg += "You are an expert in ergonomics and study environment design.";
+            prompt = "The student wants to optimize their workspace for deep focus. Give 5 high-impact suggestions (physical and digital).";
+        } else if (mode === 'productivity') {
+            systemMsg += "Analyze the student's task management and habits.";
+            prompt += `Current Data: ${JSON.stringify(userData)}. Focus on their streak of habits and pending tasks.`;
+        } else if (mode === 'performance') {
+            systemMsg += "Analyze the student's academic results and study hours.";
+            prompt += `Current Data: ${JSON.stringify(userData)}. Analyze the relationship between their study hours and GPA.`;
+        } else {
+            systemMsg += "Perform a complete audit of the student's progress.";
+            prompt += `Everything: ${JSON.stringify(userData)}. Give a comprehensive feedback on how they are doing across all areas.`;
+        }
+
+        try {
+            const responseText = await callAI(prompt, systemMsg + " Respond in professional yet motivating tone. Use markdown formatting.");
+            res.json({ reply: responseText.trim() });
+        } catch (e) {
+            console.error('AI Analysis Error:', e.message);
+            res.status(500).json({ message: "Analysis failed", error: e.message });
+        }
+    } catch (err) {
+        console.error('Holistic Analysis Catch:', err);
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
 
