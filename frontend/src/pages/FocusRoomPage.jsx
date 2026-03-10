@@ -26,26 +26,37 @@ const FocusRoomPage = () => {
     const [chatLog, setChatLog] = useState([{ role: 'ai', text: 'Stuck? I am your AI study tutor. Ask me anything to clear your doubts without leaving the focus room!' }]);
     const [chatting, setChatting] = useState(false);
 
+    const fetchTopTask = async () => {
+        setLoadingTask(true);
+        try {
+            const res = await API.get('/todos');
+            const todayTodos = res.data.filter(t => t.dayPlan && !t.completed);
+            const sorted = todayTodos.sort((a, b) => {
+                const weight = { 'High': 3, 'Medium': 2, 'Low': 1 };
+                return weight[b.priority] || 0 - weight[a.priority] || 0;
+            });
+            setPriorityTask(sorted.length > 0 ? sorted[0] : null);
+        } catch (error) {
+            console.error("Failed to load top task", error);
+        } finally {
+            setLoadingTask(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchTopTask = async () => {
-            try {
-                const res = await API.get('/todos');
-                const todayTodos = res.data.filter(t => t.dayPlan && !t.completed);
-                // Sort to find the highest priority task (High > Medium > Low)
-                const sorted = todayTodos.sort((a, b) => {
-                    const weight = { 'High': 3, 'Medium': 2, 'Low': 1 };
-                    return weight[b.priority] - weight[a.priority];
-                });
-                if (sorted.length > 0) {
-                    setPriorityTask(sorted[0]);
-                }
-            } catch (error) {
-                console.error("Failed to load top task", error);
-            } finally {
-                setLoadingTask(false);
-            }
-        };
         fetchTopTask();
+        
+        // Auto-reload when window is focused (sync from other tabs)
+        const handleFocus = () => fetchTopTask();
+        window.addEventListener('focus', handleFocus);
+        
+        // Periodic refresh every 3 minutes
+        const refreshInterval = setInterval(fetchTopTask, 180000);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            clearInterval(refreshInterval);
+        };
     }, []);
 
     const markTaskDone = async () => {
@@ -140,31 +151,27 @@ const FocusRoomPage = () => {
     const secs = String(seconds % 60).padStart(2, '0');
 
     return (
-        <div style={{ minHeight: 'calc(100vh - 40px)', margin: '-1.5rem', background: '#050510', position: 'relative', overflowY: 'auto', paddingBottom: '80px' }}>
+        <div style={{ minHeight: 'calc(100vh - 40px)', margin: '0', background: '#050510', position: 'relative', overflowX: 'hidden', paddingBottom: '80px' }}>
             {/* Ambient Background - Lofi video iframe (No controls, looping) */}
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.2, pointerEvents: 'none', zIndex: 0 }}>
-                {/* Embedded Lofi Girl Radio or Similar */}
-                <iframe
-                    width="100%"
-                    height="100%"
-                    src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=0&controls=0&showinfo=0&rel=0&loop=1&playlist=jfKfPfyJRdk"
-                    frameBorder="0"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                    style={{ transform: 'scale(1.5)' }}
-                ></iframe>
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.15, pointerEvents: 'none', zIndex: 0 }}>
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=jfKfPfyJRdk" frameBorder="0" allow="autoplay; encrypted-media" style={{ transform: 'scale(1.5)', pointerEvents: 'none' }}></iframe>
             </div>
 
             {/* Gradient Overlay */}
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #050510 0%, transparent 100%)', zIndex: 1 }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, #050510 80%)', zIndex: 1 }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, #050510 90%)', zIndex: 1 }} />
 
             {/* Main Content */}
-            <div style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '2rem', marginTop: '1rem', opacity: 0.8 }}>
-                    <Zap size={24} color="#ec4899" />
-                    <h1 style={{ fontSize: 'clamp(1rem, 5vw, 1.5rem)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#e2e8f0' }}>Deep Focus Room</h1>
+            <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem' }}>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.5rem', marginTop: '1.5rem', opacity: 0.9 }}>
+                    <div className="pulse-icon" style={{ background: 'rgba(236,72,153,0.1)', padding: '0.6rem', borderRadius: '12px' }}>
+                        <Zap size={24} color="#ec4899" />
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: '1.25rem', fontWeight: 900, letterSpacing: '0.05em', color: '#f8fafc' }}>STUDY SANCTUARY</h1>
+                        <p style={{ fontSize: '0.65rem', color: '#ec4899', fontWeight: 800 }}>FOCUS STATE: {mode.label.toUpperCase()}</p>
+                    </div>
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1.5rem', width: '100%', maxWidth: 1000 }}>
@@ -260,6 +267,17 @@ const FocusRoomPage = () => {
 
                 </div>
             </div>
+            <style>{`
+                .custom-scroll::-webkit-scrollbar { width: 4px; }
+                .custom-scroll::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.2); borderRadius: 10px; }
+                .pulse-icon { animation: pulse 2s infinite; }
+                @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+                
+                @media (max-width: 768px) {
+                    .glass-card { padding: 1.5rem !important; min-width: 100% !important; }
+                    h1 { font-size: 1.1rem !important; }
+                }
+            `}</style>
         </div>
     );
 };

@@ -16,6 +16,11 @@ const todayName = () => {
 };
 
 const TimetablePage = () => {
+    const [slots, setSlots] = useState([]);
+    const [config, setConfig] = useState({ totalPeriods: 8, periods: DEFAULT_PERIODS(8) });
+    const [loading, setLoading] = useState(true);
+    const [modal, setModal] = useState(null); // {day, period}
+    const [form, setForm] = useState({ subject: '', teacher: '', room: '', color: '#6366f1' });
     const [saving, setSaving] = useState(false);
     const [selectedDay, setSelectedDay] = useState(todayName()); // For mobile view
     const [showConfig, setShowConfig] = useState(false);
@@ -25,22 +30,30 @@ const TimetablePage = () => {
     const [optimizing, setOptimizing] = useState(false);
     const today = todayName();
 
+    const loadData = async (silent = false) => {
+        if (!silent) setLoading(true);
+        try {
+            const [slotsRes, configRes] = await Promise.all([API.get('/timetable'), API.get('/timetable-config')]);
+            setSlots(slotsRes.data);
+            const cfg = configRes.data;
+            const periods = Array.from({ length: cfg.totalPeriods }, (_, i) => {
+                const existing = cfg.periods?.find(p => p.number === i + 1);
+                return existing || { number: i + 1, label: `P${i + 1}`, startTime: '', endTime: '' };
+            });
+            setConfig({ totalPeriods: cfg.totalPeriods, periods });
+        } catch { 
+            if (!silent) toast.error('Failed to load timetable'); 
+        } finally {
+            if (!silent) setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const load = async () => {
-            try {
-                const [slotsRes, configRes] = await Promise.all([API.get('/timetable'), API.get('/timetable-config')]);
-                setSlots(slotsRes.data);
-                const cfg = configRes.data;
-                // Ensure periods array matches totalPeriods
-                const periods = Array.from({ length: cfg.totalPeriods }, (_, i) => {
-                    const existing = cfg.periods?.find(p => p.number === i + 1);
-                    return existing || { number: i + 1, label: `P${i + 1}`, startTime: '', endTime: '' };
-                });
-                setConfig({ totalPeriods: cfg.totalPeriods, periods });
-            } catch { toast.error('Failed to load timetable'); }
-            setLoading(false);
-        };
-        load();
+        loadData();
+        
+        const handleFocus = () => loadData(true);
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
     }, []);
 
     const openConfig = () => {

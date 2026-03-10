@@ -136,47 +136,54 @@ const DashboardPage = () => {
         return () => clearInterval(interval);
     }, []);
 
-    useEffect(() => {
-        const fetchAll = async () => {
-            try {
-                const [upRes, ttRes, cfgRes, jRes, todosRes, habRes] = await Promise.all([
-                    getUpcoming(),
-                    API.get('/timetable'),
-                    API.get('/timetable-config'),
-                    API.get('/journal'),
-                    API.get('/todos'),
-                    getHabits()
-                ]);
-                setUpcoming(upRes.data);
-                setTimetableSlots(ttRes.data);
-                setTimetableConfig(cfgRes.data);
-                setJournalEntries(jRes.data);
-                setHabits(habRes.data);
+    const fetchAll = async (silent = false) => {
+        if (!silent) setLoading(true);
+        try {
+            const [upRes, ttRes, cfgRes, jRes, todosRes, habRes] = await Promise.all([
+                getUpcoming(),
+                API.get('/timetable'),
+                API.get('/timetable-config'),
+                API.get('/journal'),
+                API.get('/todos'),
+                getHabits()
+            ]);
+            setUpcoming(upRes.data);
+            setTimetableSlots(ttRes.data);
+            setTimetableConfig(cfgRes.data);
+            setJournalEntries(jRes.data);
+            setHabits(habRes.data);
 
-                const todayRes = new Date();
-                let staleTaskIds = [];
-                const updatedTodos = todosRes.data.map(t => {
-                    if (t.dayPlan && !t.completed) {
-                        const planDate = t.dayPlanDate ? new Date(t.dayPlanDate) : new Date(t.createdAt);
-                        const isToday = planDate.getDate() === todayRes.getDate() &&
-                            planDate.getMonth() === todayRes.getMonth() &&
-                            planDate.getFullYear() === todayRes.getFullYear();
-                        if (!isToday) {
-                            staleTaskIds.push(t._id);
-                            return { ...t, dayPlan: false, dayPlanDate: null };
-                        }
+            const todayRes = new Date();
+            let staleTaskIds = [];
+            const updatedTodos = todosRes.data.map(t => {
+                if (t.dayPlan && !t.completed) {
+                    const planDate = t.dayPlanDate ? new Date(t.dayPlanDate) : new Date(t.createdAt);
+                    const isToday = planDate.getDate() === todayRes.getDate() &&
+                        planDate.getMonth() === todayRes.getMonth() &&
+                        planDate.getFullYear() === todayRes.getFullYear();
+                    if (!isToday) {
+                        staleTaskIds.push(t._id);
+                        return { ...t, dayPlan: false, dayPlanDate: null };
                     }
-                    return t;
-                });
+                }
+                return t;
+            });
 
-                setTodos(updatedTodos);
-                staleTaskIds.forEach(id => {
-                    API.put(`/todos/${id}`, { dayPlan: false, dayPlanDate: null }).catch(() => { });
-                });
-            } catch { }
-            setLoading(false);
-        };
+            setTodos(updatedTodos);
+            staleTaskIds.forEach(id => {
+                API.put(`/todos/${id}`, { dayPlan: false, dayPlanDate: null }).catch(() => { });
+            });
+        } catch { } finally {
+            if (!silent) setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchAll();
+        
+        const handleFocus = () => fetchAll(true);
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
     }, []);
 
     const fetchAiInsight = async () => {

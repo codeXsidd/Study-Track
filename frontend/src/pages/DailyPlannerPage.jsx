@@ -22,41 +22,44 @@ const DailyPlannerPage = () => {
 
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        const fetch = async () => {
-            try {
-                const res = await API.get('/todos');
-                let fetchedTodos = res.data;
+    const fetchTasks = async (silent = false) => {
+        if (!silent) setLoading(true);
+        try {
+            const res = await API.get('/todos');
+            let fetchedTodos = res.data;
+            const today = new Date();
+            let staleTaskIds = [];
 
-                // Auto-erase planner logic: if a task was planned for a previous day and is uncompleted, move it to backlog
-                const today = new Date();
-                let staleTaskIds = [];
-
-                const updatedTodos = fetchedTodos.map(t => {
-                    if (t.dayPlan && !t.completed) {
-                        const planDate = t.dayPlanDate ? new Date(t.dayPlanDate) : new Date(t.createdAt);
-                        const isToday = planDate.getDate() === today.getDate() &&
-                            planDate.getMonth() === today.getMonth() &&
-                            planDate.getFullYear() === today.getFullYear();
-                        if (!isToday) {
-                            staleTaskIds.push(t._id);
-                            return { ...t, dayPlan: false, dayPlanDate: null };
-                        }
+            const updatedTodos = fetchedTodos.map(t => {
+                if (t.dayPlan && !t.completed) {
+                    const planDate = t.dayPlanDate ? new Date(t.dayPlanDate) : new Date(t.createdAt);
+                    const isToday = planDate.getDate() === today.getDate() &&
+                        planDate.getMonth() === today.getMonth() &&
+                        planDate.getFullYear() === today.getFullYear();
+                    if (!isToday) {
+                        staleTaskIds.push(t._id);
+                        return { ...t, dayPlan: false, dayPlanDate: null };
                     }
-                    return t;
-                });
+                }
+                return t;
+            });
 
-                setAllTodos(updatedTodos);
+            setAllTodos(updatedTodos);
+            staleTaskIds.forEach(id => {
+                API.put(`/todos/${id}`, { dayPlan: false, dayPlanDate: null }).catch(() => { });
+            });
+        } catch { 
+            if (!silent) toast.error('Failed to load tasks'); 
+        } finally {
+            if (!silent) setLoading(false);
+        }
+    };
 
-                // Update the stale tasks in the background cleanly
-                staleTaskIds.forEach(id => {
-                    API.put(`/todos/${id}`, { dayPlan: false, dayPlanDate: null }).catch(() => { });
-                });
-            }
-            catch { toast.error('Failed to load tasks'); }
-            setLoading(false);
-        };
-        fetch();
+    useEffect(() => {
+        fetchTasks();
+        const handleFocus = () => fetchTasks(true);
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
     }, []);
 
     const isCompletedToday = (t) => {
