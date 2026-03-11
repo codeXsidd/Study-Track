@@ -204,18 +204,20 @@ const DashboardPage = () => {
         <div className="page-container animate-slide-scale">
 
             {/* ── HERO HEADER ── */}
-            <div style={{
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.1) 50%, rgba(16,185,129,0.05) 100%)',
-                border: '1px solid rgba(99,102,241,0.2)', borderRadius: 16, padding: '1.5rem 2rem',
-                marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem'
+            <div className="glass-card animate-slide-scale" style={{
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%)',
+                padding: '2rem',
+                marginBottom: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem',
+                border: '1px solid rgba(255,255,255,0.05)'
             }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: 4 }}>
+                    <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: 8, letterSpacing: '-0.03em' }}>
                         {greeting()}, <span className="gradient-text">{user?.name?.split(' ')[0]}!</span>
                     </h1>
-                    <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>
-                        {now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                        {' · '}{now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Calendar size={16} /> {now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        <span style={{ opacity: 0.3 }}>|</span>
+                        <Clock size={16} /> {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                 </div>
                 {/* NOW / NEXT class pill */}
@@ -242,133 +244,63 @@ const DashboardPage = () => {
             </div>
 
             {/* ── KEY STATS ROW ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                 {[
-                    { label: 'Upcoming Deadlines', value: upcoming.length, color: '#f59e0b', icon: <Clock size={18} />, sub: `${urgentCount} urgent`, class: 'productivity-card' },
-                    { label: 'Study Streak', value: streak > 0 ? `🔥 ${streak}d` : '—', color: '#ef4444', icon: <Flame size={18} />, sub: streak > 0 ? 'Keep it up!' : 'Start journaling!', class: 'performance-card' },
-                    { label: 'Today\'s Classes', value: todaySlots.length, color: '#10b981', icon: <Calendar size={18} />, sub: currentClass ? '📍 Class now' : nextClass ? '⏭ Next coming' : 'All done!', class: 'workspace-card' }
+                    { label: 'Upcoming', value: upcoming.length, color: 'var(--warning)', icon: <Clock size={22} />, sub: `${urgentCount} urgent deadlines`, class: 'productivity-card' },
+                    { label: 'Study Streak', value: streak > 0 ? `${streak} Days` : '0 Days', color: 'var(--danger)', icon: <Flame size={22} />, sub: streak > 0 ? 'You\'re on fire!' : 'Start your streak!', class: 'performance-card' },
+                    { label: 'Today\'s Classes', value: todaySlots.length, color: 'var(--success)', icon: <Calendar size={22} />, sub: currentClass ? 'Class in session' : 'Check schedule', class: 'workspace-card' }
                 ].map((s, idx) => (
-                    <div key={s.label} className={`glass-card ${s.class}`} style={{ padding: '1.25rem', borderLeft: `4px solid ${s.color}`, animationDelay: `${idx * 0.1}s` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</p>
-                            <div style={{ color: s.color, opacity: 0.7 }}>{s.icon}</div>
+                    <div key={s.label} className="glass-card" style={{ padding: '1.75rem', borderBottom: `4px solid ${s.color}`, animationDelay: `${idx * 0.1}s` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
+                            <p style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</p>
+                            <div style={{ color: s.color, background: `${s.color}15`, padding: '10px', borderRadius: '15px' }}>{s.icon}</div>
                         </div>
-                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</p>
-                        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 4 }}>{s.sub}</p>
+                        <p style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: 8 }}>{s.value}</p>
+                        <p style={{ fontSize: '0.8rem', color: s.color, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <Activity size={12} /> {s.sub}
+                        </p>
                     </div>
                 ))}
             </div>
 
-            {/* ── SMART COMMAND CENTER (AI ASK) ── */}
-            <div className="glass-card animate-slide-up" style={{
-                marginBottom: '1.5rem',
-                padding: '1.25rem',
-                background: 'rgba(15,15,35,0.6)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99,102,241,0.2)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                borderRadius: 20,
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div className="ai-pulse-bg" style={{ 
-                        width: 48, height: 48, borderRadius: 14, 
-                        background: 'linear-gradient(135deg, #6366f1, #10b981)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        boxShadow: '0 0 15px rgba(99,102,241,0.4)'
-                    }}>
-                        <Sparkles size={24} color="white" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: '240px' }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: 2 }}>Smart Command Center</h3>
-                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Ask anything about your studies, assignments, or schedule.</p>
-                    </div>
-                </div>
-                
-                <form 
-                    onSubmit={async (e) => {
-                        e.preventDefault();
-                        const q = e.target.query.value.trim();
-                        if (!q) return;
-                        setInsightLoading(true);
-                        try {
-                            const res = await API.post('/ai/ask-about-me', { query: q });
-                            setAiInsight(res.data.reply);
-                            e.target.query.value = '';
-                        } catch {
-                            setAiInsight("I'm having a bit of trouble connecting to your workspace data. Try checking your internet!");
-                        }
-                        setInsightLoading(false);
-                    }}
-                    style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', position: 'relative' }}
-                >
-                    <input 
-                        name="query"
-                        type="text" 
-                        placeholder="e.g., 'What assignments are due tomorrow?' or 'Help me plan my afternoon'"
-                        className="input"
-                        style={{ 
-                            flex: 1, padding: '0.85rem 1.25rem', borderRadius: 12, 
-                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-                            fontSize: '0.9rem', color: '#f8fafc'
-                        }}
-                    />
-                    <button type="submit" className="btn-primary" style={{ padding: '0.85rem 1.5rem', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
-                        {insightLoading ? <div className="spinner-small" /> : <Zap size={18} />}
-                        Ask AI
-                    </button>
-                </form>
-            </div>
-
-            {/* AI Smart Suggestion Banner - Updated for more impact */}
-            <div className="glass-card animate-slide-scale dash-ai-banner" style={{
-                marginBottom: '1.5rem',
-                padding: '1.5rem',
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%)',
-                border: '1px solid rgba(99,102,241,0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
-                <div style={{ position: 'absolute', top: -20, right: -20, opacity: 0.1, pointerEvents: 'none' }}>
-                    <Bot size={120} color="#6366f1" />
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ background: 'var(--primary)', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Bot size={24} color="white" />
-                    </div>
-                    <div>
-                        <h3 className="gradient-text" style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Assistant Output</h3>
-                        <p style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>PERSONALIZED STUDY BUDDY</p>
-                    </div>
-                </div>
-
-                <div style={{ 
-                    padding: '1rem 1.25rem', 
-                    background: 'rgba(0,0,0,0.2)', 
-                    borderRadius: 14, 
-                    borderLeft: '4px solid var(--primary)',
-                    minHeight: '60px',
+            {/* AI Smart Suggestion Banner */}
+            {(urgentCount > 0 || aiInsight) && (
+                <div className="glass-card animate-slide-scale dash-ai-banner" style={{
+                    marginBottom: '1.5rem',
+                    padding: '1.5rem',
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%)',
+                    border: '1px solid rgba(99,102,241,0.2)',
                     display: 'flex',
-                    alignItems: 'center'
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: '1.5rem'
                 }}>
-                    <p style={{ fontSize: '0.95rem', color: '#e2e8f0', lineHeight: 1.6, fontWeight: 500 }}>
-                        {insightLoading ? 'Analyzing your workspace performance...' : aiInsight || "Welcome back! How's the studying going? I'm ready to help you optimize your session."}
-                    </p>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <div className="badge badge-primary" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}><Layers size={12} /> Optimization: ON</div>
-                        <div className="badge badge-success" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}><Lightbulb size={12} /> Live Insights</div>
+                    <div className="ai-icon-pulse hide-mobile" style={{ background: 'var(--primary)', padding: '1rem', borderRadius: '15px', flexShrink: 0 }}>
+                        <Bot size={32} color="white" />
                     </div>
-                    <Link to="/ai-chat" className="btn-secondary" style={{ textDecoration: 'none', fontSize: '0.78rem', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)' }}>
-                        Visit AI Hub <ArrowRight size={14} />
-                    </Link>
+                    <div style={{ flex: 1, minWidth: '260px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                            <h3 className="gradient-text" style={{ fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Intelligence Hub</h3>
+                            {insightLoading && <div className="spinner-small" />}
+                        </div>
+                        <p style={{ fontSize: '1.05rem', color: '#e2e8f0', lineHeight: 1.6, fontWeight: 500, fontStyle: 'italic' }}>
+                            "{insightLoading ? 'Analyzing your workspace performance...' : aiInsight || "Welcome back! I've analyzed your upcoming tasks. Ready to optimize your study session?"}"
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
+                            <div className="badge badge-primary"><Layers size={12} /> Workspace Optimized</div>
+                            <div className="badge badge-success"><BarChart4 size={12} /> Performance: Peak</div>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <Link to="/ai-chat" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', fontSize: '0.75rem', padding: '0.5rem 1rem' }}>
+                            Open Insight Center
+                        </Link>
+                        <button onClick={fetchAiInsight} className="btn-secondary" style={{ padding: '0.5rem', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: '#94a3b8' }}>
+                            <RotateCcw size={14} /> Refresh Brain
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="dashboard-grid-hero" style={{ marginBottom: '1.25rem' }}>
 

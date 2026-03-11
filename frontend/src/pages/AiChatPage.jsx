@@ -22,6 +22,38 @@ const AiChatPage = () => {
     const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'workspace', 'productivity', 'performance'
     const messagesEndRef = useRef(null);
 
+    const [userData, setUserData] = useState({
+        subjects: [],
+        tasks: [],
+        habits: [],
+        upcoming: [],
+        gpa: null
+    });
+
+    useEffect(() => {
+        const fetchContext = async () => {
+            try {
+                const [subRes, tasksRes, habRes, upRes, gpaRes] = await Promise.all([
+                    API.get('/subjects'),
+                    API.get('/todos'),
+                    API.get('/habits'),
+                    API.get('/assignments/upcoming'),
+                    API.get('/gpa/all').catch(() => ({ data: [] }))
+                ]);
+                setUserData({
+                    subjects: subRes.data,
+                    tasks: tasksRes.data,
+                    habits: habRes.data,
+                    upcoming: upRes.data,
+                    gpa: gpaRes.data
+                });
+            } catch (err) {
+                console.warn("Failed to fetch full context for AI", err);
+            }
+        };
+        fetchContext();
+    }, []);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -41,14 +73,21 @@ const AiChatPage = () => {
         setLoading(true);
 
         try {
-            // Enhanced logic: If it's the first message or in a dedicated tab, use workspace-aware endpoint
-            let res;
-            if (activeTab !== 'chat') {
-                res = await API.post('/ai/ask-about-me', { query: text });
-            } else {
-                const context = messages.slice(-5).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n');
-                res = await aiChat({ message: text, context });
-            }
+            // Build a rich context based on current website state
+            const websiteContext = `
+                Current website data for this student:
+                - Subjects: ${userData.subjects.map(s => s.name).join(', ') || 'None yet'}
+                - Tasks in progress: ${userData.tasks.filter(t => !t.completed).map(t => t.title).join(', ') || 'No active tasks'}
+                - Habits tracking: ${userData.habits.map(h => h.name).join(', ') || 'No habits set'}
+                - Upcoming assignments: ${userData.upcoming.map(u => `${u.title} (due ${new Date(u.deadline).toLocaleDateString()})`).join(', ') || 'No upcoming deadlines'}
+                - Recent chat history:
+                ${messages.slice(-6).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n')}
+            `;
+
+            const res = await aiChat({ 
+                message: text, 
+                context: websiteContext 
+            });
 
             const aiMsg = {
                 id: (Date.now() + 1).toString(),
@@ -58,11 +97,12 @@ const AiChatPage = () => {
             };
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
-            toast.error("I'm having trouble connecting to my brain right now.");
+            toast.error("AI connection interrupted.");
             const errorMsg = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                text: "I'm currently having trouble connecting to my central brain. Let me try to help based on my local knowledge: Consistency is the key to mastering any subject. Try breaking your current focus into 15-minute sprints!",
+                text: "I'm having trouble connecting to my central brain. However, looking at your workspace, I see you have " + 
+                      (userData.upcoming.length > 0 ? userData.upcoming.length + " upcoming assignments. Maybe we should focus on those?" : "a clear schedule. Ready to start something new?"),
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, errorMsg]);
@@ -94,9 +134,9 @@ const AiChatPage = () => {
         <div className="page-container animate-fade-in" style={{ display: 'flex', gap: '1.5rem', height: '100%', maxWidth: '1400px', margin: '0 auto', overflow: 'hidden', padding: '1rem' }}>
 
             {/* Sidebar / History (Desktop only) */}
-            <div className="glass-card hide-mobile" style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.25rem' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Bot size={16} /> Intelligence Center
+            <div className="glass-card hide-mobile" style={{ width: '310px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.5rem', background: 'rgba(10,10,25,0.6)' }}>
+                <h3 className="gradient-text" style={{ fontSize: '0.95rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Sparkles size={18} /> Intelligence Hub
                 </h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>

@@ -80,11 +80,12 @@ const Sidebar = () => {
         <aside style={{
             width: collapsed ? '80px' : '260px',
             background: 'rgba(8,8,18,0.95)',
-            borderRight: '1px solid rgba(99,102,241,0.12)',
+            borderRight: '1px solid var(--border)',
             height: '100%', position: 'sticky', top: 0,
             display: 'flex', flexDirection: 'column',
-            transition: 'width 0.3s ease',
-            zIndex: 100
+            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            zIndex: 100,
+            backdropFilter: 'blur(10px)'
         }}>
             {/* Logo / Header */}
             <div className="sidebar-header" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -112,24 +113,15 @@ const Sidebar = () => {
             {/* User Info (if expanded) */}
             {!collapsed && (
                 <div className="sidebar-user" style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div className="glass-card" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center', gap: 12, border: '1px solid rgba(99,102,241,0.2)', background: 'rgba(99,102,241,0.05)' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.9rem', color: 'white' }}>
+                    <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, border: '1px solid rgba(99,102,241,0.2)', background: 'rgba(99,102,241,0.08)' }}>
+                        <div className="ai-icon-pulse" style={{ width: 42, height: 42, borderRadius: '12px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>
                             {user?.name?.[0]?.toUpperCase() || 'U'}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2, marginBottom: 4 }}>
-                                <span style={{ fontSize: '0.65rem', color: '#818cf8', fontWeight: 700 }}>Lvl {user?.level || 1}</span>
-                                <span style={{ fontSize: '0.6rem', color: '#64748b' }}>{user?.xp || 0} / {(user?.level || 1) * 100} XP</span>
-                            </div>
-                            {/* XP Progress Bar */}
-                            <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-                                <div style={{
-                                    height: '100%',
-                                    background: 'linear-gradient(90deg, #6366f1, #ec4899)',
-                                    width: `${Math.min(((user?.xp || 0) / ((user?.level || 1) * 100)) * 100, 100)}%`,
-                                    transition: 'width 0.3s'
-                                }} />
+                            <p style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{user?.name}</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <div style={{ padding: '2px 6px', background: 'rgba(99,102,241,0.2)', borderRadius: 6, fontSize: '0.6rem', fontWeight: 800, color: '#a78bfa' }}>LVL {user?.level || 1}</div>
+                                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 600 }}>{user?.xp || 0} XP</div>
                             </div>
                         </div>
                     </div>

@@ -218,7 +218,6 @@ router.post('/summarize', auth, async (req, res) => {
     }
 });
 
-
 // 5. Timetable Optimization
 router.post('/optimize', auth, async (req, res) => {
     try {
@@ -251,7 +250,6 @@ router.post('/optimize', auth, async (req, res) => {
     }
 });
 
-
 // 6. GPA Strategy Predictor
 router.post('/gpa-strategy', auth, async (req, res) => {
     try {
@@ -276,43 +274,6 @@ router.post('/gpa-strategy', auth, async (req, res) => {
         }
     } catch (err) {
         res.status(500).json({ message: "AI Error", error: err.message });
-    }
-});
-
-
-// 7. Context-Aware Knowledge Agent (Ask about my data)
-router.post('/ask-about-me', auth, async (req, res) => {
-    try {
-        const { query } = req.body;
-        if (!query) return res.status(400).json({ message: "Query required" });
-
-        // Fetch user context from multiple models
-        const [assignments, timetable, habits, todos] = await Promise.all([
-            require('../models/Assignment').find({ user: req.user.id }),
-            require('../models/Timetable').find({ user: req.user.id }),
-            require('../models/Habit').find({ user: req.user.id }),
-            require('../models/Todo').find({ user: req.user.id })
-        ]);
-
-        const context = `
-            User Study Data:
-            Assignments: ${JSON.stringify(assignments.map(a => ({ title: a.title, deadline: a.deadline, status: a.status })))}
-            Timetable: ${JSON.stringify(timetable)}
-            Habits: ${JSON.stringify(habits.map(h => ({ name: h.name, streak: h.streak })))}
-            Today's Planner: ${JSON.stringify(todos.filter(t => t.dayPlan).map(t => ({ title: t.title, priority: t.priority, completed: t.completed })))}
-        `;
-
-        const prompt = `Student Question: "${query}"\n\nUse the following data to provide a helpful, encouraging, and accurate answer:\n${context}`;
-
-        try {
-            const responseText = await callAI(prompt, "You are an intelligent Study Tracker assistant. You have access to the student's personal timetable, assignments, habits, and tasks. Answer accurately based ONLY on the provided data. If information is missing, politely say you don't have that data yet. Keep responses under 2-3 short paragraphs.");
-            res.json({ reply: responseText.trim() });
-        } catch (e) {
-            console.error('AI Ask Error:', e.message);
-            res.json({ reply: "I'm having trouble analyzing your data right now. Please try again or check your dashboard for the most recent updates." });
-        }
-    } catch (err) {
-        res.status(500).json({ message: "Internal Server Error", error: err.message });
     }
 });
 
