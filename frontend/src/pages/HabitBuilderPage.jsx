@@ -151,39 +151,45 @@ const HabitBuilderPage = () => {
             </div>
 
             {/* Productivity Tip */}
-            <div className="glass-card ai-banner animate-slide-scale" style={{ marginBottom: '2rem', borderLeft: '4px solid #8b5cf6' }}>
-                <div className="ai-icon-pulse" style={{ background: 'rgba(139,92,246,0.15)', padding: '0.8rem', borderRadius: '50%' }}>
-                    <Zap size={24} color="#a78bfa" />
+            <div className="glass-card fade-in" style={{ marginBottom: '1.5rem', padding: '1.25rem', display: 'flex', alignItems: 'flex-start', gap: '1rem', background: 'linear-gradient(90deg, rgba(99,102,241,0.1), rgba(139,92,246,0.05))', borderLeft: '4px solid #8b5cf6' }}>
+                <div style={{ background: 'rgba(139,92,246,0.2)', padding: '0.5rem', borderRadius: '50%' }}>
+                    <Zap size={20} color="#a78bfa" />
                 </div>
                 <div>
-                    <h4 style={{ fontSize: '0.8rem', fontWeight: 800, marginBottom: '0.2rem', color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Success Mindset</h4>
-                    <p style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.5, fontWeight: 500 }}>{tipOfDay}</p>
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.25rem', color: '#e2e8f0' }}>Productivity Tip of the Day</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-soft)', lineHeight: 1.5 }}>{tipOfDay}</p>
                 </div>
             </div>
 
             {/* Dashboard Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                {[
-                    { label: 'Habits Tracked', value: habits.length, color: '#6366f1', icon: <Target size={22} />, sub: 'Total goals' },
-                    { label: 'Done Today', value: `${completedTodayCount}/${habits.length}`, color: '#10b981', icon: <CheckCircle2 size={22} />, sub: 'Daily completion' },
-                    { label: 'Legendary Streak', value: `${bestGlobalStreak}d`, color: '#f59e0b', icon: <Trophy size={22} />, sub: 'Your record' }
-                ].map((s, idx) => (
-                    <div key={s.label} className="glass-card dashboard-stat-card" style={{ animationDelay: `${idx * 0.1}s` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div style={{ padding: '0.75rem', background: `${s.color}15`, borderRadius: 12, color: s.color }}>
-                                {s.icon}
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: '1.75rem', fontWeight: 900, color: s.color }}>{s.value}</p>
-                                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{s.label}</p>
-                            </div>
-                        </div>
-                        <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: s.color }} />
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', fontWeight: 500 }}>{s.sub}</p>
-                        </div>
+            <div className="stats-grid" style={{ marginBottom: '2rem', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))' }}>
+                <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Target size={24} color="#6366f1" />
                     </div>
-                ))}
+                    <div>
+                        <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', fontWeight: 600 }}>Total Habits</p>
+                        <p className="stat-number">{habits.length}</p>
+                    </div>
+                </div>
+                <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CheckCircle2 size={24} color="#10b981" />
+                    </div>
+                    <div>
+                        <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', fontWeight: 600 }}>Completed Today</p>
+                        <p className="stat-number">{completedTodayCount} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ {habits.length}</span></p>
+                    </div>
+                </div>
+                <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Trophy size={24} color="#f59e0b" />
+                    </div>
+                    <div>
+                        <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', fontWeight: 600 }}>Best Streak</p>
+                        <p className="stat-number">{bestGlobalStreak} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>days</span></p>
+                    </div>
+                </div>
             </div>
 
             {habits.length === 0 ? (
@@ -219,20 +225,20 @@ const HabitBuilderPage = () => {
                         }
 
                         return (
-                            <div key={habit._id} className="glass-card animate-slide-scale" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: completed ? '4px solid #10b981' : '4px solid transparent', transition: 'all 0.3s' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                            <div key={habit._id} className="glass-card fade-up" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: completed ? '4px solid #10b981' : '4px solid transparent', transition: 'all 0.3s' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                                     <div style={{ flex: 1 }}>
-                                        <h3 className="card-title" style={{ marginBottom: '0.25rem' }}>
+                                        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                                             {habit.name}
-                                            {habit.streak >= 3 && <Flame size={18} color="#f59e0b" className="pulse-danger" />}
+                                            {habit.streak >= 3 && <Flame size={16} color="#f59e0b" className="pulse-danger" />}
                                         </h3>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-soft)', fontWeight: 600 }}>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-soft)', marginBottom: '0.5rem' }}>
                                             {habit.streak > 0 ? `Current streak: ${habit.streak} days 🚀` : 'Start your streak today!'}
                                         </p>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={() => openModal('edit', habit)} className="glass-card" style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', cursor: 'pointer', padding: 8, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }}><Edit2 size={15} /></button>
-                                        <button onClick={() => handleDelete(habit._id)} className="glass-card" style={{ background: 'rgba(239,68,68,0.05)', color: '#ef4444', cursor: 'pointer', padding: 8, borderRadius: 10, border: '1px solid rgba(239,68,68,0.1)' }}><Trash2 size={15} /></button>
+                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                        <button onClick={() => openModal('edit', habit)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 6 }}><Edit2 size={15} /></button>
+                                        <button onClick={() => handleDelete(habit._id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 6 }}><Trash2 size={15} /></button>
                                     </div>
                                 </div>
 

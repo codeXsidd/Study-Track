@@ -3,14 +3,6 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Import all models for holistic analysis
-const Todo = require('../models/Todo');
-const Habit = require('../models/Habit');
-const JournalEntry = require('../models/JournalEntry');
-const Semester = require('../models/Semester');
-const Assignment = require('../models/Assignment');
-const Subject = require('../models/Subject');
-
 const getAIModel = (modelName, key, version = 'v1') => {
     try {
         const genAI = new GoogleGenerativeAI(key);
@@ -282,65 +274,6 @@ router.post('/gpa-strategy', auth, async (req, res) => {
         }
     } catch (err) {
         res.status(500).json({ message: "AI Error", error: err.message });
-    }
-});
-
-// 7. Holistic User Analysis (Performance, Productivity, AI Study)
-router.post('/analyze-user', auth, async (req, res) => {
-    try {
-        const { mode } = req.body;
-        const userId = req.user.id;
-
-        // Fetch data based on mode
-        let userData = {};
-        
-        if (mode === 'productivity' || mode === 'study' || mode === 'holistic') {
-            userData.todos = await Todo.find({ user: userId, completed: false }).lean();
-            userData.completedToday = await Todo.find({ 
-                user: userId, 
-                completed: true, 
-                completedAt: { $gte: new Date().setHours(0,0,0,0) } 
-            }).lean();
-            userData.habits = await Habit.find({ user: userId }).lean();
-        }
-        
-        if (mode === 'performance' || mode === 'study' || mode === 'holistic') {
-            userData.journal = await JournalEntry.find({ user: userId }).sort({ date: -1 }).limit(10).lean();
-            userData.semesters = await Semester.find({ user: userId }).lean();
-        }
-
-        if (mode === 'study' || mode === 'holistic') {
-            userData.assignments = await Assignment.find({ user: userId, completed: false }).lean();
-            userData.subjects = await Subject.find({ user: userId }).lean();
-        }
-
-        let systemMsg = "You are a professional AI Study Coach. ";
-        let prompt = `Provide a detailed ${mode} analysis for the student. `;
-        
-        if (mode === 'workspace') {
-            systemMsg += "You are an expert in ergonomics and study environment design.";
-            prompt = "The student wants to optimize their workspace for deep focus. Give 5 high-impact suggestions (physical and digital).";
-        } else if (mode === 'productivity') {
-            systemMsg += "Analyze the student's task management and habits.";
-            prompt += `Current Data: ${JSON.stringify(userData)}. Focus on their streak of habits and pending tasks.`;
-        } else if (mode === 'performance') {
-            systemMsg += "Analyze the student's academic results and study hours.";
-            prompt += `Current Data: ${JSON.stringify(userData)}. Analyze the relationship between their study hours and GPA.`;
-        } else {
-            systemMsg += "Perform a complete audit of the student's progress.";
-            prompt += `Everything: ${JSON.stringify(userData)}. Give a comprehensive feedback on how they are doing across all areas.`;
-        }
-
-        try {
-            const responseText = await callAI(prompt, systemMsg + " Respond in professional yet motivating tone. Use markdown formatting.");
-            res.json({ reply: responseText.trim() });
-        } catch (e) {
-            console.error('AI Analysis Error:', e.message);
-            res.status(500).json({ message: "Analysis failed", error: e.message });
-        }
-    } catch (err) {
-        console.error('Holistic Analysis Catch:', err);
-        res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
 

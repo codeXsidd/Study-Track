@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target } from 'lucide-react';
-import { aiChat, analyzeUser } from '../services/api';
+import { aiChat } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AiChatPage = () => {
@@ -30,24 +30,18 @@ const AiChatPage = () => {
         localStorage.setItem('study_chat_history', JSON.stringify(messages));
     }, [messages]);
 
-    const handleSend = async (val = input, mode = null) => {
+    const handleSend = async (val = input) => {
         const text = val.trim();
-        if (!text && !mode) return;
-        if (loading) return;
+        if (!text || loading) return;
 
-        const userMsg = { id: Date.now().toString(), role: 'user', text: text || `Triggered ${mode} analysis...`, timestamp: new Date() };
+        const userMsg = { id: Date.now().toString(), role: 'user', text: text, timestamp: new Date() };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setLoading(true);
 
         try {
-            let res;
-            if (mode) {
-                res = await analyzeUser({ mode });
-            } else {
-                const context = messages.slice(-5).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n');
-                res = await aiChat({ message: text, context });
-            }
+            const context = messages.slice(-5).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n');
+            const res = await aiChat({ message: text, context });
 
             const aiMsg = {
                 id: (Date.now() + 1).toString(),
@@ -97,32 +91,15 @@ const AiChatPage = () => {
                 <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <MessageSquare size={16} /> AI Activity
                 </h3>
-                    <div className="glass-card" style={{ padding: '1rem', borderRadius: '14px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)', marginBottom: '1.5rem' }}>
-                        <p style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 800, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}><Sparkles size={14} /> CURRENT INSIGHTS</p>
-                        <p style={{ fontSize: '0.8rem', color: '#e2e8f0', lineHeight: 1.5 }}>Deep work states take 20 mins to enter. Avoid small distractions!</p>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }} className="hide-scrollbar">
+                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)' }}>
+                        <p style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 700, marginBottom: 4 }}>CURRENT STATUS</p>
+                        <p style={{ fontSize: '0.82rem', color: '#e2e8f0', lineHeight: 1.4 }}>Analyzing your study patterns to provide better suggestions.</p>
                     </div>
-
-                    <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.05em' }}>Topics to Explore</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {[
-                            { title: "Explain a concept", icon: <Brain size={18} />, color: '#6366f1', prompt: "Explain a concept simply" },
-                            { title: "Study Schedule", icon: <Clock size={18} />, color: '#10b981', prompt: "Help me plan a study session" },
-                            { title: "Productivity", icon: <Zap size={18} />, color: '#f59e0b', mode: 'productivity' },
-                            { title: "Workspace", icon: <Target size={18} />, color: '#ec4899', mode: 'workspace' },
-                            { title: "Performance", icon: <Target size={18} />, color: '#8b5cf6', mode: 'performance' },
-                            { title: "Exam Prep", icon: <Target size={18} />, color: '#ef4444', prompt: "How to prepare for exams" },
-                            { title: "Full Site Audit", icon: <Bot size={18} />, color: '#10b981', mode: 'holistic' }
-                        ].map((t, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => t.mode ? handleSend('', t.mode) : suggest(t.prompt)}
-                                className="ai-sidebar-button"
-                            >
-                                <span>{t.icon}</span>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>{t.title}</span>
-                            </button>
-                        ))}
+                    <div>
+                        <p style={{ fontSize: '0.7rem', color: '#475569', textAlign: 'center', marginTop: '1rem', fontStyle: 'italic' }}>More tools coming soon!</p>
                     </div>
+                </div>
                 <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <button onClick={clearChat} style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.1)', color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         <Trash2 size={14} /> Clear History

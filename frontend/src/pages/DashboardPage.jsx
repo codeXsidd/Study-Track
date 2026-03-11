@@ -22,12 +22,23 @@ const timeToMinutes = (t) => {
 };
 
 // ---------- sub-components ----------
-const QuickLink = ({ to, icon, label, color }) => (
-    <Link to={to} className="quick-action-button">
-        <div className="quick-action-icon" style={{ background: `${color}20` }}>
-            {React.cloneElement(icon, { size: 22, color })}
+const QuickLink = ({ to, icon, label, color, count }) => (
+    <Link to={to} style={{ textDecoration: 'none' }}>
+        <div className="glass-card" style={{
+            padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem',
+            cursor: 'pointer', transition: 'all 0.2s', border: '1px solid rgba(99,102,241,0.08)', borderRadius: 12
+        }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = `${color}44`; e.currentTarget.style.background = `${color}08`; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.08)'; e.currentTarget.style.background = 'rgba(26, 26, 46, 0.8)'; }}>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {React.cloneElement(icon, { size: 18, color })}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: 700, fontSize: '0.82rem', color: '#e2e8f0' }}>{label}</p>
+                {count !== undefined && <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{count}</p>}
+            </div>
+            <ArrowRight size={13} color="#64748b" />
         </div>
-        <p className="quick-action-label">{label}</p>
     </Link>
 );
 
@@ -192,169 +203,176 @@ const DashboardPage = () => {
         <div className="page-container animate-slide-scale">
 
             {/* ── HERO HEADER ── */}
-            <header className="dashboard-hero" style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem', position: 'relative', zIndex: 1 }}>
-                    <div>
-                        <h1 className="hero-title">
-                            {greeting()}, <br />
-                            <span className="gradient-text">{user?.name?.split(' ')[0]}!</span>
-                        </h1>
-                        <p className="hero-subtitle">
-                            {now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
-                            {' · '}{now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        {currentClass ? (
-                            <div className="pill-status" style={{ background: `${currentClass.color}15`, border: `1px solid ${currentClass.color}30`, color: currentClass.color }}>
-                                <div className="pulse-danger" style={{ width: 8, height: 8, borderRadius: '50%', background: currentClass.color }} />
-                                <div>
-                                    <p style={{ fontSize: '0.6rem', opacity: 0.8 }}>Now In Class</p>
-                                    <p style={{ fontSize: '0.9rem', fontWeight: 800 }}>{currentClass.subject}</p>
-                                </div>
-                            </div>
-                        ) : nextClass ? (
-                            <div className="pill-status" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', color: '#818cf8' }}>
-                                <Clock size={14} />
-                                <div>
-                                    <p style={{ fontSize: '0.6rem', opacity: 0.8 }}>Next Up at {nextClass.startTime}</p>
-                                    <p style={{ fontSize: '0.9rem', fontWeight: 800 }}>{nextClass.subject}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="pill-status" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981' }}>
-                                <CheckCircle size={14} />
-                                <span>Free Schedule</span>
-                            </div>
-                        )}
-                    </div>
+            <div style={{
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.1) 50%, rgba(16,185,129,0.05) 100%)',
+                border: '1px solid rgba(99,102,241,0.2)', borderRadius: 16, padding: '1.5rem 2rem',
+                marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem'
+            }}>
+                <div>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: 4 }}>
+                        {greeting()}, <span className="gradient-text">{user?.name?.split(' ')[0]}!</span>
+                    </h1>
+                    <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>
+                        {now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        {' · '}{now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                 </div>
-            </header>
+                {/* NOW / NEXT class pill */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    {currentClass ? (
+                        <div style={{ padding: '0.6rem 1rem', background: `${currentClass.color}22`, border: `1px solid ${currentClass.color}55`, borderRadius: 12 }}>
+                            <p style={{ fontSize: '0.65rem', fontWeight: 700, color: currentClass.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>📍 Now in Class</p>
+                            <p style={{ fontWeight: 800, fontSize: '0.9rem', color: '#e2e8f0' }}>{currentClass.subject}</p>
+                            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{currentClass.label} · {currentClass.room || '—'}</p>
+                        </div>
+                    ) : nextClass ? (
+                        <div style={{ padding: '0.6rem 1rem', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 12 }}>
+                            <p style={{ fontSize: '0.65rem', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>⏭ Next Class</p>
+                            <p style={{ fontWeight: 800, fontSize: '0.9rem', color: '#e2e8f0' }}>{nextClass.subject}</p>
+                            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{nextClass.label} · {nextClass.startTime || '—'}</p>
+                        </div>
+                    ) : (
+                        <div style={{ padding: '0.6rem 1rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
+                            <p style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>✅ No more classes today</p>
+                            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>Enjoy your free time!</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* ── KEY STATS ROW ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                 {[
-                    { label: 'Upcoming Tasks', value: upcoming.length, color: '#f59e0b', icon: <Clock size={22} />, sub: `${urgentCount} urgent` },
-                    { label: 'Current Streak', value: streak > 0 ? `${streak} Days` : '0 Days', color: '#ef4444', icon: <Flame size={22} />, sub: 'Journal streak' },
-                    { label: 'Today\'s Classes', value: todaySlots.length, color: '#10b981', icon: <Calendar size={22} />, sub: 'Classes scheduled' }
+                    { label: 'Upcoming Deadlines', value: upcoming.length, color: '#f59e0b', icon: <Clock size={18} />, sub: `${urgentCount} urgent` },
+                    { label: 'Study Streak', value: streak > 0 ? `🔥 ${streak}d` : '—', color: '#ef4444', icon: <Flame size={18} />, sub: streak > 0 ? 'Keep it up!' : 'Start journaling!' },
+                    { label: 'Today\'s Classes', value: todaySlots.length, color: '#10b981', icon: <Calendar size={18} />, sub: currentClass ? '📍 Class now' : nextClass ? '⏭ Next coming' : 'All done!' }
                 ].map((s, idx) => (
-                    <div key={s.label} className="glass-card dashboard-stat-card" style={{ animationDelay: `${idx * 0.1}s` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div style={{ padding: '0.75rem', background: `${s.color}15`, borderRadius: 12, color: s.color }}>
-                                {s.icon}
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: '1.75rem', fontWeight: 900, color: s.color }}>{s.value}</p>
-                                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{s.label}</p>
-                            </div>
+                    <div key={s.label} className="glass-card" style={{ padding: '1.25rem', borderLeft: `4px solid ${s.color}`, animationDelay: `${idx * 0.1}s` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</p>
+                            <div style={{ color: s.color, opacity: 0.7 }}>{s.icon}</div>
                         </div>
-                        <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: s.color }} />
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', fontWeight: 500 }}>{s.sub}</p>
-                        </div>
+                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</p>
+                        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 4 }}>{s.sub}</p>
                     </div>
                 ))}
             </div>
 
             {/* AI Smart Suggestion Banner */}
             {(urgentCount > 0 || aiInsight) && (
-                <div className="glass-card animate-slide-scale ai-banner" style={{
-                    marginBottom: '2rem',
+                <div className="glass-card animate-slide-scale" style={{
+                    marginBottom: '1.5rem',
+                    padding: '1.25rem 1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.25rem',
+                    background: urgentCount > 0
+                        ? 'linear-gradient(90deg, rgba(239,68,68,0.12), rgba(13,11,26,0.5))'
+                        : 'linear-gradient(90deg, rgba(16,185,129,0.12), rgba(13,11,26,0.5))',
                     borderLeft: `4px solid ${urgentCount > 0 ? '#ef4444' : '#10b981'}`,
+                    position: 'relative',
+                    overflow: 'hidden'
                 }}>
                     <div className="ai-icon-pulse" style={{
                         background: urgentCount > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
-                        padding: '0.8rem', borderRadius: '50%', flexShrink: 0
+                        padding: '0.6rem', borderRadius: '50%', flexShrink: 0
                     }}>
-                        <Bot size={28} color={urgentCount > 0 ? '#ef4444' : '#10b981'} />
+                        <Bot size={24} color={urgentCount > 0 ? '#ef4444' : '#10b981'} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.25rem' }}>
-                            <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                AI Brainwave
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.2rem' }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                AI Smart Suggestion
                             </h4>
                             {insightLoading && <div className="spinner-small" />}
                         </div>
-                        <div style={{ fontSize: '1rem', color: '#cbd5e1', lineHeight: 1.6, fontWeight: 500 }}>
+                        <div style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.5, fontWeight: 500 }}>
                             {insightLoading ? (
-                                <span style={{ opacity: 0.6, fontStyle: 'italic' }}>Synthesizing strategy...</span>
+                                <span style={{ opacity: 0.7, fontStyle: 'italic' }}>Thinking...</span>
                             ) : (
-                                <Link to="/ai-chat" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Link to="/ai-chat" style={{ textDecoration: 'none', color: 'inherit' }}>
                                     {aiInsight || (
-                                        <>Action needed: You have <b>{urgentCount} urgent deadlines</b>. Let's tackle them!</>
+                                        <>You have <b>{urgentCount} urgent deadline{urgentCount > 1 ? 's' : ''}</b>. Click to chat about a study strategy!</>
                                     )}
-                                    <ArrowRight size={16} style={{ opacity: 0.5 }} />
                                 </Link>
                             ) || "Ready for a productivity boost? Click to chat with your AI buddy!"}
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <Link to="/ai-chat" style={{
+                            padding: '0.4rem 0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '8px', fontSize: '0.7rem', fontWeight: 700, color: '#e2e8f0', textDecoration: 'none',
+                            display: 'flex', alignItems: 'center', gap: 6, transition: 'var(--transition)'
+                        }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                            Talk to Buddy <ArrowRight size={12} />
+                        </Link>
                         <button
                             onClick={fetchAiInsight}
                             disabled={insightLoading}
-                            className="glass-card"
                             style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.1)',
                                 cursor: 'pointer',
                                 color: '#94a3b8',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                width: 38, height: 38,
+                                width: 32, height: 32,
                                 borderRadius: '50%',
-                                transition: 'all 0.3s',
-                                border: '1px solid rgba(255,255,255,0.1)'
+                                transition: 'all 0.3s'
                             }}
                             title="Refresh Brain"
                         >
-                            <RotateCcw size={16} style={{ animation: insightLoading ? 'spin 1s linear infinite' : 'none' }} />
+                            <RotateCcw size={14} style={{ animation: insightLoading ? 'spin 1s linear infinite' : 'none' }} />
                         </button>
                     </div>
                 </div>
             )}
 
-            <div className="dashboard-grid-hero" style={{ marginBottom: '2rem' }}>
+            <div className="dashboard-grid-hero" style={{ marginBottom: '1.25rem' }}>
 
                 {/* ── LEFT: Today's Timetable ── */}
-                <div className="glass-card" style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                        <h2 className="card-title">
-                            <Calendar size={20} color="#6366f1" /> Today's Schedule
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>({today})</span>
+                <div className="glass-card" style={{ padding: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <Calendar size={16} color="#6366f1" /> Today's Schedule
+                            <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 400 }}>({today})</span>
                         </h2>
-                        <Link to="/timetable" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.05em' }}>FULL CALENDAR →</Link>
+                        <Link to="/timetable" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>View Full →</Link>
                     </div>
 
                     {loading ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>Loading...</p>
                         : todaySlots.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎉</div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#e2e8f0', marginBottom: '0.5rem' }}>No classes today!</h3>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Use this time to catch up on assignments or relax.</p>
-                                <Link to="/timetable" className="btn-primary" style={{ textDecoration: 'none', fontSize: '0.75rem' }}>Update Schedule</Link>
+                            <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                                <p style={{ fontSize: '1.8rem', marginBottom: 6 }}>🎉</p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No classes today!</p>
+                                <Link to="/timetable" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Set up your timetable →</Link>
                             </div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                 {todaySlots.map(slot => {
                                     const isCurrent = currentClass?._id === slot._id;
                                     const isPast = slot.endMins >= 0 && nowMins > slot.endMins;
                                     return (
-                                        <div key={slot._id} className="list-item" style={{
-                                            background: isCurrent ? `${slot.color}10` : isPast ? 'rgba(15,15,26,0.2)' : 'rgba(15,15,26,0.4)',
-                                            border: isCurrent ? `1.5px solid ${slot.color}30` : '1px solid rgba(255,255,255,0.03)',
-                                            opacity: isPast ? 0.6 : 1
+                                        <div key={slot._id} style={{
+                                            display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.8rem',
+                                            borderRadius: 10, transition: 'all 0.2s',
+                                            background: isCurrent ? `${slot.color}18` : isPast ? 'rgba(15,15,26,0.3)' : 'rgba(15,15,26,0.5)',
+                                            border: isCurrent ? `1.5px solid ${slot.color}55` : '1px solid rgba(99,102,241,0.07)',
+                                            opacity: isPast ? 0.5 : 1
                                         }}>
-                                            <div style={{ width: 4, height: 32, borderRadius: 2, background: slot.color, flexShrink: 0 }} />
+                                            <div style={{ width: 3, height: 36, borderRadius: 2, background: isCurrent ? slot.color : slot.color + '66', flexShrink: 0 }} />
                                             <div style={{ flex: 1 }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                    <p style={{ fontWeight: 800, fontSize: '0.875rem', color: isCurrent ? slot.color : '#f1f5f9' }}>{slot.subject}</p>
-                                                    {isCurrent && <span className="badge-success" style={{ padding: '0 6px', fontSize: '0.55rem' }}>LIVE</span>}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    <p style={{ fontWeight: 700, fontSize: '0.83rem', color: isCurrent ? slot.color : '#e2e8f0' }}>{slot.subject}</p>
+                                                    {isCurrent && <span style={{ fontSize: '0.58rem', fontWeight: 700, color: slot.color, padding: '0.1rem 0.4rem', background: `${slot.color}22`, borderRadius: 8 }}>LIVE</span>}
+                                                    {isPast && <span style={{ fontSize: '0.58rem', color: '#475569', padding: '0.1rem 0.4rem', background: 'rgba(71,85,105,0.2)', borderRadius: 8 }}>Done</span>}
                                                 </div>
-                                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                                                    {slot.label}{slot.startTime ? ` · ${slot.startTime} – ${slot.endTime}` : ''}{slot.room ? ` · 📍 ${slot.room}` : ''}
+                                                <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                                                    {slot.label}{slot.startTime ? ` · ${slot.startTime}${slot.endTime ? `–${slot.endTime}` : ''}` : ''}{slot.room ? ` · 📍${slot.room}` : ''}
                                                 </p>
                                             </div>
-                                            {slot.teacher && <span style={{ fontSize: '0.65rem', color: 'var(--text-soft)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 6 }}>{slot.teacher}</span>}
+                                            {slot.teacher && <p style={{ fontSize: '0.65rem', color: '#64748b', textAlign: 'right' }}>{slot.teacher}</p>}
                                         </div>
                                     );
                                 })}
@@ -363,40 +381,38 @@ const DashboardPage = () => {
                 </div>
 
                 {/* ── RIGHT: Deadlines ── */}
-                <div className="glass-card" style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                        <h2 className="card-title">
-                            <AlertTriangle size={20} color="#f59e0b" /> Critical Deadlines
+                <div className="glass-card" style={{ padding: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <AlertTriangle size={16} color="#f59e0b" /> Upcoming Deadlines
                         </h2>
-                        <Link to="/assignments" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.05em' }}>VIEW ALL →</Link>
+                        <Link to="/assignments" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>All →</Link>
                     </div>
                     {loading ? <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Loading...</p>
                         : upcoming.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✨</div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#e2e8f0', marginBottom: '0.5rem' }}>All Caught Up!</h3>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No upcoming deadlines found. Great job!</p>
+                            <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                                <p style={{ fontSize: '1.8rem', marginBottom: 6 }}>✅</p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No deadlines this week!</p>
                             </div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                {upcoming.slice(0, 5).map(a => {
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {upcoming.slice(0, 6).map(a => {
                                     const days = getDaysLeft(a.deadline);
                                     const urgColor = days <= 1 ? '#ef4444' : days <= 3 ? '#f59e0b' : '#6366f1';
                                     return (
-                                        <div key={a._id} className="list-item" style={{
-                                            background: days <= 1 ? 'rgba(239,68,68,0.05)' : 'rgba(15,15,26,0.4)',
-                                            borderLeft: `3px solid ${urgColor}`
+                                        <div key={a._id} style={{
+                                            padding: '0.65rem 0.8rem', borderRadius: 10,
+                                            background: days <= 1 ? 'rgba(239,68,68,0.06)' : 'rgba(15,15,26,0.5)',
+                                            border: `1px solid ${urgColor}22`, display: 'flex', alignItems: 'center', gap: '0.75rem'
                                         }}>
+                                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: urgColor, flexShrink: 0 }} />
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <p style={{ fontWeight: 700, fontSize: '0.875rem', color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</p>
-                                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>{a.subject?.name || 'Academic'}</p>
+                                                <p style={{ fontWeight: 600, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</p>
+                                                <p style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{a.subject?.name || 'General'}</p>
                                             </div>
-                                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                                                <p style={{ fontSize: '0.75rem', fontWeight: 800, color: urgColor }}>
-                                                    {days <= 0 ? 'Today' : `${days} days left`}
-                                                </p>
-                                                <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>Due {new Date(a.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
-                                            </div>
+                                            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: urgColor, whiteSpace: 'nowrap', padding: '0.15rem 0.45rem', background: `${urgColor}18`, borderRadius: 8 }}>
+                                                {days <= 0 ? '🔴 Today' : `${days}d`}
+                                            </span>
                                         </div>
                                     );
                                 })}
@@ -505,17 +521,17 @@ const DashboardPage = () => {
                 </div>
 
                 {/* ── Quick Actions ── */}
-                <div className="glass-card" style={{ padding: '1.5rem' }}>
-                    <h2 className="card-title">
-                        <Zap size={20} color="#f59e0b" /> Quick Navigator
+                <div className="glass-card" style={{ padding: '1.25rem' }}>
+                    <h2 style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <Zap size={16} color="#f59e0b" /> Quick Actions
                     </h2>
                     <div className="dashboard-grid-quick">
-                        <QuickLink to="/planner" icon={<Target />} label="Planner" color="#f59e0b" />
-                        <QuickLink to="/habits" icon={<TrendingUp />} label="Habits" color="#10b981" />
-                        <QuickLink to="/assignments" icon={<CheckSquare />} label="Tasks" color="#6366f1" />
-                        <QuickLink to="/pomodoro" icon={<Timer />} label="Focus" color="#8b5cf6" />
-                        <QuickLink to="/journal" icon={<BookMarked />} label="Journal" color="#ef4444" />
-                        <QuickLink to="/portfolio" icon={<Code2 />} label="Projects" color="#22d3ee" />
+                        <QuickLink to="/planner" icon={<Target />} label="Plan My Day" color="#f59e0b" />
+                        <QuickLink to="/habits" icon={<TrendingUp />} label="Habit Builder" color="#10b981" />
+                        <QuickLink to="/assignments" icon={<CheckSquare />} label="Add Assignment" color="#6366f1" />
+                        <QuickLink to="/pomodoro" icon={<Timer />} label="Start Pomodoro" color="#8b5cf6" />
+                        <QuickLink to="/journal" icon={<BookMarked />} label="Log Study" color="#ef4444" />
+                        <QuickLink to="/portfolio" icon={<Code2 />} label="Add Project" color="#22d3ee" />
                     </div>
                 </div>
 

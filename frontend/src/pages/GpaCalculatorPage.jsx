@@ -204,13 +204,10 @@ const GpaCalculatorPage = () => {
 
     return (
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem 1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
-                <div>
-                    <h2 className="section-title" style={{ marginBottom: '0.5rem' }}>
-                        <GraduationCap size={28} color="#6366f1" /> Academic Performance
-                    </h2>
-                    <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem' }}>Track your SGPA/CGPA and predict your academic path.</p>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.5rem', fontWeight: 700 }}>
+                    <GraduationCap size={26} color="#6366f1" /> GPA / CGPA Calculator
+                </h2>
             </div>
 
             <div className="gpa-grid" style={{ gap: '1.5rem' }}>
@@ -341,43 +338,37 @@ const GpaCalculatorPage = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                     {/* Final CGPA big card */}
-                    <div className="glass-card dashboard-hero" style={{ padding: '2rem', textAlign: 'center', borderTop: `4px solid ${getGpaColor(finalCGPA)}`, minHeight: 'auto' }}>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 12 }}>
-                            Total Cumulative GPA
+                    <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', borderTop: `4px solid ${getGpaColor(finalCGPA)}`, background: 'rgba(99,102,241,0.05)' }}>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                            <Award size={14} color="#6366f1" /> Current CGPA
                         </p>
-                        <div style={{ fontSize: '5rem', fontWeight: 900, color: getGpaColor(finalCGPA), lineHeight: 0.9, marginBottom: '1rem', fontFamily: 'var(--font-heading)' }}>
+                        <div style={{ fontSize: '4.5rem', fontWeight: 900, color: getGpaColor(finalCGPA), lineHeight: 1, textShadow: `0 0 20px ${getGpaColor(finalCGPA)}33` }}>
                             {finalCGPA || '—'}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-                            <div className="pill-status" style={{ background: `${getGpaColor(finalCGPA)}15`, color: getGpaColor(finalCGPA), border: `1px solid ${getGpaColor(finalCGPA)}30`, padding: '0.4rem 1rem' }}>
-                                {getClassification(finalCGPA)}
-                            </div>
+                        <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 10, fontWeight: 600 }}>{finalCGPA ? 'STREAKING HIGH!' : 'READY TO START'}</p>
+                        <div style={{ marginTop: '1rem', fontSize: '0.82rem', fontWeight: 800, padding: '0.4rem', borderRadius: 8, background: 'rgba(255,255,255,0.03)', color: getGpaColor(finalCGPA) }}>
+                            {getClassification(finalCGPA)}
                         </div>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', fontWeight: 600 }}>
-                            {finalCGPA >= 9 ? 'You are doing exceptionally well!' : finalCGPA >= 7.5 ? 'Keep up the great work!' : finalCGPA > 0 ? 'Consistent effort will bring results.' : 'Begin tracking to see your progress.'}
-                        </p>
                     </div>
 
                     {/* AI Predictor Tool */}
-                    <div className="glass-card ai-banner" style={{ padding: '1.5rem', borderLeft: '4px solid #ec4899', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div className="ai-icon-pulse" style={{ background: 'rgba(236,72,153,0.15)', padding: '0.5rem', borderRadius: '50%' }}>
-                                <RefreshCw size={18} color="#ec4899" />
-                            </div>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Target Predictor</h4>
+                    <div className="glass-card" style={{ padding: '1.25rem', border: '1px solid rgba(236,72,153,0.2)', background: 'linear-gradient(135deg, rgba(236,72,153,0.05), rgba(139,92,246,0.05))', position: 'relative' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+                            <RefreshCw size={16} color="#ec4899" />
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase' }}>Target Predictor</h4>
                         </div>
-                        <div style={{ width: '100%' }}>
-                            <label style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>TARGET CGPA</label>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: 6 }}>SET YOUR TARGET CGPA</label>
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <input
                                     type="number" className="input" step={0.1} min={0} max={10}
                                     value={targetCgpa} onChange={e => setTargetCgpa(e.target.value)}
-                                    style={{ flex: 1, padding: '0.6rem', fontSize: '1.25rem', fontWeight: 900, textAlign: 'center' }}
+                                    style={{ flex: 1, padding: '0.5rem', fontSize: '1.1rem', fontWeight: 800, textAlign: 'center', borderRadius: 10 }}
                                 />
                                 <button
                                     onClick={handleAiAnalysis} disabled={analyzing}
                                     className="btn-primary"
-                                    style={{ flex: 1.5, background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', border: 'none' }}
+                                    style={{ flex: 1.5, background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', border: 'none', fontSize: '0.75rem' }}
                                 >
                                     {analyzing ? <div className="spinner-small" /> : 'Predict Path 🚀'}
                                 </button>
@@ -385,27 +376,27 @@ const GpaCalculatorPage = () => {
                         </div>
 
                         {aiAnalysis && (
-                            <div className="animate-slide-scale" style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.25)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>MIN. SGPA NEEDED:</span>
-                                    <span style={{ fontSize: '1rem', fontWeight: 900, color: '#ec4899' }}>{aiAnalysis.requiredSgpa}</span>
+                            <div className="fade-in" style={{ padding: '0.85rem', background: 'rgba(0,0,0,0.2)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>REQUIRED SGPA:</span>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ec4899' }}>{aiAnalysis.requiredSgpa}</span>
                                 </div>
-                                <div style={{ marginBottom: 12 }}>
-                                    <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3 }}>
+                                <div style={{ marginBottom: 8 }}>
+                                    <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
                                         <div style={{
-                                            height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #ec4899, #8b5cf6)',
+                                            height: '100%', borderRadius: 2, background: '#ec4899',
                                             width: `${Math.min((aiAnalysis.requiredSgpa / 10) * 100, 100)}%`
                                         }} />
                                     </div>
                                 </div>
-                                <p style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.6, fontWeight: 500, marginBottom: '0.75rem' }}>
+                                <p style={{ fontSize: '0.75rem', color: '#cbd5e1', lineHeight: 1.4, fontWeight: 500 }}>
                                     {aiAnalysis.advice}
                                 </p>
-                                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                                    <span className="badge" style={{
-                                        background: aiAnalysis.difficulty === 'Hard' ? 'rgba(239,68,68,0.15)' : aiAnalysis.difficulty === 'Moderate' ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
-                                        color: aiAnalysis.difficulty === 'Hard' ? '#ef4444' : aiAnalysis.difficulty === 'Moderate' ? '#f59e0b' : '#10b981',
-                                        border: '1px solid currentColor', opacity: 0.9
+                                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
+                                    <span style={{
+                                        fontSize: '0.6rem', padding: '2px 8px', borderRadius: 10, fontWeight: 800,
+                                        background: aiAnalysis.difficulty === 'Hard' ? '#ef4444' : aiAnalysis.difficulty === 'Moderate' ? '#f59e0b' : '#10b981',
+                                        color: '#fff', textTransform: 'uppercase'
                                     }}>
                                         {aiAnalysis.difficulty} Difficulty
                                     </span>

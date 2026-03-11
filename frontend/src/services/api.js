@@ -62,4 +62,3 @@ export const aiChat = (data) => API.post('/ai/chat', data);
 export const summarizeText = (data) => API.post('/ai/summarize', data);
 export const optimizeSchedule = (data) => API.post('/ai/optimize', data);
 export const getGpaStrategy = (data) => API.post('/ai/gpa-strategy', data);
-export const analyzeUser = (data) => API.post('/ai/analyze-user', data);
