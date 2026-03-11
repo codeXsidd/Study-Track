@@ -19,7 +19,11 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --glass-bg: rgba(15, 15, 30, 0.6);
+  --workspace-accent: #22d3ee;
+  --productivity-accent: #f59e0b;
+  --performance-accent: #ef4444;
 }
 
 * {
@@ -167,6 +171,37 @@ body {
 
 .animate-slide-scale {
   animation: slideScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes page-exit {
+  from { opacity: 1; transform: scale(1); filter: blur(0); }
+  to { opacity: 0; transform: scale(0.98); filter: blur(4px); }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: scale(1.02); filter: blur(4px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+.page-exit { animation: page-exit 0.3s forwards ease-in-out; }
+.page-enter { animation: page-enter 0.3s forwards ease-out; }
+
+.workspace-card {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.05), rgba(15, 15, 30, 0.4));
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  box-shadow: 0 4px 15px rgba(34, 211, 238, 0.05);
+}
+
+.workspace-card:hover { border-color: rgba(34, 211, 238, 0.3); }
+
+.productivity-card {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(15, 15, 30, 0.4));
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.performance-card {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(15, 15, 30, 0.4));
+  border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
 @keyframes pulse-ring {
@@ -525,6 +560,12 @@ textarea {
   .dashboard-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+
+  .dash-ai-banner {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem !important;
   }
 }
 

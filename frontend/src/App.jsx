@@ -25,14 +25,44 @@ import FocusRoomPage from './pages/FocusRoomPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AiChatPage from './pages/AiChatPage';
 
-const Layout = ({ children }) => (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
-        <Sidebar />
-        <main className="main-content" style={{ flex: 1, overflowY: 'auto' }}>
-            {children}
-        </main>
-    </div>
-);
+import { useLocation } from 'react-router-dom';
+
+const Layout = ({ children }) => {
+    const location = useLocation();
+    const [isTransitioning, setIsTransitioning] = React.useState(false);
+    const [displayChildren, setDisplayChildren] = React.useState(children);
+
+    React.useEffect(() => {
+        if (location.pathname !== displayChildren?.props?.children?.type?.name) { // Simple path change check
+            setIsTransitioning(true);
+            const timer = setTimeout(() => {
+                setDisplayChildren(children);
+                setIsTransitioning(false);
+                // The "Auto Reload" feature - ensuring window scroll and fresh state feel
+                window.scrollTo(0, 0);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [location.pathname]);
+
+    return (
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
+            <Sidebar />
+            <main className={`main-content ${isTransitioning ? 'page-exit' : 'page-enter'}`} style={{ flex: 1, overflowY: 'auto' }}>
+                {displayChildren}
+                {isTransitioning && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(3,3,11,0.4)', backdropFilter: 'blur(8px)',
+                        zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <div className="spinner-small" style={{ width: 40, height: 40, borderWidth: 3 }} />
+                    </div>
+                )}
+            </main>
+        </div>
+    );
+};
 const P = ({ children }) => <ProtectedRoute><Layout>{children}</Layout></ProtectedRoute>;
 
 const AppRoutes = () => {

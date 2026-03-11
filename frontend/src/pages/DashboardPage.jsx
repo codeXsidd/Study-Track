@@ -5,7 +5,8 @@ import API, { getUpcoming, getHabits, toggleHabit, aiChat } from '../services/ap
 import {
     BookOpen, Calendar, CheckCircle, AlertTriangle, TrendingUp, Clock,
     Award, Timer, GraduationCap, BookMarked, Code2, Users, ClipboardList,
-    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check, Activity, Circle, CheckCircle2, Bot, RotateCcw
+    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check, Activity, Circle, CheckCircle2, Bot, RotateCcw,
+    Layers, Briefcase, BarChart4, Lightbulb
 } from 'lucide-react';
 
 // ---------- helpers ----------
@@ -23,7 +24,7 @@ const timeToMinutes = (t) => {
 
 // ---------- sub-components ----------
 const QuickLink = ({ to, icon, label, color, count }) => (
-    <a href={to} onClick={(e) => { e.preventDefault(); window.location.href = to; }} style={{ textDecoration: 'none' }}>
+    <Link to={to} style={{ textDecoration: 'none' }}>
         <div className="glass-card" style={{
             padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem',
             cursor: 'pointer', transition: 'all 0.2s', border: '1px solid rgba(99,102,241,0.08)', borderRadius: 12
@@ -39,7 +40,7 @@ const QuickLink = ({ to, icon, label, color, count }) => (
             </div>
             <ArrowRight size={13} color="#64748b" />
         </div>
-    </a>
+    </Link>
 );
 
 const MiniStat = ({ label, value, color, icon }) => (
@@ -243,12 +244,11 @@ const DashboardPage = () => {
             {/* ── KEY STATS ROW ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                 {[
-                    { label: 'Upcoming Deadlines', value: upcoming.length, color: '#f59e0b', icon: <Clock size={18} />, sub: `${urgentCount} urgent` },
-                    { label: 'Study Streak', value: streak > 0 ? `🔥 ${streak}d` : '—', color: '#ef4444', icon: <Flame size={18} />, sub: streak > 0 ? 'Keep it up!' : 'Start journaling!' },
-                    { label: 'Today\'s Classes', value: todaySlots.length, color: '#10b981', icon: <Calendar size={18} />, sub: currentClass ? '📍 Class now' : nextClass ? '⏭ Next coming' : 'All done!' },
-                    { label: 'Productivity Score', value: '88%', color: '#22d3ee', icon: <TrendingUp size={18} />, sub: 'Top 5% this week' }
+                    { label: 'Upcoming Deadlines', value: upcoming.length, color: '#f59e0b', icon: <Clock size={18} />, sub: `${urgentCount} urgent`, class: 'productivity-card' },
+                    { label: 'Study Streak', value: streak > 0 ? `🔥 ${streak}d` : '—', color: '#ef4444', icon: <Flame size={18} />, sub: streak > 0 ? 'Keep it up!' : 'Start journaling!', class: 'performance-card' },
+                    { label: 'Today\'s Classes', value: todaySlots.length, color: '#10b981', icon: <Calendar size={18} />, sub: currentClass ? '📍 Class now' : nextClass ? '⏭ Next coming' : 'All done!', class: 'workspace-card' }
                 ].map((s, idx) => (
-                    <div key={s.label} className="glass-card" style={{ padding: '1.25rem', borderLeft: `4px solid ${s.color}`, animationDelay: `${idx * 0.1}s`, background: `linear-gradient(180deg, ${s.color}05 0%, rgba(13,11,26,0.5) 100%)` }}>
+                    <div key={s.label} className={`glass-card ${s.class}`} style={{ padding: '1.25rem', borderLeft: `4px solid ${s.color}`, animationDelay: `${idx * 0.1}s` }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                             <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</p>
                             <div style={{ color: s.color, opacity: 0.7 }}>{s.icon}</div>
@@ -261,70 +261,38 @@ const DashboardPage = () => {
 
             {/* AI Smart Suggestion Banner */}
             {(urgentCount > 0 || aiInsight) && (
-                <div className="glass-card animate-slide-scale" style={{
+                <div className="glass-card animate-slide-scale dash-ai-banner" style={{
                     marginBottom: '1.5rem',
-                    padding: '1.25rem 1.5rem',
+                    padding: '1.5rem',
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%)',
+                    border: '1px solid rgba(99,102,241,0.2)',
                     display: 'flex',
+                    flexWrap: 'wrap',
                     alignItems: 'center',
-                    gap: '1.25rem',
-                    background: urgentCount > 0
-                        ? 'linear-gradient(90deg, rgba(239,68,68,0.12), rgba(13,11,26,0.5))'
-                        : 'linear-gradient(90deg, rgba(16,185,129,0.12), rgba(13,11,26,0.5))',
-                    borderLeft: `4px solid ${urgentCount > 0 ? '#ef4444' : '#10b981'}`,
-                    position: 'relative',
-                    overflow: 'hidden'
+                    gap: '1.5rem'
                 }}>
-                    <div className="ai-icon-pulse" style={{
-                        background: urgentCount > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
-                        padding: '0.6rem', borderRadius: '50%', flexShrink: 0
-                    }}>
-                        <Bot size={24} color={urgentCount > 0 ? '#ef4444' : '#10b981'} />
+                    <div className="ai-icon-pulse hide-mobile" style={{ background: 'var(--primary)', padding: '1rem', borderRadius: '15px', flexShrink: 0 }}>
+                        <Bot size={32} color="white" />
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.2rem' }}>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                AI Smart Suggestion
-                            </h4>
+                    <div style={{ flex: 1, minWidth: '260px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                            <h3 className="gradient-text" style={{ fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Intelligence Hub</h3>
                             {insightLoading && <div className="spinner-small" />}
                         </div>
-                        <div style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.5, fontWeight: 500 }}>
-                            {insightLoading ? (
-                                <span style={{ opacity: 0.7, fontStyle: 'italic' }}>Thinking...</span>
-                            ) : (
-                                <a href="/ai-chat" onClick={(e) => { e.preventDefault(); window.location.href = '/ai-chat'; }} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                    {aiInsight || (
-                                        <>You have <b>{urgentCount} urgent deadline{urgentCount > 1 ? 's' : ''}</b>. Click to chat about a study strategy!</>
-                                    )}
-                                </a>
-                            ) || "Ready for a productivity boost? Click to chat with your AI buddy!"}
+                        <p style={{ fontSize: '0.95rem', color: '#e2e8f0', lineHeight: 1.5, fontWeight: 500 }}>
+                            {insightLoading ? 'Analyzing your workspace performance...' : aiInsight || "Welcome back! I've analyzed your upcoming tasks. Ready to optimize your study session?"}
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
+                            <div className="badge badge-primary"><Layers size={12} /> Workspace Optimized</div>
+                            <div className="badge badge-success"><BarChart4 size={12} /> Performance: Peak</div>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                        <a href="/ai-chat" onClick={(e) => { e.preventDefault(); window.location.href = '/ai-chat'; }} style={{
-                            padding: '0.4rem 0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '8px', fontSize: '0.7rem', fontWeight: 700, color: '#e2e8f0', textDecoration: 'none',
-                            display: 'flex', alignItems: 'center', gap: 6, transition: 'var(--transition)'
-                        }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
-                            Talk to Buddy <ArrowRight size={12} />
-                        </a>
-                        <button
-                            onClick={fetchAiInsight}
-                            disabled={insightLoading}
-                            style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                cursor: 'pointer',
-                                color: '#94a3b8',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: 32, height: 32,
-                                borderRadius: '50%',
-                                transition: 'all 0.3s'
-                            }}
-                            title="Refresh Brain"
-                        >
-                            <RotateCcw size={14} style={{ animation: insightLoading ? 'spin 1s linear infinite' : 'none' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <Link to="/ai-chat" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', fontSize: '0.75rem', padding: '0.5rem 1rem' }}>
+                            Open Insight Center
+                        </Link>
+                        <button onClick={fetchAiInsight} className="btn-secondary" style={{ padding: '0.5rem', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: '#94a3b8' }}>
+                            <RotateCcw size={14} /> Refresh Brain
                         </button>
                     </div>
                 </div>
@@ -339,7 +307,7 @@ const DashboardPage = () => {
                             <Calendar size={16} color="#6366f1" /> Today's Schedule
                             <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 400 }}>({today})</span>
                         </h2>
-                        <a href="/timetable" onClick={(e) => { e.preventDefault(); window.location.href = '/timetable'; }} style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>View Full →</a>
+                        <Link to="/timetable" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>View Full →</Link>
                     </div>
 
                     {loading ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>Loading...</p>
@@ -347,7 +315,7 @@ const DashboardPage = () => {
                             <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                                 <p style={{ fontSize: '1.8rem', marginBottom: 6 }}>🎉</p>
                                 <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No classes today!</p>
-                                <a href="/timetable" onClick={(e) => { e.preventDefault(); window.location.href = '/timetable'; }} style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Set up your timetable →</a>
+                                <Link to="/timetable" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Set up your timetable →</Link>
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -387,7 +355,7 @@ const DashboardPage = () => {
                         <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
                             <AlertTriangle size={16} color="#f59e0b" /> Upcoming Deadlines
                         </h2>
-                        <a href="/assignments" onClick={(e) => { e.preventDefault(); window.location.href = '/assignments'; }} style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>All →</a>
+                        <Link to="/assignments" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>All →</Link>
                     </div>
                     {loading ? <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Loading...</p>
                         : upcoming.length === 0 ? (
@@ -430,7 +398,7 @@ const DashboardPage = () => {
                         <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
                             <Target size={16} color="#f59e0b" /> Today's Focus
                         </h2>
-                        <a href="/planner" onClick={(e) => { e.preventDefault(); window.location.href = '/planner'; }} style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Plan Day →</a>
+                        <Link to="/planner" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Plan Day →</Link>
                     </div>
                     {loading ? (
                         <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>Loading...</p>
@@ -438,7 +406,7 @@ const DashboardPage = () => {
                         <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                             <p style={{ fontSize: '1.8rem', marginBottom: 6 }}>🎯</p>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No tasks planned for today.</p>
-                            <a href="/planner" onClick={(e) => { e.preventDefault(); window.location.href = '/planner'; }} style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Add tasks →</a>
+                            <Link to="/planner" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Add tasks →</Link>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -476,7 +444,7 @@ const DashboardPage = () => {
                         <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
                             <Activity size={16} color="#ec4899" /> Daily Habits
                         </h2>
-                        <a href="/habits" onClick={(e) => { e.preventDefault(); window.location.href = '/habits'; }} style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Manage →</a>
+                        <Link to="/habits" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Manage →</Link>
                     </div>
                     {loading ? (
                         <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>Loading...</p>
@@ -484,7 +452,7 @@ const DashboardPage = () => {
                         <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                             <p style={{ fontSize: '1.8rem', marginBottom: 6 }}>🌱</p>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No habits added yet.</p>
-                            <a href="/habits" onClick={(e) => { e.preventDefault(); window.location.href = '/habits'; }} style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Build a habit →</a>
+                            <Link to="/habits" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Build a habit →</Link>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -542,13 +510,13 @@ const DashboardPage = () => {
                         <h2 style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 7 }}>
                             <BookMarked size={16} color="#818cf8" /> Recent Study Logs
                         </h2>
-                        <a href="/journal" onClick={(e) => { e.preventDefault(); window.location.href = '/journal'; }} style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>View All →</a>
+                        <Link to="/journal" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>View All →</Link>
                     </div>
                     {journalEntries.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                             <p style={{ fontSize: '1.5rem', marginBottom: 6 }}>📖</p>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No study logs yet.</p>
-                            <a href="/journal" onClick={(e) => { e.preventDefault(); window.location.href = '/journal'; }} style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Start journaling →</a>
+                            <Link to="/journal" style={{ fontSize: '0.78rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Start journaling →</Link>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

@@ -56,32 +56,21 @@ const Sidebar = () => {
             {!collapsed && <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', paddingLeft: '0.75rem' }}>{title}</p>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                 {links.map(link => (
-                    <a
-                        key={link.to}
-                        href={link.to}
-                        title={collapsed ? link.label : ''}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            window.location.href = link.to;
-                        }}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem',
-                            borderRadius: '12px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600,
-                            background: isActive(link.to) ? 'rgba(99,102,241,0.12)' : 'transparent',
-                            color: isActive(link.to) ? '#a78bfa' : '#94a3b8',
-                            border: isActive(link.to) ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
-                            transition: 'var(--transition)',
-                            position: 'relative'
-                        }}
-                        onMouseEnter={e => !isActive(link.to) && (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                        onMouseLeave={e => !isActive(link.to) && (e.currentTarget.style.background = 'transparent')}
-                    >
+                    <Link key={link.to} to={link.to} title={collapsed ? link.label : ''} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem',
+                        borderRadius: '12px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600,
+                        background: isActive(link.to) ? 'rgba(99,102,241,0.12)' : 'transparent',
+                        color: isActive(link.to) ? '#a78bfa' : '#94a3b8',
+                        border: isActive(link.to) ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
+                        transition: 'var(--transition)',
+                        position: 'relative'
+                    }} onMouseEnter={e => !isActive(link.to) && (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')} onMouseLeave={e => !isActive(link.to) && (e.currentTarget.style.background = 'transparent')}>
                         {link.icon}
                         {!collapsed && <span>{link.label}</span>}
                         {isActive(link.to) && (
                             <div style={{ position: 'absolute', right: '0.75rem', width: 4, height: 4, borderRadius: '50%', background: '#a78bfa', boxShadow: '0 0 8px #a78bfa' }} />
                         )}
-                    </a>
+                    </Link>
                 ))}
             </div>
         </div>
@@ -100,12 +89,12 @@ const Sidebar = () => {
             {/* Logo / Header */}
             <div className="sidebar-header" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 {!collapsed && (
-                    <a href="/" onClick={(e) => { e.preventDefault(); window.location.href = '/'; }} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                    <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
                         <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <BookOpen size={18} color="white" />
                         </div>
                         <span className="gradient-text" style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em' }}>StudyTrack</span>
-                    </a>
+                    </Link>
                 )}
                 <button onClick={() => setCollapsed(!collapsed)} style={{
                     background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer',
@@ -157,9 +146,9 @@ const Sidebar = () => {
 
             {/* Bottom Actions */}
             <div style={{ padding: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="sidebar-bottom">
-                <a href="/planner" onClick={(e) => { e.preventDefault(); window.location.href = '/planner'; }} title={collapsed ? "Daily Plan" : ""} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <Link to="/planner" title={collapsed ? "Daily Plan" : ""} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
                     <Sparkles size={16} /> {!collapsed && <span className="hide-mobile">Plan Today</span>}
-                </a>
+                </Link>
                 <button onClick={() => { logout(); navigate('/login'); }} title={collapsed ? "Logout" : ""} style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: '0.75rem', padding: '0.6rem 0.75rem', borderRadius: '10px', background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', width: '100%' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <LogOut size={18} /> {!collapsed && <span className="hide-mobile">Log Out</span>}
                 </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target, Layers, BarChart4, Briefcase, Activity } from 'lucide-react';
 import { aiChat } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -19,6 +19,7 @@ const AiChatPage = () => {
     });
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'workspace', 'productivity', 'performance'
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -89,36 +90,44 @@ const AiChatPage = () => {
             {/* Sidebar / History (Desktop only) */}
             <div className="glass-card hide-mobile" style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.25rem' }}>
                 <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <MessageSquare size={16} /> AI Activity
+                    <Bot size={16} /> Intelligence Center
                 </h3>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }} className="hide-scrollbar">
-                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)' }}>
-                        <p style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 700, marginBottom: 4 }}>CURRENT STATUS</p>
-                        <p style={{ fontSize: '0.82rem', color: '#e2e8f0', lineHeight: 1.4 }}>Analyzing your study patterns to provide better suggestions.</p>
-                    </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                    {[
+                        { id: 'chat', label: 'AI Chat', icon: <MessageSquare size={16} /> },
+                        { id: 'workspace', label: 'Workspace', icon: <Layers size={16} /> },
+                        { id: 'productivity', label: 'Productivity', icon: <Activity size={16} /> },
+                        { id: 'performance', label: 'Performance', icon: <BarChart4 size={16} /> }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: 12, padding: '0.75rem 1rem', borderRadius: 12,
+                                border: '1px solid transparent', background: activeTab === tab.id ? 'rgba(99,102,241,0.15)' : 'transparent',
+                                color: activeTab === tab.id ? '#818cf8' : '#94a3b8', fontWeight: activeTab === tab.id ? 700 : 500,
+                                cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
+                                borderColor: activeTab === tab.id ? 'rgba(99,102,241,0.2)' : 'transparent'
+                            }}
+                        >
+                            {tab.icon} {tab.label}
+                        </button>
+                    ))}
+                </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <p style={{ fontSize: '0.7rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specialized Tools</p>
-                        <button onClick={() => suggest("Analyze my productivity for the last 7 days based on my journal and habits.")} style={{
-                            width: '100%', padding: '0.75rem', borderRadius: '10px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)',
-                            color: '#10b981', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8
-                        }}>
-                            <Zap size={14} /> Productivity Report
-                        </button>
-                        <button onClick={() => suggest("Create a study workspace plan for my upcoming exams.")} style={{
-                            width: '100%', padding: '0.75rem', borderRadius: '10px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)',
-                            color: '#818cf8', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8
-                        }}>
-                            <Target size={14} /> Workspace Strategy
-                        </button>
-                        <button onClick={() => suggest("Predict my exam performance based on my current study hours.")} style={{
-                            width: '100%', padding: '0.75rem', borderRadius: '10px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.1)',
-                            color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8
-                        }}>
-                            <TrendingUp size={14} /> Performance Predictor
-                        </button>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }} className="hide-scrollbar">
+                    <div className="workspace-card" style={{ padding: '1rem', borderRadius: '12px', border: '1px solid rgba(34,211,238,0.1)' }}>
+                        <p style={{ fontSize: '0.75rem', color: '#22d3ee', fontWeight: 700, marginBottom: 4 }}>AI INSIGHT</p>
+                        <p style={{ fontSize: '0.82rem', color: '#e2e8f0', lineHeight: 1.4 }}>
+                            {activeTab === 'workspace' ? "Your study workspace is 85% optimized for deep focus." : 
+                             activeTab === 'productivity' ? "You're most productive between 10 AM and 2 PM." : 
+                             activeTab === 'performance' ? "Current trajectory: GPA 3.8-4.0 based on current efforts." : 
+                             "Analyzing your study patterns to provide better suggestions."}
+                        </p>
                     </div>
                 </div>
+
                 <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <button onClick={clearChat} style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.1)', color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         <Trash2 size={14} /> Clear History
@@ -128,9 +137,8 @@ const AiChatPage = () => {
 
             {/* Main Chat Area */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
-
-                {/* Chat Display */}
-                <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0, background: 'rgba(15,15,30,0.4)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                {activeTab === 'chat' ? (
+                    <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0, background: 'rgba(15,15,30,0.4)', border: '1px solid rgba(255,255,255,0.05)' }}>
 
                     {/* Header */}
                     <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.2)' }}>
@@ -239,6 +247,53 @@ const AiChatPage = () => {
                         </form>
                     </div>
                 </div>
+                ) : (
+                    <div className="glass-card animate-slide-scale" style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+                        <div style={{ maxWidth: '8000px', margin: '0 auto' }}>
+                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '2rem' }}>
+                                <div style={{ 
+                                    padding: '1rem', borderRadius: '18px', 
+                                    background: activeTab === 'workspace' ? 'rgba(34,211,238,0.1)' : activeTab === 'productivity' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: activeTab === 'workspace' ? '#22d3ee' : activeTab === 'productivity' ? '#f59e0b' : '#ef4444'
+                                }}>
+                                    {activeTab === 'workspace' ? <Layers size={32} /> : activeTab === 'productivity' ? <Activity size={32} /> : <BarChart4 size={32} />}
+                                </div>
+                                <div>
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>AI {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Analysis</h2>
+                                    <p style={{ color: '#94a3b8' }}>Real-time intelligence based on your study patterns.</p>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                                <div className={`${activeTab}-card`} style={{ padding: '1.5rem', borderRadius: 16 }}>
+                                    <h4 style={{ fontWeight: 800, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <Bot size={18} /> AI Summary
+                                    </h4>
+                                    <p style={{ fontSize: '0.95rem', lineHeight: 1.6, color: '#ced4da' }}>
+                                        {activeTab === 'workspace' ? "Your study environment is looking sharp. I've noticed a pattern in your late-night notes—try grouping them by week to see better connections. Your current project 'Main Thesis' is 70% complete." :
+                                         activeTab === 'productivity' ? "You've gained 15% efficiency in the last 7 days. Your focus sessions are getting longer. The AI recommends a 5-minute break every 50 minutes for sustained memory retention." :
+                                         "Current Academic Performance is 'Excellent'. Based on your assignment scores and GPA, you're on track for your target goal. Recommendation: Focus on higher-weightage subjects in the next 3 days."}
+                                    </p>
+                                </div>
+                                <div className="glass-card" style={{ padding: '1.5rem', borderRadius: 16 }}>
+                                    <h4 style={{ fontWeight: 800, marginBottom: 12, color: 'var(--primary)' }}>Actionable Insights</h4>
+                                    <ul style={{ paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: 12, fontSize: '0.9rem', color: '#adb5bd' }}>
+                                        <li>Optimize subject tags in the Settings</li>
+                                        <li>Schedule a mandatory break at 2:00 PM</li>
+                                        <li>Review the 'Calculus' notes this evening</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div className="glass-card" style={{ padding: '2.5rem', textAlign: 'center', background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(0,0,0,0.15))' }}>
+                                <Sparkles size={40} color="#818cf8" style={{ marginBottom: '1.25rem' }} />
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: 8 }}>Need specific advice?</h3>
+                                <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>Switch back to the AI Chat and ask me anything about your academic journey!</p>
+                                <button onClick={() => setActiveTab('chat')} className="btn-primary" style={{ padding: '0.75rem 2rem' }}>Return to Chat Buddy</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <style>{`
