@@ -24,7 +24,6 @@ import HabitBuilderPage from './pages/HabitBuilderPage';
 import FocusRoomPage from './pages/FocusRoomPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AiChatPage from './pages/AiChatPage';
-import AiAssistantPanel from './components/AiAssistantPanel';
 
 import { useLocation } from 'react-router-dom';
 
@@ -49,23 +48,18 @@ const Layout = ({ children }) => {
     return (
         <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
             <Sidebar />
-            <main className={`main-content ${isTransitioning ? 'page-exit' : 'page-enter'}`} style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+            <main className={`main-content ${isTransitioning ? 'page-exit' : 'page-enter'}`} style={{ flex: 1, overflowY: 'auto' }}>
                 {displayChildren}
                 {isTransitioning && (
                     <div style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(3,3,11,0.6)', backdropFilter: 'blur(12px)',
-                        zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.3s ease'
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(3,3,11,0.4)', backdropFilter: 'blur(8px)',
+                        zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                            <div className="spinner-small" style={{ width: 40, height: 40, borderWidth: 3, borderColor: 'rgba(99,102,241,0.2)', borderTopColor: '#818cf8' }} />
-                            <p style={{ fontSize: '0.8rem', color: '#818cf8', fontWeight: 600, letterSpacing: '0.05em' }}>SYNCING...</p>
-                        </div>
+                        <div className="spinner-small" style={{ width: 40, height: 40, borderWidth: 3 }} />
                     </div>
                 )}
             </main>
-            <AiAssistantPanel />
         </div>
     );
 };

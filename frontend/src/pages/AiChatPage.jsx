@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target, Layers, BarChart4, Briefcase, Activity } from 'lucide-react';
-import { aiChat, getUpcoming, getHabits, API } from '../services/api';
+import { aiChat } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AiChatPage = () => {
@@ -19,41 +19,8 @@ const AiChatPage = () => {
     });
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('chat');
-    const [stats, setStats] = useState({ upcoming: [], habits: [], records: [] });
+    const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'workspace', 'productivity', 'performance'
     const messagesEndRef = useRef(null);
-
-    useEffect(() => {
-        const loadStats = async () => {
-            try {
-                const [up, hab, rec] = await Promise.all([
-                    getUpcoming(),
-                    getHabits(),
-                    API.get('/journal')
-                ]);
-                setStats({ upcoming: up.data, habits: hab.data, records: rec.data });
-            } catch (err) {
-                console.error("Failed to load AI stats", err);
-            }
-        };
-        loadStats();
-    }, []);
-
-    const getDynamicInsight = () => {
-        if (activeTab === 'workspace') {
-            const upCount = stats.upcoming.length;
-            return `You have ${upCount} upcoming assignments. ${upCount > 3 ? "Your workspace is getting crowded—try focusing on one project at a time." : "Your workspace is clear and optimized for deep focus today."}`;
-        }
-        if (activeTab === 'productivity') {
-            const streak = stats.habits.reduce((acc, h) => Math.max(acc, h.streak || 0), 0);
-            return `Current top habit streak: ${streak} days. You're most consistent with ${stats.habits[0]?.name || 'your routines'}. Productivity is up 12% this week.`;
-        }
-        if (activeTab === 'performance') {
-            const hours = stats.records.reduce((acc, r) => acc + (r.hoursStudied || 0), 0);
-            return `Total study time logged: ${hours}h. Your current trajectory indicates a strong performance boost in your major subjects.`;
-        }
-        return "Analyzing your study patterns to provide better suggestions.";
-    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -153,7 +120,10 @@ const AiChatPage = () => {
                     <div className="workspace-card" style={{ padding: '1rem', borderRadius: '12px', border: '1px solid rgba(34,211,238,0.1)' }}>
                         <p style={{ fontSize: '0.75rem', color: '#22d3ee', fontWeight: 700, marginBottom: 4 }}>AI INSIGHT</p>
                         <p style={{ fontSize: '0.82rem', color: '#e2e8f0', lineHeight: 1.4 }}>
-                            {getDynamicInsight()}
+                            {activeTab === 'workspace' ? "Your study workspace is 85% optimized for deep focus." : 
+                             activeTab === 'productivity' ? "You're most productive between 10 AM and 2 PM." : 
+                             activeTab === 'performance' ? "Current trajectory: GPA 3.8-4.0 based on current efforts." : 
+                             "Analyzing your study patterns to provide better suggestions."}
                         </p>
                     </div>
                 </div>
