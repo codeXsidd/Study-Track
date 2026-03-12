@@ -2,6 +2,37 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure Multer for image uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/ai';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `ai-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png|webp/;
+        const mimetype = filetypes.test(file.mimetype);
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        cb(new Error("Only images (jpeg, jpg, png, webp) are allowed"));
+    }
+});
 
 const getAIModel = (modelName, key, version = 'v1') => {
     try {
@@ -13,7 +44,7 @@ const getAIModel = (modelName, key, version = 'v1') => {
     }
 };
 
-const callAI = async (prompt, systemInstruction = "You are a helpful AI study assistant.") => {
+const callAI = async (prompt, systemInstruction = "You are a helpful AI study assistant.", imagePath = null) => {
     let key = process.env.GEMINI_API_KEY;
     if (!key || key.trim() === "") throw new Error("API_KEY_MISSING");
 
@@ -41,7 +72,21 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
             const activeModel = getAIModel(modelName, key, 'v1');
             if (!activeModel) continue;
 
-            const result = await activeModel.generateContent(fullPrompt);
+            let result;
+            if (imagePath && fs.existsSync(imagePath)) {
+                const imageData = fs.readFileSync(imagePath);
+                const imageParts = [
+                    {
+                        inlineData: {
+                            data: imageData.toString('base64'),
+                            mimeType: 'image/jpeg' // This might need to be dynamic based on extension
+                        }
+                    }
+                ];
+                result = await activeModel.generateContent([fullPrompt, ...imageParts]);
+            } else {
+                result = await activeModel.generateContent(fullPrompt);
+            }
             const response = await result.response;
             const text = response.text();
 
@@ -189,6 +234,41 @@ router.post('/chat', auth, async (req, res) => {
             } else {
                 res.json({ reply: "I'm having trouble connecting right now. Please try again in a moment." });
             }
+        }
+    } catch (err) {
+        res.status(500).json({ message: "AI Error", error: err.message });
+    }
+});
+
+
+// 3b. AI Chat with Image
+router.post('/chat-image', auth, upload.single('image'), async (req, res) => {
+    try {
+        const { message, context } = req.body;
+        const imagePath = req.file ? req.file.path : null;
+
+        if (!message && !imagePath) {
+            return res.status(400).json({ message: "Message or image required" });
+        }
+
+        let prompt = message || "Please analyze this image.";
+        if (context) prompt += `\n\nContext from previous conversation: ${context}`;
+
+        try {
+            const responseText = await callAI(prompt, "You are a helpful AI study assistant. You can see images. Analyze the provided image if any and help the student.", imagePath);
+            
+            // Clean up the uploaded file after processing
+            if (imagePath && fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+
+            res.json({ reply: responseText.trim() });
+        } catch (e) {
+            console.error('❌ AI Chat Image Error:', e);
+            if (imagePath && fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+            res.status(500).json({ reply: "I'm having trouble analyzing images right now. " + e.message });
         }
     } catch (err) {
         res.status(500).json({ message: "AI Error", error: err.message });

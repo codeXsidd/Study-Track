@@ -59,6 +59,9 @@ export const toggleHabit = (id, date) => API.post(`/habits/${id}/toggle`, { date
 export const breakDownTask = (data) => API.post('/ai/breakdown', data);
 export const generateFlashcards = (data) => API.post('/ai/flashcards', data);
 export const aiChat = (data) => API.post('/ai/chat', data);
+export const aiChatImage = (formData) => API.post('/ai/chat-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+});
 export const summarizeText = (data) => API.post('/ai/summarize', data);
 export const optimizeSchedule = (data) => API.post('/ai/optimize', data);
 export const getGpaStrategy = (data) => API.post('/ai/gpa-strategy', data);

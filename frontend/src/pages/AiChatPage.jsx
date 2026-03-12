@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target } from 'lucide-react';
-import { aiChat } from '../services/api';
+import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target, Image, X } from 'lucide-react';
+import { aiChat, aiChatImage } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AiChatPage = () => {
@@ -19,7 +19,10 @@ const AiChatPage = () => {
     });
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
     const messagesEndRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -30,18 +33,60 @@ const AiChatPage = () => {
         localStorage.setItem('study_chat_history', JSON.stringify(messages));
     }, [messages]);
 
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error("Image too large. Max 5MB.");
+                return;
+            }
+            setSelectedImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewUrl(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setSelectedImage(null);
+        setPreviewUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const handleSend = async (val = input) => {
         const text = val.trim();
-        if (!text || loading) return;
+        if (!text && !selectedImage) return;
+        if (loading) return;
 
-        const userMsg = { id: Date.now().toString(), role: 'user', text: text, timestamp: new Date() };
+        const userMsg = { 
+            id: Date.now().toString(), 
+            role: 'user', 
+            text: text, 
+            image: previewUrl,
+            timestamp: new Date() 
+        };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
+        setPreviewUrl(null);
+        const currentImage = selectedImage;
+        setSelectedImage(null);
         setLoading(true);
 
         try {
-            const context = messages.slice(-5).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n');
-            const res = await aiChat({ message: text, context });
+            let res;
+            if (currentImage) {
+                const formData = new FormData();
+                formData.append('message', text);
+                formData.append('image', currentImage);
+                const context = messages.slice(-5).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n');
+                formData.append('context', context);
+                res = await aiChatImage(formData);
+            } else {
+                const context = messages.slice(-5).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.text}`).join('\n');
+                res = await aiChat({ message: text, context });
+            }
 
             const aiMsg = {
                 id: (Date.now() + 1).toString(),
@@ -165,6 +210,9 @@ const AiChatPage = () => {
                                     borderTopRightRadius: msg.role === 'user' ? '4px' : '18px',
                                     borderTopLeftRadius: msg.role === 'user' ? '18px' : '4px',
                                 }}>
+                                    {msg.image && (
+                                        <img src={msg.image} alt="uploaded" style={{ maxWidth: '100%', borderRadius: '12px', marginBottom: '0.75rem', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                    )}
                                     <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.text}</p>
                                     <p style={{ fontSize: '0.6rem', color: '#64748b', marginTop: 6, textAlign: msg.role === 'user' ? 'right' : 'left', fontWeight: 600 }}>
                                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -200,18 +248,46 @@ const AiChatPage = () => {
                                 ))}
                             </div>
                         )}
-                        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ display: 'flex', gap: '0.75rem' }}>
+                        {previewUrl && (
+                            <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem', borderRadius: '12px', overflow: 'hidden', border: '2px solid #818cf8' }}>
+                                <img src={previewUrl} alt="preview" style={{ height: '80px', display: 'block' }} />
+                                <button
+                                    onClick={removeImage}
+                                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', borderRadius: '50%', border: 'none', color: 'white', padding: 2, cursor: 'pointer' }}
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        )}
+                        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
+                            <div style={{ flex: 1, position: 'relative' }}>
+                                <input
+                                    className="input"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder="Message your study buddy..."
+                                    style={{ width: '100%', borderRadius: '14px', padding: '0.8rem 1.25rem', fontSize: '0.92rem' }}
+                                    disabled={loading}
+                                />
+                            </div>
                             <input
-                                className="input"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder="Message your study buddy..."
-                                style={{ flex: 1, borderRadius: '14px', padding: '0.8rem 1.25rem', fontSize: '0.92rem' }}
-                                disabled={loading}
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                                accept="image/*"
+                                onChange={handleImageSelect}
                             />
                             <button
+                                type="button"
+                                onClick={() => fileInputRef.current.click()}
+                                style={{ width: 46, height: 46, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', cursor: 'pointer' }}
+                                disabled={loading}
+                            >
+                                <Image size={20} />
+                            </button>
+                            <button
                                 type="submit"
-                                disabled={loading || !input.trim()}
+                                disabled={loading || (!input.trim() && !selectedImage)}
                                 className="btn-primary"
                                 style={{ width: 46, height: 46, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '14px', flexShrink: 0, background: 'linear-gradient(135deg, #10b981, #6366f1)', border: 'none' }}
                             >
