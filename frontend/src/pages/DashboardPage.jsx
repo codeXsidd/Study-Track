@@ -153,17 +153,24 @@ const DashboardPage = () => {
     const fetchAiInsight = async () => {
         setInsightLoading(true);
         try {
-            const context = `Student has ${urgentCount} urgent deadlines, ${dashboardTodos.length} focus tasks, and ${currentClass ? `is in class ${currentClass.subject}` : 'is free right now'}. Current time: ${now.toLocaleTimeString()}.`;
-            const prompt = `Give me one short (max 15 words), high-energy, personalized productivity sentence for my dashboard. Mention a specific tool from: [Focus Room, Pomodoro, Planner, Habits, Journal] if relevant.`;
+            const context = `Student has ${urgentCount} urgent deadlines, ${dashboardTodos.length} focus tasks, and ${currentClass ? `is in class ${currentClass.subject}` : 'is free right now'}.`;
+            const prompt = `Give me one short (max 15 words), high-energy, personalized productivity sentence for my dashboard. Mention one of: [Planner, Habits, Journal, Pomodoro] if it matches my state.`;
             const res = await aiChat({ message: prompt, context });
-            const reply = res.data.reply;
-            if (reply && reply.length > 5) {
-                setAiInsight(reply);
+            if (res.data?.reply) {
+                setAiInsight(res.data.reply);
             } else {
-                throw new Error("Invalid response");
+                throw new Error("Empty reply");
             }
-        } catch {
-            setAiInsight("Deep work is the superpower of the 21st century. Open the **AI Assistant** to optimize your flow!");
+        } catch (err) {
+            console.warn("AI Insight failed, using fallback:", err.message);
+            // Better fallbacks based on student state
+            if (urgentCount > 0) {
+                setAiInsight(`You have ${urgentCount} urgent deadlines. Prioritize your **Planner** to stay ahead of the curve!`);
+            } else if (dashboardTodos.length > 0) {
+                setAiInsight(`Focus mode: ON. You have ${dashboardTodos.length} tasks today. Let's crush them!`);
+            } else {
+                setAiInsight("Growth is a slow process, but quitting won't speed it up. Why not log a study session in your **Journal**?");
+            }
         }
         setInsightLoading(false);
     };
@@ -286,19 +293,17 @@ const DashboardPage = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.2rem' }}>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.9 }}>
                                 AI Smart Suggestion
                             </h4>
-                            {insightLoading && <div className="spinner-small" />}
+                            {insightLoading && <div className="spinner-small" style={{ width: 12, height: 12, border: '2px solid rgba(255,255,255,0.1)', borderTopColor: urgentCount > 0 ? '#ef4444' : '#10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
                         </div>
-                        <div style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.5, fontWeight: 500 }}>
+                        <div style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.5, fontWeight: 500, transition: 'all 0.5s ease' }}>
                             {insightLoading ? (
-                                <span style={{ opacity: 0.7, fontStyle: 'italic' }}>Thinking...</span>
+                                <span style={{ opacity: 0.6, fontStyle: 'italic', letterSpacing: '0.02em' }}>Fetching latest insights...</span>
                             ) : (
-                                <Link to="/ai-chat" style={{ textDecoration: 'none', color: 'inherit' }}>
-                                    {aiInsight || (
-                                        <>You have <b>{urgentCount} urgent deadline{urgentCount > 1 ? 's' : ''}</b>. Click to chat about a study strategy!</>
-                                    )}
+                                <Link to="/ai-chat" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                                    {(aiInsight || "").split('**').map((part, i) => i % 2 === 1 ? <b key={i} style={{ color: urgentCount > 0 ? '#fca5a5' : '#6ee7b7' }}>{part}</b> : part)}
                                 </Link>
                             ) || "Ready for a productivity boost? Click to chat with your AI buddy!"}
                         </div>
