@@ -6,14 +6,23 @@ const Assignment = require('../models/Assignment');
 const Note = require('../models/Note');
 const { GoogleGenAI } = require('@google/genai');
 
-// Initialize the new Google GenAI Client
-const getClient = (key) => {
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Initialize the clients
+const getStableClient = (key) => {
     try {
         if (!key) return null;
-        // The new SDK can take the key in the constructor or use env GOOGLE_GENAI_API_KEY
+        return new GoogleGenerativeAI(key);
+    } catch (err) {
+        return null;
+    }
+};
+
+const getInteractionsClient = (key) => {
+    try {
+        if (!key) return null;
         return new GoogleGenAI({ apiKey: key });
     } catch (err) {
-        console.error("Failed to initialize GoogleGenAI client:", err.message);
         return null;
     }
 };
@@ -25,66 +34,76 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     // Cleaning API Key
     key = key.trim().replace(/^["']|["']$/g, '');
 
-    // The SDK sometimes expects GOOGLE_GENAI_API_KEY environment variable specifically
-    process.env.GOOGLE_GENAI_API_KEY = key;
-
-    const client = getClient(key);
-    if (!client) throw new Error("AI_CLIENT_INITIALIZATION_FAILED");
-
-    // Preferred models for 2026/Interactions API
+    // Attempt with both SDKs for maximum resilience
     const models = [
-        "gemini-2.0-flash",        // Very stable, high rate limits
-        "gemini-1.5-flash",        // Highly reliable fallback
-        "gemini-3-flash-preview",  // Latest, but may be unstable/throttled
-        "models/gemini-2.0-flash", // Variant with prefix
-        "models/gemini-1.5-flash"  // Variant with prefix
+        { name: "gemini-1.5-flash", sdk: 'stable' },
+        { name: "gemini-2.0-flash", sdk: 'interactions' },
+        { name: "gemini-3-flash-preview", sdk: 'interactions' },
+        { name: "gemini-1.5-flash", sdk: 'interactions' }
     ];
 
     let lastError = null;
 
-    for (const modelName of models) {
+    for (const modelConfig of models) {
         try {
-            console.log(`🤖 AI Attempt: ${modelName} via Interactions API`);
+            console.log(`🤖 AI Attempt: ${modelConfig.name} via ${modelConfig.sdk} SDK`);
             
-            const interaction = await client.interactions.create({
-                model: modelName,
-                input: `${systemInstruction}\n\nStudent Input: ${prompt}`,
-            });
+            if (modelConfig.sdk === 'interactions') {
+                const client = getInteractionsClient(key);
+                if (!client) continue;
 
-            // Extract text from the new interaction output structure
-            if (interaction && interaction.outputs && interaction.outputs.length > 0) {
-                // The text is typically in the last output
-                const text = interaction.outputs[interaction.outputs.length - 1].text;
+                const interaction = await client.interactions.create({
+                    model: modelConfig.name,
+                    input: `${systemInstruction}\n\nStudent Input: ${prompt}`,
+                });
+
+                if (interaction && interaction.outputs && interaction.outputs.length > 0) {
+                    const text = interaction.outputs[interaction.outputs.length - 1].text;
+                    if (text) {
+                        console.log(`✅ AI Success (Interactions): ${modelConfig.name}`);
+                        return text.trim();
+                    }
+                }
+            } else {
+                const client = getStableClient(key);
+                if (!client) continue;
+
+                const model = client.getGenerativeModel({ 
+                    model: modelConfig.name,
+                    systemInstruction: systemInstruction 
+                });
+                
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
                 if (text) {
-                    console.log(`✅ AI Success: ${modelName}`);
+                    console.log(`✅ AI Success (Stable): ${modelConfig.name}`);
                     return text.trim();
                 }
             }
         } catch (err) {
             lastError = err;
             const errMsg = err.message || "";
-            console.warn(`⚠️ Model ${modelName} failed:`, errMsg);
+            console.warn(`⚠️ Model ${modelConfig.name} failed:`, errMsg);
 
-            // Handle specific critical errors early
-            if (errMsg.includes('401') || errMsg.includes('API_KEY_INVALID')) {
-                throw new Error("Invalid Gemini API Key. Please verify your credentials.");
+            // If it's an auth error, we should stop and tell the user
+            if (errMsg.includes('401') || errMsg.includes('API_KEY_INVALID') || errMsg.includes('unauthenticated')) {
+                throw new Error("API_KEY_INVALID");
             }
             
-            // If it's a 429 (Too many requests), wait a bit or try another model
             if (errMsg.includes('429')) {
-                console.log("Throttled. Trying next model...");
+                console.log("Throttled. Trying next fallback...");
                 continue;
             }
-
-            // Continue to next model for 400, 404, etc.
-            continue;
         }
     }
 
-    // Fallback error if everything failed
-    console.error("❌ CRITICAL: ALL AI MODELS FAILED.");
+    // Fallback error
     const finalErrorMessage = lastError ? lastError.message : "Connection failed to all Gemini models.";
-    throw new Error(`${finalErrorMessage}. Please check your API key and network connection.`);
+    if (finalErrorMessage.includes('401') || finalErrorMessage.includes('API_KEY_INVALID')) {
+        throw new Error("API_KEY_INVALID");
+    }
+    throw new Error(finalErrorMessage);
 };
 
 // Helper to extract JSON from AI response safely
@@ -129,6 +148,12 @@ router.post('/breakdown', auth, async (req, res) => {
             const subtasks = extractJson(responseText);
             res.json(subtasks);
         } catch (e) {
+            if (e.message === 'API_KEY_INVALID' || e.message === 'API_KEY_MISSING') {
+                return res.json([
+                    { title: "Configure API Key", duration: "1m" },
+                    { title: "Verify connection", duration: "1m" }
+                ]);
+            }
             res.json([
                 { title: `Research concepts for ${taskTitle.split(' ')[0]}`, duration: "30m" },
                 { title: `Draft outline and main points`, duration: "45m" },
@@ -153,6 +178,12 @@ router.post('/flashcards', auth, async (req, res) => {
             const cards = extractJson(responseText);
             res.json(cards);
         } catch (e) {
+            if (e.message === 'API_KEY_INVALID' || e.message === 'API_KEY_MISSING') {
+                return res.json([
+                    { title: "Configure API Key", duration: "1m" },
+                    { title: "Verify connection", duration: "1m" }
+                ]);
+            }
             res.json([
                 { q: "What is the main topic here?", a: "The core concept discussed in the text." },
                 { q: "Can you list a key detail?", a: "A specific fact mentioned in the notes." }
@@ -176,8 +207,8 @@ router.post('/chat', auth, async (req, res) => {
             const responseText = await callAI(prompt, "You are a concise, highly knowledgeable, friendly tutor helping a university student. Keep answers under 3 short paragraphs. Use analogies.");
             res.json({ reply: responseText.trim() });
         } catch (e) {
-            if (e.message === 'API_KEY_MISSING') {
-                res.json({ reply: "I'm currently in **Demonstration Mode**. Please configure the `GEMINI_API_KEY` to enable my full intelligence." });
+            if (e.message === 'API_KEY_MISSING' || e.message === 'API_KEY_INVALID') {
+                res.json({ reply: "I'm currently in **Demonstration Mode**. Please configure a valid `GEMINI_API_KEY` to enable my full intelligence." });
             } else {
                 res.json({ reply: "I'm experiencing a brief connection issue. Try asking me again in a few seconds." });
             }
