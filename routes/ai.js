@@ -10,6 +10,7 @@ const { GoogleGenAI } = require('@google/genai');
 const getClient = (key) => {
     try {
         if (!key) return null;
+        // The new SDK can take the key in the constructor or use env GOOGLE_GENAI_API_KEY
         return new GoogleGenAI({ apiKey: key });
     } catch (err) {
         console.error("Failed to initialize GoogleGenAI client:", err.message);
@@ -24,25 +25,26 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     // Cleaning API Key
     key = key.trim().replace(/^["']|["']$/g, '');
 
+    // The SDK sometimes expects GOOGLE_GENAI_API_KEY environment variable specifically
+    process.env.GOOGLE_GENAI_API_KEY = key;
+
     const client = getClient(key);
     if (!client) throw new Error("AI_CLIENT_INITIALIZATION_FAILED");
 
-    // Valid model names for the current Gemini API in 2026
+    // Preferred models for 2026/Interactions API
     const models = [
-        "gemini-3.1-flash",
-        "gemini-3.1-pro",
-        "gemini-3-flash-preview",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-2.0-flash",        // Very stable, high rate limits
+        "gemini-1.5-flash",        // Highly reliable fallback
+        "gemini-3-flash-preview",  // Latest, but may be unstable/throttled
+        "models/gemini-2.0-flash", // Variant with prefix
+        "models/gemini-1.5-flash"  // Variant with prefix
     ];
 
     let lastError = null;
 
-    // Try each model using the new syntax
     for (const modelName of models) {
         try {
-            console.log(`🤖 AI Attempt: ${modelName} via @google/genai`);
+            console.log(`🤖 AI Attempt: ${modelName} via Interactions API`);
             
             const interaction = await client.interactions.create({
                 model: modelName,
@@ -51,6 +53,7 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
             // Extract text from the new interaction output structure
             if (interaction && interaction.outputs && interaction.outputs.length > 0) {
+                // The text is typically in the last output
                 const text = interaction.outputs[interaction.outputs.length - 1].text;
                 if (text) {
                     console.log(`✅ AI Success: ${modelName}`);
@@ -59,16 +62,21 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
             }
         } catch (err) {
             lastError = err;
-            console.warn(`⚠️ Model ${modelName} failed:`, err.message);
+            const errMsg = err.message || "";
+            console.warn(`⚠️ Model ${modelName} failed:`, errMsg);
 
-            // Handle invalid API key specifically
-            if (err.message.toLowerCase().includes('api key') ||
-                err.message.toLowerCase().includes('apikey_invalid') ||
-                err.message.toLowerCase().includes('401')) {
+            // Handle specific critical errors early
+            if (errMsg.includes('401') || errMsg.includes('API_KEY_INVALID')) {
                 throw new Error("Invalid Gemini API Key. Please verify your credentials.");
             }
+            
+            // If it's a 429 (Too many requests), wait a bit or try another model
+            if (errMsg.includes('429')) {
+                console.log("Throttled. Trying next model...");
+                continue;
+            }
 
-            // Continue to next model
+            // Continue to next model for 400, 404, etc.
             continue;
         }
     }
