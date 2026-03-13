@@ -54,25 +54,4 @@ StudyTrack is an all-in-one, ultra-premium personal student workspace designed t
    ```bash
    git clone https://github.com/codeXsidd/Student-Management.git
    cd Student-Management
-   ```
-
-2. **Environment Configuration:**
-   Create a `.env` file for local development or set these in your **Render/Hosting Dashboard**:
-   ```env
-   PORT=5000
-   MONGODB_URI=your_mongodb_atlas_string
-   JWT_SECRET=your_random_string
-   GEMINI_API_KEY=your_google_ai_studio_key (Essential for AI Assistant)
-   BREVO_API_KEY=your_brevo_api_key (Essential for Forgot Password)
-   ```
-
-3. **Install & Run:**
-   - **Backend:** `npm run dev`
-   - **Frontend:** `cd frontend && npm run dev`
-
----
-
-## 📜 License & Contribution
-This project is open-source and designed to help students worldwide. Contributions to UI improvements or new AI modules (like OCR note scanning!) are highly welcome.
-
-**Built with ❤️ for students who want to master their time.**
+'''
