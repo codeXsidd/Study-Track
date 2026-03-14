@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target, Coffee, Layout, Calendar, Flame } from 'lucide-react';
-import API, { aiChat, energySync } from '../services/api';
+import API, { aiChat } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AiChatPage = () => {
@@ -23,8 +23,6 @@ const AiChatPage = () => {
     const [showSidebar, setShowSidebar] = useState(false);
     const [metrics, setMetrics] = useState({ distraction: 'Low', load: 'Balanced', flow: '88%' });
     const [focusMode, setFocusMode] = useState(false);
-    const [energyLevel, setEnergyLevel] = useState('Moderate');
-    const [recommendation, setRecommendation] = useState(null);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -79,34 +77,6 @@ const AiChatPage = () => {
         scrollToBottom();
         localStorage.setItem('study_chat_history', JSON.stringify(messages));
     }, [messages]);
-
-    const handleEnergySync = async (level = energyLevel) => {
-        setLoading(true);
-        try {
-            const todosRes = await API.get('/todos');
-            const pendingTodos = todosRes.data.filter(t => !t.completed);
-            
-            if (pendingTodos.length === 0) {
-                toast.error("Add some tasks to your planner first!");
-                setLoading(false);
-                return;
-            }
-
-            const res = await energySync({ energyLevel: level, todos: pendingTodos });
-            setRecommendation(res.data);
-            
-            const aiMsg = {
-                id: Date.now().toString(),
-                role: 'assistant',
-                text: `🔋 **Energy Sync Result:** Based on your **${level}** energy levels, I recommend focusing on: **${res.data.reason}**\n\n🎯 **Strategy:** ${res.data.strategy}\n💡 **Tip:** ${res.data.tip}`,
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, aiMsg]);
-        } catch (e) {
-            toast.error("Failed to sync productivity bio-rhythms.");
-        }
-        setLoading(false);
-    };
 
     const handleSend = async (val = input) => {
         const text = val.trim();
@@ -238,27 +208,6 @@ const AiChatPage = () => {
                                 >
                                     #{tag}
                                 </span>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div style={{ marginTop: '0.5rem' }}>
-                        <p style={{ fontSize: '0.7rem', color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.75rem' }}>Bio-Rhythm Energy</p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginBottom: '0.75rem' }}>
-                            {['Burned Out', 'Moderate', 'Peak'].map(level => (
-                                <button 
-                                    key={level}
-                                    onClick={() => { setEnergyLevel(level); handleEnergySync(level); }}
-                                    style={{ 
-                                        padding: '0.5rem 0.2rem', borderRadius: '8px', 
-                                        background: energyLevel === level ? 'rgba(129, 140, 248, 0.2)' : 'rgba(255,255,255,0.02)',
-                                        border: energyLevel === level ? '1px solid rgba(129, 140, 248, 0.4)' : '1px solid rgba(255,255,255,0.05)',
-                                        fontSize: '0.6rem', color: energyLevel === level ? '#818cf8' : '#94a3b8',
-                                        fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
-                                    }}
-                                >
-                                    {level === 'Burned Out' ? '😫' : level === 'Moderate' ? '😐' : '⚡'} {level.split(' ')[0]}
-                                </button>
                             ))}
                         </div>
                     </div>

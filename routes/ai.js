@@ -39,7 +39,7 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     for (const modelName of models) {
         try {
             console.log(`🤖 AI Attempt: ${modelName} via Interactions API`);
-            
+
             const interaction = await client.interactions.create({
                 model: modelName,
                 input: `${systemInstruction}\n\nStudent Input: ${prompt}`,
@@ -309,42 +309,42 @@ router.get('/insights', auth, async (req, res) => {
     }
 });
 
-// 10. AI Bio-Rhythm Productivity Sync
-router.post('/energy-sync', auth, async (req, res) => {
+// 10. AI Mastery Roadmap Generator
+router.post('/roadmap', auth, async (req, res) => {
     try {
-        const { energyLevel, todos } = req.body;
-        if (!energyLevel || !todos) {
-            return res.status(400).json({ message: "Energy level and Todos required." });
-        }
+        const { topic, level } = req.body;
+        if (!topic) return res.status(400).json({ message: "Topic required" });
 
-        const prompt = `Student feels: ${energyLevel}. 
-        Tasks Available: ${JSON.stringify(todos.map(t => ({ id: t._id, title: t.title, priority: t.priority })))}
-        Based on the energy level, select ONE best task to do now.
-        Return EXACTLY this JSON: {"taskId": "...", "reason": "...", "strategy": "...", "tip": "..."}`;
+        const prompt = `Create a high-intensity, 7-day mastery roadmap for the student to learn: "${topic}".
+        Target level: ${level || 'Beginner to Intermediate'}.
+        For each day, provide a 'focus' and a 'challenge'.
+        Return EXACTLY this JSON format:
+        {
+            "topic": "${topic}",
+            "overview": "A brief overview...",
+            "roadmap": [
+                {"day": 1, "focus": "...", "challenge": "..."},
+                ...
+            ]
+        }`;
 
         try {
-            const responseText = await callAI(prompt, "Productivity and Bio-rhythm expert. Return only raw JSON.");
+            const responseText = await callAI(prompt, "Expert educational consultant. Return raw JSON.");
             res.json(extractJson(responseText));
         } catch (e) {
-            // Fallback for low energy
-            if (energyLevel.toLowerCase().includes('low') || energyLevel.toLowerCase().includes('burn')) {
-                res.json({
-                    taskId: todos[0]?._id,
-                    reason: "Low energy detected. Starting with a small win will build momentum.",
-                    strategy: "The 5-Minute Rule",
-                    tip: "Just commit to 5 minutes. You'll likely find it easier to continue once started."
-                });
-            } else {
-                res.json({
-                    taskId: todos[0]?._id,
-                    reason: "Ready for action. Tackle your highest priority task now.",
-                    strategy: "90-Minute Deep Work",
-                    tip: "Maximize this peak state by eliminating all notifications."
-                });
-            }
+            // Fallback
+            res.json({
+                topic,
+                overview: "Your roadmap to mastering " + topic,
+                roadmap: Array.from({ length: 7 }, (_, i) => ({
+                    day: i + 1,
+                    focus: `Core concept ${i + 1} of ${topic}`,
+                    challenge: `Practical exercise for ${topic} phase ${i + 1}`
+                }))
+            });
         }
     } catch (err) {
-        res.status(500).json({ message: "Energy Sync Error", error: err.message });
+        res.status(500).json({ message: "Roadmap Error", error: err.message });
     }
 });
 

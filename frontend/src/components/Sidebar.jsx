@@ -5,7 +5,7 @@ import API from '../services/api';
 import {
     BookOpen, LayoutDashboard, Users, ClipboardList, CheckSquare,
     Award, Timer, GraduationCap, Calendar, BookMarked, Code2,
-    StickyNote, Target, Bell, LogOut, ChevronLeft, ChevronRight, Sparkles, Activity, Zap, TrendingUp
+    StickyNote, Target, Bell, LogOut, ChevronLeft, ChevronRight, Sparkles, Activity, Zap, TrendingUp, Compass
 } from 'lucide-react';
 
 const mainLinks = [
@@ -30,6 +30,7 @@ const performanceLinks = [
 const productivityLinks = [
     { to: '/pomodoro', icon: <Timer size={18} />, label: 'Pomodoro' },
     { to: '/focus-room', icon: <Zap size={18} />, label: 'Deep Focus Room' },
+    { to: '/roadmap', icon: <Compass size={18} />, label: 'Mastery Roadmap' },
     { to: '/journal', icon: <BookMarked size={18} />, label: 'Study Journal' },
     { to: '/notes', icon: <StickyNote size={18} />, label: 'Notes Wall' },
     { to: '/habits', icon: <Activity size={18} />, label: 'Habit Builder' },

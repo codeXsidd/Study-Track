@@ -25,6 +25,7 @@ import HabitBuilderPage from './pages/HabitBuilderPage';
 import FocusRoomPage from './pages/FocusRoomPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AiChatPage from './pages/AiChatPage';
+import MasteryRoadmapPage from './pages/MasteryRoadmapPage';
 
 const Layout = ({ children }) => {
     const { pathname } = useLocation();
@@ -75,6 +76,7 @@ const AppRoutes = () => {
             <Route path="/focus-room" element={<P><FocusRoomPage /></P>} />
             <Route path="/analytics" element={<P><AnalyticsPage /></P>} />
             <Route path="/ai-chat" element={<P><AiChatPage /></P>} />
+            <Route path="/roadmap" element={<P><MasteryRoadmapPage /></P>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

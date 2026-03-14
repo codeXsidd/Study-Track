@@ -65,4 +65,3 @@ export const getGpaStrategy = (data) => API.post('/ai/gpa-strategy', data);
 export const getAiInsights = () => API.get('/ai/insights');
 export const getAiMetrics = () => API.get('/ai/metrics');
 export const getDailyBriefing = () => API.get('/ai/briefing');
-export const energySync = (data) => API.post('/ai/energy-sync', data);

@@ -5,7 +5,7 @@ import API, { getUpcoming, getHabits, toggleHabit, aiChat } from '../services/ap
 import {
     BookOpen, Calendar, CheckCircle, AlertTriangle, TrendingUp, Clock,
     Award, Timer, GraduationCap, BookMarked, Code2, Users, ClipboardList,
-    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check, Activity, Circle, CheckCircle2, Bot, RotateCcw
+    CheckSquare, Flame, Zap, Target, ArrowRight, Star, StickyNote, Check, Activity, Circle, CheckCircle2, Bot, RotateCcw, Compass
 } from 'lucide-react';
 
 // ---------- helpers ----------
@@ -527,11 +527,11 @@ const DashboardPage = () => {
                     </h2>
                     <div className="dashboard-grid-quick">
                         <QuickLink to="/planner" icon={<Target />} label="Plan My Day" color="#f59e0b" />
+                        <QuickLink to="/roadmap" icon={<Compass />} label="Mastery Roadmap" color="#ec4899" />
                         <QuickLink to="/habits" icon={<TrendingUp />} label="Habit Builder" color="#10b981" />
                         <QuickLink to="/assignments" icon={<CheckSquare />} label="Add Assignment" color="#6366f1" />
                         <QuickLink to="/pomodoro" icon={<Timer />} label="Start Pomodoro" color="#8b5cf6" />
                         <QuickLink to="/journal" icon={<BookMarked />} label="Log Study" color="#ef4444" />
-                        <QuickLink to="/portfolio" icon={<Code2 />} label="Add Project" color="#22d3ee" />
                     </div>
                 </div>
 
