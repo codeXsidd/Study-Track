@@ -19,10 +19,7 @@ const getClient = (key) => {
 
 const callAI = async (prompt, systemInstruction = "You are a helpful AI study assistant.") => {
     let key = process.env.GEMINI_API_KEY;
-    if (!key || key.trim() === "") {
-        console.error("❌ GEMINI_API_KEY is missing in .env");
-        throw new Error("API_KEY_MISSING");
-    }
+    if (!key || key.trim() === "") throw new Error("API_KEY_MISSING");
 
     // Cleaning API Key
     key = key.trim().replace(/^["']|["']$/g, '');
@@ -30,7 +27,7 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     const client = getClient(key);
     if (!client) throw new Error("AI_CLIENT_INITIALIZATION_FAILED");
 
-    // Preferred models for the new Interactions API
+    // Standardized models for the new Interactions API
     const models = [
         "gemini-3-flash-preview",
         "gemini-2.0-flash",
@@ -41,33 +38,34 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     for (const modelName of models) {
         try {
-            console.log(`🤖 AI Attempting model: ${modelName}`);
+            console.log(`🤖 AI Attempt: ${modelName} via Interactions API`);
             
             const interaction = await client.interactions.create({
                 model: modelName,
-                input: `${systemInstruction}\n\nUser Question: ${prompt}`,
+                input: `${systemInstruction}\n\nStudent Input: ${prompt}`,
             });
 
+            // Using the specific output path provided in the user's sample
             if (interaction && interaction.outputs && interaction.outputs.length > 0) {
                 const responseText = interaction.outputs[interaction.outputs.length - 1].text;
                 if (responseText) {
-                    console.log(`✅ AI Success using: ${modelName}`);
+                    console.log(`✅ AI Success: ${modelName}`);
                     return responseText.trim();
                 }
             }
-            console.warn(`⚠️ Model ${modelName} returned no output.`);
         } catch (err) {
             lastError = err;
-            console.error(`❌ Model ${modelName} Error:`, err.message);
+            console.warn(`⚠️ Model ${modelName} failed:`, err.message);
 
-            if (err.message.toLowerCase().includes('api key') || err.message.toLowerCase().includes('401')) {
+            if (err.message.toLowerCase().includes('api key') ||
+                err.message.toLowerCase().includes('401')) {
                 throw new Error("Invalid Gemini API Key. Please verify your credentials.");
             }
-            // Continue to next fallback model
+            continue;
         }
     }
 
-    throw new Error(lastError ? lastError.message : "All AI models failed to respond.");
+    throw new Error(lastError ? lastError.message : "Failed to connect to Gemini models.");
 };
 
 // Helper to extract JSON from AI response safely
@@ -159,14 +157,10 @@ router.post('/chat', auth, async (req, res) => {
             const responseText = await callAI(prompt, "You are a concise, highly knowledgeable, friendly tutor helping a university student. Keep answers under 3 short paragraphs. Use analogies.");
             res.json({ reply: responseText.trim() });
         } catch (e) {
-            console.error("AI Chat Route Error:", e.message);
             if (e.message === 'API_KEY_MISSING') {
                 res.json({ reply: "I'm currently in **Demonstration Mode**. Please configure the `GEMINI_API_KEY` to enable my full intelligence." });
             } else {
-                res.json({ 
-                    reply: "I'm experiencing a brief connection issue. Try asking me again in a few seconds.",
-                    error: e.message 
-                });
+                res.json({ reply: "I'm experiencing a brief connection issue. Try asking me again in a few seconds." });
             }
         }
     } catch (err) {
@@ -312,6 +306,45 @@ router.get('/insights', auth, async (req, res) => {
         }
     } catch (err) {
         res.status(500).json({ message: "AI Error", error: err.message });
+    }
+});
+
+// 10. AI Bio-Rhythm Productivity Sync
+router.post('/energy-sync', auth, async (req, res) => {
+    try {
+        const { energyLevel, todos } = req.body;
+        if (!energyLevel || !todos) {
+            return res.status(400).json({ message: "Energy level and Todos required." });
+        }
+
+        const prompt = `Student feels: ${energyLevel}. 
+        Tasks Available: ${JSON.stringify(todos.map(t => ({ id: t._id, title: t.title, priority: t.priority })))}
+        Based on the energy level, select ONE best task to do now.
+        Return EXACTLY this JSON: {"taskId": "...", "reason": "...", "strategy": "...", "tip": "..."}`;
+
+        try {
+            const responseText = await callAI(prompt, "Productivity and Bio-rhythm expert. Return only raw JSON.");
+            res.json(extractJson(responseText));
+        } catch (e) {
+            // Fallback for low energy
+            if (energyLevel.toLowerCase().includes('low') || energyLevel.toLowerCase().includes('burn')) {
+                res.json({
+                    taskId: todos[0]?._id,
+                    reason: "Low energy detected. Starting with a small win will build momentum.",
+                    strategy: "The 5-Minute Rule",
+                    tip: "Just commit to 5 minutes. You'll likely find it easier to continue once started."
+                });
+            } else {
+                res.json({
+                    taskId: todos[0]?._id,
+                    reason: "Ready for action. Tackle your highest priority task now.",
+                    strategy: "90-Minute Deep Work",
+                    tip: "Maximize this peak state by eliminating all notifications."
+                });
+            }
+        }
+    } catch (err) {
+        res.status(500).json({ message: "Energy Sync Error", error: err.message });
     }
 });
 

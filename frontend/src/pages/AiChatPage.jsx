@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Trash2, Brain, Zap, Clock, MessageSquare, Target, Coffee, Layout, Calendar, Flame } from 'lucide-react';
-import API, { aiChat } from '../services/api';
+import API, { aiChat, energySync } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AiChatPage = () => {
@@ -23,6 +23,8 @@ const AiChatPage = () => {
     const [showSidebar, setShowSidebar] = useState(false);
     const [metrics, setMetrics] = useState({ distraction: 'Low', load: 'Balanced', flow: '88%' });
     const [focusMode, setFocusMode] = useState(false);
+    const [energyLevel, setEnergyLevel] = useState('Moderate');
+    const [recommendation, setRecommendation] = useState(null);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -78,6 +80,34 @@ const AiChatPage = () => {
         localStorage.setItem('study_chat_history', JSON.stringify(messages));
     }, [messages]);
 
+    const handleEnergySync = async (level = energyLevel) => {
+        setLoading(true);
+        try {
+            const todosRes = await API.get('/todos');
+            const pendingTodos = todosRes.data.filter(t => !t.completed);
+            
+            if (pendingTodos.length === 0) {
+                toast.error("Add some tasks to your planner first!");
+                setLoading(false);
+                return;
+            }
+
+            const res = await energySync({ energyLevel: level, todos: pendingTodos });
+            setRecommendation(res.data);
+            
+            const aiMsg = {
+                id: Date.now().toString(),
+                role: 'assistant',
+                text: `🔋 **Energy Sync Result:** Based on your **${level}** energy levels, I recommend focusing on: **${res.data.reason}**\n\n🎯 **Strategy:** ${res.data.strategy}\n💡 **Tip:** ${res.data.tip}`,
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, aiMsg]);
+        } catch (e) {
+            toast.error("Failed to sync productivity bio-rhythms.");
+        }
+        setLoading(false);
+    };
+
     const handleSend = async (val = input) => {
         const text = val.trim();
         if (!text || loading) return;
@@ -96,8 +126,7 @@ const AiChatPage = () => {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
                 text: res.data.reply,
-                timestamp: new Date(),
-                error: res.data.error
+                timestamp: new Date()
             };
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
@@ -209,6 +238,27 @@ const AiChatPage = () => {
                                 >
                                     #{tag}
                                 </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '0.5rem' }}>
+                        <p style={{ fontSize: '0.7rem', color: '#475569', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.75rem' }}>Bio-Rhythm Energy</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                            {['Burned Out', 'Moderate', 'Peak'].map(level => (
+                                <button 
+                                    key={level}
+                                    onClick={() => { setEnergyLevel(level); handleEnergySync(level); }}
+                                    style={{ 
+                                        padding: '0.5rem 0.2rem', borderRadius: '8px', 
+                                        background: energyLevel === level ? 'rgba(129, 140, 248, 0.2)' : 'rgba(255,255,255,0.02)',
+                                        border: energyLevel === level ? '1px solid rgba(129, 140, 248, 0.4)' : '1px solid rgba(255,255,255,0.05)',
+                                        fontSize: '0.6rem', color: energyLevel === level ? '#818cf8' : '#94a3b8',
+                                        fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {level === 'Burned Out' ? '😫' : level === 'Moderate' ? '😐' : '⚡'} {level.split(' ')[0]}
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -334,11 +384,6 @@ const AiChatPage = () => {
                                     borderTopLeftRadius: msg.role === 'user' ? '16px' : '4px',
                                 }}>
                                     <p style={{ fontSize: '0.85rem', color: '#e2e8f0', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{msg.text}</p>
-                                    {msg.error && (
-                                        <p style={{ fontSize: '0.7rem', color: '#f43f5e', marginTop: 8, padding: '4px 8px', borderRadius: '4px', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)' }}>
-                                            Debug Info: {msg.error}
-                                        </p>
-                                    )}
                                     <p style={{ fontSize: '0.55rem', color: '#64748b', marginTop: 4, textAlign: msg.role === 'user' ? 'right' : 'left', fontWeight: 600 }}>
                                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
@@ -422,24 +467,20 @@ const AiChatPage = () => {
                         height: 100vh !important;
                         margin: 0 !important;
                         border-radius: 0 24px 24px 0 !important;
-                        z-index: 2000 !important;
                     }
                     .ai-sidebar.show {
                         transform: translateX(340px) !important;
                     }
-                    .mobile-backdrop { display: block !important; z-index: 1500 !important; }
+                    .mobile-backdrop { display: block !important; }
                     .mobile-toggle-btn { display: flex !important; }
-                    .chat-layout { padding: 0.5rem !important; gap: 0 !important; }
+                    .chat-layout { padding: 0.75rem !important; gap: 0 !important; }
                     .chat-main-container { border-radius: 20px !important; }
-                    .chat-layout { height: calc(100vh - 80px) !important; }
                 }
                 
                 @media (max-width: 600px) {
-                    .chat-layout { padding: 0.25rem !important; }
-                    .chat-main-container { border-radius: 12px !important; }
-                    .message-bubble { max-width: 95% !important; }
-                    .chat-main-container h2 { fontSize: 0.8rem !important; }
-                    .chat-main-container { height: 100% !important; }
+                    .chat-layout { padding: 0.5rem !important; }
+                    .chat-main-container { border-radius: 16px !important; }
+                    .message-bubble { max-width: 92% !important; }
                 }
 
                 .refresh-btn:hover { color: #818cf8 !important; transform: rotate(30deg); }
@@ -455,25 +496,12 @@ const AiChatPage = () => {
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 
-                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.15); border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.3); }
 
                 .input:focus { border-color: #818cf8 !important; box-shadow: 0 0 15px rgba(129, 140, 248, 0.2) !important; }
-                
-                .spinner-small {
-                    border: 2px solid rgba(16, 185, 129, 0.1);
-                    border-radius: 50%;
-                    border-top: 2px solid #10b981;
-                    width: 14px;
-                    height: 14px;
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
             `}</style>
         </div>
     );
