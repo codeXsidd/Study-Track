@@ -394,4 +394,65 @@ router.post('/mastery-roadmap', auth, async (req, res) => {
     }
 });
 
+// 12. Dopamine Vault: Lock and Determine Cost
+router.post('/vault/lock', auth, async (req, res) => {
+    try {
+        const { reward } = req.body;
+        if (!reward) return res.status(400).json({ message: "Reward is required" });
+
+        const prompt = `A university student wants to lock away this distraction/reward in a virtual 'Dopamine Vault': "${reward}".
+        Determine how many 'Focus Keys' (1 key = 1 completed assignment or 30 mins of deep work) they should have to earn to unlock it.
+        Return EXACTLY this JSON format:
+        {
+            "keysRequired": 3,
+            "aiMessage": "A short, gamified message acknowledging the reward and setting the challenge."
+        }`;
+
+        try {
+            const insight = await callAI(prompt, "You guard the dopamine vault. Be slightly challenging but fair. Return only JSON.");
+            const parsed = extractJson(insight);
+            // Ensure keys are reasonable
+            let keys = parseInt(parsed.keysRequired);
+            if (isNaN(keys) || keys < 1) keys = 2;
+            if (keys > 10) keys = 10;
+            
+            res.json({ keysRequired: keys, aiMessage: parsed.aiMessage });
+        } catch (e) {
+            res.json({ keysRequired: 3, aiMessage: "The Vault is sealed. Prove your focus to unlock your reward." });
+        }
+
+    } catch (err) {
+        res.status(500).json({ message: "Vault Error", error: err.message });
+    }
+});
+
+// 13. Dopamine Vault: Override Roast
+router.post('/vault/break', auth, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { reward, keysRemaining } = req.body;
+        
+        const assignments = await Assignment.find({ user: userId, completed: false }).sort({ deadline: 1 }).limit(3);
+        const assignmentContext = assignments.map(a => `${a.title} (due ${a.deadline.toDateString()})`).join(', ');
+
+        const prompt = `A university student is trying to press the "EMERGENCY OVERRIDE" button to break open their Dopamine Vault early to get their reward: "${reward}". 
+        They still had ${keysRemaining} Focus Keys left to earn.
+        
+        Here are their upcoming, pending assignments: ${assignmentContext || 'None immediately due, but there is always studying to do.'}
+        
+        Generate a brutal, personalized, 2-line "AI Roast" / reality check. Hit them with the academic consequences of yielding to distraction right now. Do not hold back, but keep it PG-13.
+        Return EXACTLY this JSON format: {"roast": "the brutally honest reality check"}`;
+
+        try {
+            const insight = await callAI(prompt, "You are an intense, highly-demanding academic coach. Do not let them slack off. Return only JSON.");
+            res.json(extractJson(insight));
+        } catch (e) {
+            res.json({ roast: "Are you seriously breaking the vault early? Your assignments aren't going to finish themselves." });
+        }
+
+    } catch (err) {
+        res.status(500).json({ message: "Vault Error", error: err.message });
+    }
+});
+
 module.exports = router;
