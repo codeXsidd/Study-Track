@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getSubjects, addSubject, deleteSubject } from '../services/api';
 import toast from 'react-hot-toast';
 import { BookOpen, Plus, Trash2, Loader } from 'lucide-react';
+import MasteryRoadmap from '../components/MasteryRoadmap';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#06b6d4'];
 
@@ -52,6 +53,8 @@ const SubjectsPage = () => {
                 <BookOpen size={24} color="#6366f1" />
                 <span>My Subjects</span>
             </div>
+
+            <MasteryRoadmap />
 
             {/* Add form */}
             <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>

@@ -319,4 +319,79 @@ router.get('/insights', auth, async (req, res) => {
     }
 });
 
+// 10. AI Task Matchmaker
+router.post('/match-task', auth, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { timeAvailable, energyLevel } = req.body;
+        
+        if (!timeAvailable || !energyLevel) {
+            return res.status(400).json({ message: "Time and energy level are required." });
+        }
+
+        const [todos, assignments] = await Promise.all([
+            Todo.find({ user: userId, completed: false }),
+            Assignment.find({ user: userId, completed: false })
+        ]);
+
+        const taskContext = `Pending Todos: ${todos.map(t => t.title).join(', ') || 'None'}\nPending Assignments: ${assignments.map(a => `${a.title} (Due: ${a.deadline.toDateString()})`).join(', ') || 'None'}`;
+
+        const prompt = `I have ${timeAvailable} available and my energy level is ${energyLevel}. 
+        Here are my tasks:
+        ${taskContext}
+        
+        Analyze my tasks and recommend EXACTLY ONE best task to do right now. If no tasks exist, suggest a productive micro-habit.
+        Return EXACTLY this JSON format: {"recommendedTask": "Task Name", "rationale": "Why I should do it based on time/energy", "type": "todo|assignment|habit"}`;
+
+        try {
+            const insight = await callAI(prompt, "You are an expert productivity matchmaker. Only return JSON.");
+            res.json(extractJson(insight));
+        } catch (e) {
+            res.json({
+                recommendedTask: "Organize your study space",
+                rationale: "Since AI didn't respond, a quick physical reset matches any energy level and takes minimal time.",
+                type: "habit"
+            });
+        }
+    } catch (err) {
+        res.status(500).json({ message: "AI Error", error: err.message });
+    }
+});
+
+// 11. AI Mastery Roadmap
+router.post('/mastery-roadmap', auth, async (req, res) => {
+    try {
+        const { topic, timeframe } = req.body;
+        
+        if (!topic) return res.status(400).json({ message: "Topic is required" });
+
+        const prompt = `Create a learning roadmap to master the topic of "${topic}". The timeframe is ${timeframe || '7 days'}.
+        Break it down into progressive milestones.
+        Return EXACTLY this JSON format: 
+        {
+          "topic": "${topic}",
+          "milestones": [
+            {"day": 1, "title": "...", "description": "...", "timeRecommendation": "1h"}
+          ],
+          "masteryProject": "A small final project to prove mastery"
+        }`;
+
+        try {
+            const insight = await callAI(prompt, "You are a curriculum design expert. Only return JSON.");
+            res.json(extractJson(insight));
+        } catch (e) {
+            res.json({
+                topic: topic,
+                milestones: [
+                    { day: 1, title: "Foundations", description: "Understand the core concepts of " + topic, timeRecommendation: "1h" },
+                    { day: 2, title: "Deep Dive", description: "Explore advanced principles and use cases", timeRecommendation: "2h" }
+                ],
+                masteryProject: "Write a 500-word summary explaining it to a beginner."
+            });
+        }
+    } catch (err) {
+        res.status(500).json({ message: "AI Error", error: err.message });
+    }
+});
+
 module.exports = router;

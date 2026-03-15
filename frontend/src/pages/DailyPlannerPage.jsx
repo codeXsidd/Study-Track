@@ -3,6 +3,7 @@ import { Target, Plus, Check, Trash2, Calendar, Star, Layout, ListTodo, Sun, Cof
 import API from '../services/api';
 import { breakDownTask } from '../services/api';
 import toast from 'react-hot-toast';
+import TaskMatchmaker from '../components/TaskMatchmaker';
 
 const DailyPlannerPage = () => {
     const [allTodos, setAllTodos] = useState([]);
@@ -169,9 +170,9 @@ const DailyPlannerPage = () => {
             </div>
 
             <div className="dashboard-grid-hero" style={{ gap: '2rem' }}>
-
                 {/* ── LEFT COLUMN: THE ACTIVE DAY PLAN ── */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <TaskMatchmaker />
                     <div className="glass-card glow-anim" style={{ padding: '1.5rem', background: 'rgba(99,102,241,0.08)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
                             <Target size={22} color="#6366f1" />

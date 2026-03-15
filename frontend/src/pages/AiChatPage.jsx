@@ -148,16 +148,16 @@ const AiChatPage = () => {
             )}
 
             {/* Sidebar / History */}
-            <div className={`glass-card ai-sidebar ${showSidebar ? 'show' : ''}`} style={{ 
+            <div className={`glass-card ai-sidebar \${showSidebar ? 'show' : ''}`} style={{ 
                 width: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.5rem', 
-                background: 'rgba(10, 10, 25, 0.8)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(10, 10, 25, 0.9)', border: '1px solid rgba(255, 255, 255, 0.08)',
                 transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
-                boxShadow: '20px 0 50px rgba(0,0,0,0.5)',
+                boxShadow: '20px 0 50px rgba(0,0,0,0.3)',
                 zIndex: 200
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Brain size={20} color="#818cf8" /> INSIGHTS
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Brain size={18} color="#818cf8" /> CURRENT INSIGHTS
                     </h3>
                     <button onClick={fetchInsight} className="refresh-btn" style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 4, display: 'flex' }}>
                         <Zap size={14} />
@@ -416,24 +416,20 @@ const AiChatPage = () => {
                         height: 100vh !important;
                         margin: 0 !important;
                         border-radius: 0 24px 24px 0 !important;
-                        box-shadow: 40px 0 100px rgba(0,0,0,0.6) !important;
                     }
                     .ai-sidebar.show {
                         transform: translateX(340px) !important;
                     }
                     .mobile-backdrop { display: block !important; }
                     .mobile-toggle-btn { display: flex !important; }
-                    .chat-layout { padding: 0.5rem !important; gap: 0 !important; }
-                    .chat-main-container { border-radius: 12px !important; }
-                    .chat-sidebar-btn { display: flex !important; }
+                    .chat-layout { padding: 0.75rem !important; gap: 0 !important; }
+                    .chat-main-container { border-radius: 20px !important; }
                 }
                 
                 @media (max-width: 600px) {
-                    .chat-layout { padding: 0.25rem !important; }
-                    .chat-main-container { border-radius: 0 !important; border: none !important; height: 100vh !important; }
-                    .message-bubble { max-width: 95% !important; }
-                    .quick-actions-row { gap: 0.4rem !important; }
-                    .action-btn { font-size: 0.65rem !important; padding: 0.4rem 0.7rem !important; }
+                    .chat-layout { padding: 0.5rem !important; }
+                    .chat-main-container { border-radius: 16px !important; }
+                    .message-bubble { max-width: 92% !important; }
                 }
 
                 .refresh-btn:hover { color: #818cf8 !important; transform: rotate(30deg); }
