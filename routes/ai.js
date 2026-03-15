@@ -29,10 +29,11 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     // Valid model names for the current Gemini API in 2026
     const models = [
+        "gemini-3.1-flash",
+        "gemini-3.1-pro",
         "gemini-3-flash-preview",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-2.5-flash",
+        "gemini-2.5-pro"
     ];
 
     let lastError = null;
@@ -57,8 +58,7 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
             }
         } catch (err) {
             lastError = err;
-            console.error(`❌ Model ${modelName} failed:`, err.message);
-            if (err.stack) console.error(err.stack);
+            console.warn(`⚠️ Model ${modelName} failed:`, err.message);
 
             // Handle invalid API key specifically
             if (err.message.toLowerCase().includes('api key') ||
