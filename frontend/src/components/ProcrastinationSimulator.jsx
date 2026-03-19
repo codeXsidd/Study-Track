@@ -51,7 +51,7 @@ const ProcrastinationSimulator = ({ defaultTask = "" }) => {
                     type="submit" 
                     disabled={loading || !task.trim()}
                     className="btn-danger" 
-                    style={{ padding: '0 1.5rem', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', border: '1px solid #ef4444', display: 'flex', alignItems: 'center', gap: 8, height: '44px' }}
+                    style={{ padding: '0 1.5rem', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', color: 'white', border: '1px solid #ef4444', display: 'flex', alignItems: 'center', gap: 8, height: '44px' }}
                 >
                     {loading ? <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <FastForward size={18} />}
                     <span style={{ fontWeight: 700 }}>Simulate Skipping</span>
