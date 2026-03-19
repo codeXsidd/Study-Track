@@ -4,10 +4,17 @@ import toast from 'react-hot-toast';
 import { Map, MapPin, Route, Loader, BookOpen, Star } from 'lucide-react';
 
 const MasteryRoadmap = () => {
-    const [topic, setTopic] = useState('');
-    const [timeframe, setTimeframe] = useState('7 days');
+    const [topic, setTopic] = useState(() => localStorage.getItem('mastery_topic') || '');
+    const [timeframe, setTimeframe] = useState(() => localStorage.getItem('mastery_timeframe') || '7 days');
     const [loading, setLoading] = useState(false);
-    const [roadmap, setRoadmap] = useState(null);
+    const [roadmap, setRoadmap] = useState(() => {
+        try {
+            const saved = localStorage.getItem('mastery_roadmap');
+            return saved ? JSON.parse(saved) : null;
+        } catch {
+            return null;
+        }
+    });
 
     const handleGenerate = async (e) => {
         e.preventDefault();
@@ -18,11 +25,21 @@ const MasteryRoadmap = () => {
         try {
             const res = await generateMasteryRoadmap({ topic, timeframe });
             setRoadmap(res.data);
+            localStorage.setItem('mastery_roadmap', JSON.stringify(res.data));
+            localStorage.setItem('mastery_topic', topic);
+            localStorage.setItem('mastery_timeframe', timeframe);
             toast.success("Mastery roadmap generated!");
         } catch (error) {
             toast.error("Failed to map the journey. Try again.");
         }
         setLoading(false);
+    };
+
+    const handleClear = () => {
+        setRoadmap(null);
+        setTopic('');
+        localStorage.removeItem('mastery_roadmap');
+        localStorage.removeItem('mastery_topic');
     };
 
     return (
@@ -69,9 +86,14 @@ const MasteryRoadmap = () => {
 
             {roadmap && (
                 <div className="fade-up" style={{ marginTop: '2rem' }}>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', marginBottom: '1.5rem', textAlign: 'center' }}>
-                        Roadmap to Mastery: {roadmap.topic}
-                    </h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: 10 }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', margin: 0 }}>
+                            Roadmap to Mastery: {roadmap.topic}
+                        </h4>
+                        <button onClick={handleClear} className="btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                            Clear Roadmap
+                        </button>
+                    </div>
 
                     <div style={{ position: 'relative', paddingLeft: '2rem', borderLeft: '2px dashed rgba(6,182,212,0.3)' }}>
                         {roadmap.milestones.map((milestone, idx) => (
