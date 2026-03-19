@@ -347,10 +347,50 @@ router.post('/match-task', auth, async (req, res) => {
             const insight = await callAI(prompt, "You are an expert productivity matchmaker. Only return JSON.");
             res.json(extractJson(insight));
         } catch (e) {
+            if (todos.length === 0 && assignments.length === 0) {
+                return res.json({
+                    recommendedTask: "Organize your study space",
+                    rationale: "You don't have any pending tasks! A quick physical reset matches perfectly.",
+                    type: "habit"
+                });
+            }
+
+            const getPriorityScore = (p) => p === 'High' ? 3 : p === 'Medium' ? 2 : 1;
+            let bestTask = null;
+            let bestType = 'todo';
+            let rationale = '';
+
+            if (energyLevel === 'High') {
+                const highAssignments = assignments.filter(a => a.priority === 'High' || a.priority === 'high');
+                if (highAssignments.length > 0) {
+                    bestTask = highAssignments[0].title;
+                    bestType = 'assignment';
+                    rationale = `With your High energy and ${timeAvailable} available, this high-priority assignment is the perfect challenge right now.`;
+                } else {
+                    const sortedTodos = todos.sort((a,b) => getPriorityScore(b.priority) - getPriorityScore(a.priority));
+                    bestTask = sortedTodos[0].title;
+                    rationale = `With high energy, knocking out your highest priority task is the best use of your ${timeAvailable}.`;
+                }
+            } else if (energyLevel === 'Low') {
+                const lowTodos = todos.filter(t => t.priority === 'Low' || t.priority === 'low');
+                if (lowTodos.length > 0) {
+                    bestTask = lowTodos[0].title;
+                    rationale = `Since your energy is low, this low-friction task is perfect to build momentum without burning you out.`;
+                } else {
+                    bestTask = todos.length > 0 ? todos[0].title : assignments[0].title;
+                    bestType = todos.length > 0 ? 'todo' : 'assignment';
+                    rationale = `Your energy is low, so let's just make a very small dent in this task for the next ${timeAvailable}. No pressure.`;
+                }
+            } else {
+                bestTask = todos.length > 0 ? todos[0].title : assignments[0].title;
+                bestType = todos.length > 0 ? 'todo' : 'assignment';
+                rationale = `This task balances perfectly with your normal energy levels. You can make solid progress in ${timeAvailable}.`;
+            }
+
             res.json({
-                recommendedTask: "Organize your study space",
-                rationale: "Since AI didn't respond, a quick physical reset matches any energy level and takes minimal time.",
-                type: "habit"
+                recommendedTask: bestTask,
+                rationale: rationale,
+                type: bestType
             });
         }
     } catch (err) {
@@ -418,7 +458,7 @@ router.post('/vault/lock', auth, async (req, res) => {
             
             res.json({ keysRequired: keys, aiMessage: parsed.aiMessage });
         } catch (e) {
-            res.json({ keysRequired: 3, aiMessage: "The Vault is sealed. Prove your focus to unlock your reward." });
+            res.json({ keysRequired: 3, aiMessage: `The Vault containing your "${reward}" is sealed tight. Prove your unshakable focus to unlock it!` });
         }
 
     } catch (err) {
@@ -447,7 +487,7 @@ router.post('/vault/break', auth, async (req, res) => {
             const insight = await callAI(prompt, "You are an intense, highly-demanding academic coach. Do not let them slack off. Return only JSON.");
             res.json(extractJson(insight));
         } catch (e) {
-            res.json({ roast: "Are you seriously breaking the vault early? Your assignments aren't going to finish themselves." });
+            res.json({ roast: `Seriously? You're going to break early for "${reward}"? With ${keysRemaining} keys left, that's incredibly weak discipline. Get back to work or your grades will suffer.` });
         }
 
     } catch (err) {
@@ -477,9 +517,9 @@ router.post('/simulate-procrastination', auth, async (req, res) => {
             res.json(extractJson(insight));
         } catch (e) {
             res.json({ 
-                oneWeek: "You fall behind immediately and have to cram all weekend.",
-                oneMonth: "Your grade drops severely, causing massive stress.",
-                oneYear: "You look back and regret not having the discipline to do this simple task."
+                oneWeek: `You keep pushing "${taskTitle}" off, and the pile of work doubles. You end up sacrificing your entire weekend.`,
+                oneMonth: `The stress from avoiding "${taskTitle}" bleeds into your other classes. Your grades slip universally.`,
+                oneYear: `You look back and realize procrastinating on "${taskTitle}" was the domino that ruined your semester's momentum.`
             });
         }
 
