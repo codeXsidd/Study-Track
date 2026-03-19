@@ -1,256 +1,250 @@
-import React, { useState } from 'react';
-import { parseMindSweep } from '../services/api';
-import API from '../services/api';
+import React, { useState, useEffect } from 'react';
+import API, { aiMindSweep, getSubjects, addAssignment, addNote } from '../services/api';
 import toast from 'react-hot-toast';
-import { BrainCircuit, Wand2, Check, RefreshCw, Trash2, Save, X, Lightbulb, CheckSquare, BookOpen } from 'lucide-react';
+import { Wand2, Loader, Save, Trash2, CheckCircle2, AlertCircle, FileText, CheckSquare } from 'lucide-react';
 
 const AiMindSweepPage = () => {
-    const [brainDump, setBrainDump] = useState('');
+    const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
-    const [parsedData, setParsedData] = useState(null);
-    const [saving, setSaving] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    
+    // Parsed results
+    const [todos, setTodos] = useState([]);
+    const [assignments, setAssignments] = useState([]);
+    const [notes, setNotes] = useState([]);
 
-    const handleSweep = async () => {
-        if (!brainDump.trim()) {
-            toast.error("Type something first!");
-            return;
-        }
+    // We need subjects for assignments
+    const [subjects, setSubjects] = useState([]);
 
+    useEffect(() => {
+        getSubjects().then(res => setSubjects(res.data)).catch(() => {});
+    }, []);
+
+    const handleOrganize = async () => {
+        if (!text.trim()) return toast.error("Write down your thoughts first!");
+        
         setLoading(true);
-        setParsedData(null);
         try {
-            const res = await parseMindSweep({ brainDump });
-            setParsedData(res.data);
-            toast.success("Mind Organized! Check the results below.");
+            const res = await aiMindSweep({ text });
+            setTodos(res.data.todos || []);
+            setAssignments(res.data.assignments || []);
+            setNotes(res.data.notes || []);
+            toast.success("Mind organized! Review and save below.", { icon: '✨' });
         } catch (error) {
-            toast.error("AI couldn't process this right now. Try again!");
+            toast.error("Failed to organize your thoughts.");
         }
         setLoading(false);
     };
 
     const handleSaveAll = async () => {
-        if (!parsedData) return;
-        setSaving(true);
+        setIsSaving(true);
         let successCount = 0;
-        let failCount = 0;
 
         try {
             // Save Todos
-            if (parsedData.todos) {
-                for (let todo of parsedData.todos) {
-                    try {
-                        await API.post('/todos', { ...todo });
-                        successCount++;
-                    } catch (e) { failCount++; }
-                }
+            for (const t of todos) {
+                await API.post('/todos', {
+                    title: t.title,
+                    priority: ['High', 'Medium', 'Low'].includes(t.priority) ? t.priority : 'Medium',
+                    category: t.category || 'Study',
+                    dayPlan: t.dayPlan === true
+                });
+                successCount++;
             }
-            
+
             // Save Assignments
-            if (parsedData.assignments) {
-                for (let ass of parsedData.assignments) {
-                    try {
-                        await API.post('/assignments', { ...ass });
-                        successCount++;
-                    } catch (e) { failCount++; }
+            for (const a of assignments) {
+                if (subjects.length > 0) {
+                    await addAssignment({
+                        title: a.title,
+                        description: a.description || 'Generated from Mind Sweep',
+                        deadline: a.deadline || new Date().toISOString(),
+                        priority: ['high', 'medium', 'low'].includes(a.priority?.toLowerCase()) ? a.priority.toLowerCase() : 'medium',
+                        subjectId: subjects[0]._id // Fallback to first subject
+                    });
+                    successCount++;
+                } else {
+                    toast.error(`Could not save assignment: "${a.title}" because you have no subjects created.`);
                 }
             }
 
             // Save Notes
-            if (parsedData.notes) {
-                for (let note of parsedData.notes) {
-                    try {
-                        await API.post('/notes', { ...note });
-                        successCount++;
-                    } catch (e) { failCount++; }
-                }
+            for (const n of notes) {
+                await addNote({
+                    title: n.title,
+                    content: n.content || '',
+                    tags: n.tags || ['BrainDump']
+                });
+                successCount++;
             }
 
-            if (failCount === 0 && successCount > 0) {
-                toast.success(`Successfully saved ${successCount} items!`);
-                setParsedData(null);
-                setBrainDump('');
-            } else if (successCount > 0) {
-                toast.success(`Saved ${successCount} items, but ${failCount} failed.`);
-            } else if (successCount === 0 && failCount > 0) {
-                toast.error("Failed to save items.");
+            if (successCount > 0) {
+                toast.success(`Successfully saved ${successCount} items to your dashboard!`, { icon: '🚀', duration: 4000 });
+                // Clear the state so user can start fresh
+                setTodos([]);
+                setAssignments([]);
+                setNotes([]);
+                setText('');
             }
 
         } catch (error) {
-            toast.error("A critical error occurred while saving.");
+            toast.error("An error occurred while saving to the database.");
+            console.error(error);
         }
-        setSaving(false);
+        setIsSaving(false);
     };
 
-    const removeItem = (type, index) => {
-        setParsedData({
-            ...parsedData,
-            [type]: parsedData[type].filter((_, i) => i !== index)
-        });
-    };
+    const hasResults = todos.length > 0 || assignments.length > 0 || notes.length > 0;
 
     return (
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '2rem 1.5rem' }}>
             {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #a78bfa, #f472b6)', marginBottom: '1rem', boxShadow: '0 0 20px rgba(167, 139, 250, 0.4)' }} className="float">
-                    <BrainCircuit size={32} color="white" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <div style={{ padding: 10, background: 'linear-gradient(135deg, #a855f7, #6366f1)', borderRadius: 12 }}>
+                    <Wand2 size={24} color="white" />
                 </div>
-                <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.05em', background: 'linear-gradient(to right, #a78bfa, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
+                <h1 style={{ fontSize: '2rem', fontWeight: 900, background: 'linear-gradient(to right, #c084fc, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                     AI Mind Sweep
                 </h1>
-                <p style={{ color: '#94a3b8', fontSize: '1.05rem', maxWidth: 600, margin: '0 auto', lineHeight: 1.6 }}>
-                    Clear your head. Dump your chaotic thoughts, tasks, and deadlines below. The AI will instantly untangle them into an organized action plan.
-                </p>
             </div>
+            <p style={{ color: '#94a3b8', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: 1.5, maxWidth: 600 }}>
+                Feeling overwhelmed? Brain dump everything on your mind—tasks, deadlines, big projects, or random ideas. The AI will instantly categorize and organize them for you.
+            </p>
 
             {/* Input Area */}
-            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', border: '1px solid rgba(167, 139, 250, 0.2)' }}>
+            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', background: 'rgba(15,15,30,0.6)', border: '1px solid rgba(168,85,247,0.2)' }}>
                 <textarea
-                    className="input custom-scroll"
-                    placeholder="E.g. I need to finish my history essay by Friday, grab coffee with Sarah tomorrow, start reviewing for the midterms, and buy groceries tonight..."
-                    style={{
-                        width: '100%',
-                        minHeight: '200px',
-                        resize: 'vertical',
-                        background: 'rgba(15, 15, 26, 0.6)',
-                        padding: '1.25rem',
-                        fontSize: '1.1rem',
-                        lineHeight: 1.6,
-                        color: '#f8fafc',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                        borderRadius: '12px'
+                    className="input"
+                    style={{ 
+                        width: '100%', minHeight: '180px', padding: '1.25rem', fontSize: '1.05rem', 
+                        background: 'rgba(0,0,0,0.3)', resize: 'vertical', lineHeight: 1.6, 
+                        border: '1px solid rgba(255,255,255,0.05)', color: '#e2e8f0', borderRadius: '12px'
                     }}
-                    value={brainDump}
-                    onChange={(e) => setBrainDump(e.target.value)}
+                    placeholder={"Type loosely. E.g., 'I have a massive history essay due next Friday, plus I need to grab milk tonight. Remember to text mom. Oh, and here's a random idea: use a neural network for predictions!'" }
+                    value={text}
+                    onChange={e => setText(e.target.value)}
                 />
-
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                     <button 
-                        onClick={handleSweep} 
-                        disabled={loading || !brainDump.trim() || saving}
+                        onClick={handleOrganize} 
+                        disabled={loading || !text.trim()} 
                         className="btn-primary" 
-                        style={{ 
-                            padding: '0.8rem 2.5rem', 
-                            fontSize: '1.1rem', 
-                            background: 'linear-gradient(135deg, #8b5cf6, #ec4899)', 
-                            border: 'none', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 10,
-                            boxShadow: '0 10px 25px -5px rgba(236, 72, 153, 0.4)'
-                        }}
+                        style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1)', display: 'flex', alignItems: 'center', gap: 8, padding: '0.75rem 2rem', fontSize: '1rem' }}
                     >
-                        {loading ? (
-                            <><RefreshCw size={20} style={{ animation: 'spin 1s linear infinite' }} /> Untangling thoughts...</>
-                        ) : (
-                            <><Wand2 size={20} /> Organize My Mind</>
-                        )}
+                        {loading ? <Loader size={18} className="spin" /> : <Wand2 size={18} />}
+                        Organize My Mind
                     </button>
                 </div>
             </div>
 
-            {/* Parsed Results Area */}
-            {parsedData && !loading && (
+            {/* Results */}
+            {hasResults && (
                 <div className="fade-up">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Extracted Action Plan</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#e2e8f0' }}>Your Organized Plan</h2>
                         <button 
                             onClick={handleSaveAll} 
-                            disabled={saving}
-                            className="btn-primary" 
-                            style={{ background: '#10b981', border: 'none', display: 'flex', alignItems: 'center', gap: 8, padding: '0.6rem 1.25rem' }}
+                            disabled={isSaving}
+                            className="btn-primary"
+                            style={{ background: '#10b981', border: 'none', display: 'flex', alignItems: 'center', gap: 8 }}
                         >
-                            {saving ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />} 
-                            {saving ? "Saving..." : "Save All to Dashboard"}
+                            {isSaving ? <Loader size={18} className="spin" /> : <Save size={18} />}
+                            Save All to Dashboard
                         </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                    <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                         
-                        {/* Todos */}
-                        {parsedData.todos && parsedData.todos.length > 0 && (
-                            <div className="glass-card" style={{ padding: '1.25rem', borderTop: '4px solid #3b82f6', background: 'rgba(59, 130, 246, 0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem', color: '#60a5fa' }}>
-                                    <CheckSquare size={20} />
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>To-Dos</h3>
-                                </div>
+                        {/* Todos Column */}
+                        <div className="glass-card" style={{ padding: '1.25rem', borderTop: '4px solid #3b82f6' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+                                <CheckSquare size={20} color="#3b82f6" />
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#e2e8f0' }}>Action Items</h3>
+                            </div>
+                            {todos.length === 0 ? <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No direct tasks found.</p> : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    {parsedData.todos.map((item, idx) => (
-                                        <div key={idx} style={{ background: 'rgba(0,0,0,0.3)', padding: '0.85rem', borderRadius: 8, position: 'relative' }}>
-                                            <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: 4, paddingRight: 20 }}>{item.title}</p>
-                                            {item.description && <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{item.description}</p>}
-                                            {item.dayPlan && <span style={{ display: 'inline-block', marginTop: 6, fontSize: '0.65rem', background: '#3b82f633', color: '#93c5fd', padding: '2px 6px', borderRadius: 4 }}>Added to Today</span>}
-                                            <button onClick={() => removeItem('todos', idx)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
-                                                <X size={14} />
-                                            </button>
+                                    {todos.map((t, idx) => (
+                                        <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <input className="input" style={{ width: '85%', padding: '0.4rem', fontSize: '0.9rem', background: 'transparent', border: 'none', color: '#e2e8f0' }} value={t.title} onChange={e => {
+                                                    const newArr = [...todos]; newArr[idx].title = e.target.value; setTodos(newArr);
+                                                }} />
+                                                <button onClick={() => setTodos(todos.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: '#ef4444' }}>
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: 6, marginTop: 4, paddingLeft: '0.4rem' }}>
+                                                {t.dayPlan && <span style={{ fontSize: '0.65rem', background: '#ec489920', color: '#f472b6', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>DO TODAY</span>}
+                                                <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', padding: '2px 6px', borderRadius: 4 }}>{t.priority}</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {/* Assignments */}
-                        {parsedData.assignments && parsedData.assignments.length > 0 && (
-                            <div className="glass-card" style={{ padding: '1.25rem', borderTop: '4px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem', color: '#f87171' }}>
-                                    <BookOpen size={20} />
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Assignments</h3>
-                                </div>
+                        {/* Assignments Column */}
+                        <div className="glass-card" style={{ padding: '1.25rem', borderTop: '4px solid #f59e0b' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+                                <AlertCircle size={20} color="#f59e0b" />
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#e2e8f0' }}>Big Projects</h3>
+                            </div>
+                            {assignments.length === 0 ? <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No major assignments found.</p> : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    {parsedData.assignments.map((item, idx) => (
-                                        <div key={idx} style={{ background: 'rgba(0,0,0,0.3)', padding: '0.85rem', borderRadius: 8, position: 'relative' }}>
-                                            <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: 4, paddingRight: 20 }}>{item.title}</p>
-                                            {item.course && <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Course: {item.course}</p>}
-                                            {item.deadline && <span style={{ display: 'inline-block', marginTop: 6, fontSize: '0.65rem', background: '#ef444433', color: '#fca5a5', padding: '2px 6px', borderRadius: 4 }}>Due: {item.deadline}</span>}
-                                            <button onClick={() => removeItem('assignments', idx)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
-                                                <X size={14} />
-                                            </button>
+                                    {assignments.map((a, idx) => (
+                                        <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <input className="input" style={{ width: '85%', padding: '0.4rem', fontSize: '0.9rem', background: 'transparent', border: 'none', color: '#e2e8f0', fontWeight: 700 }} value={a.title} onChange={e => {
+                                                    const newArr = [...assignments]; newArr[idx].title = e.target.value; setAssignments(newArr);
+                                                }} />
+                                                <button onClick={() => setAssignments(assignments.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: '#ef4444' }}>
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                            {a.deadline && (
+                                                <p style={{ fontSize: '0.7rem', color: '#fca5a5', marginTop: 4, paddingLeft: '0.4rem' }}>
+                                                    Due: {new Date(a.deadline).toLocaleDateString()}
+                                                </p>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {/* Notes */}
-                        {parsedData.notes && parsedData.notes.length > 0 && (
-                            <div className="glass-card" style={{ padding: '1.25rem', borderTop: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem', color: '#fbbf24' }}>
-                                    <Lightbulb size={20} />
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Ideas & Notes</h3>
-                                </div>
+                        {/* Notes Column */}
+                        <div className="glass-card" style={{ padding: '1.25rem', borderTop: '4px solid #10b981' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+                                <FileText size={20} color="#10b981" />
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#e2e8f0' }}>Notes & Ideas</h3>
+                            </div>
+                            {notes.length === 0 ? <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No scattered notes found.</p> : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    {parsedData.notes.map((item, idx) => (
-                                        <div key={idx} style={{ background: 'rgba(0,0,0,0.3)', padding: '0.85rem', borderRadius: 8, position: 'relative' }}>
-                                            {item.title && <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: 4, paddingRight: 20 }}>{item.title}</p>}
-                                            <p style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.5 }}>"{item.content}"</p>
-                                            <button onClick={() => removeItem('notes', idx)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
-                                                <X size={14} />
-                                            </button>
+                                    {notes.map((n, idx) => (
+                                        <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <input className="input" style={{ width: '85%', padding: '0.4rem', fontSize: '0.9rem', background: 'transparent', border: 'none', color: '#e2e8f0', fontWeight: 700 }} value={n.title} onChange={e => {
+                                                    const newArr = [...notes]; newArr[idx].title = e.target.value; setNotes(newArr);
+                                                }} />
+                                                <button onClick={() => setNotes(notes.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: '#ef4444' }}>
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                            <p style={{ fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.4rem', marginTop: 4, fontStyle: 'italic' }}>
+                                                {n.content}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
-                        
-                        {(!parsedData.todos?.length && !parsedData.assignments?.length && !parsedData.notes?.length) && (
-                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                <p>No items could be extracted. Try adding more detail to your brain dump.</p>
-                            </div>
-                        )}
+                            )}
+                        </div>
+
                     </div>
                 </div>
             )}
-
             <style>{`
-                .float { animation: float 3s ease-in-out infinite; }
-                @keyframes float {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-8px); }
-                }
-                .custom-scroll::-webkit-scrollbar { width: 8px; }
-                .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 8px; }
-                .custom-scroll::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.3); border-radius: 8px; }
-                .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(167, 139, 250, 0.5); }
+                .spin { animation: spin 1s linear infinite; }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
             `}</style>
         </div>
     );

@@ -488,93 +488,35 @@ router.post('/simulate-procrastination', auth, async (req, res) => {
     }
 });
 
-// 15. AI Study Rival Sync
-router.post('/rival-sync', auth, async (req, res) => {
-    try {
-        const { rivalType, userTasksCompleted, totalSessionTasks } = req.body;
-        
-        let rivalPrompt = "";
-        
-        if (rivalType === "Chad (The relentless 4.0 Pre-Med)") {
-            rivalPrompt = `You are playing the role of "Chad", an arrogant, hyper-productive, relentless 4.0 pre-med student. 
-            The human user has completed ${userTasksCompleted} out of ${totalSessionTasks} tasks.
-            You must be slightly ahead of the user, so say you have completed ${Math.min(userTasksCompleted + 2, totalSessionTasks + 1)} tasks.
-            Give a 1-sentence taunting, competitive, yet motivating remark to push them to catch up to you.`;
-        } else if (rivalType === "Zoe (The erratic last-minute crammer)") {
-            rivalPrompt = `You are playing the role of "Zoe", an erratic student who procrastinates but then panic-studies at lightspeed.
-            The user has completed ${userTasksCompleted} out of ${totalSessionTasks} tasks.
-            You should say you've suddenly finished ${Math.min(userTasksCompleted + 1, totalSessionTasks)} tasks.
-            Give a 1-sentence chaotic, stressed-out, highly caffeinated remark showing you are rapidly catching up or passing them.`;
-        } else {
-            rivalPrompt = `You are a robotic, highly efficient AI Study Rival. The user has done ${userTasksCompleted} tasks. You have done ${userTasksCompleted + 1}. Give a 1-sentence cold, calculated taunt.`;
-        }
-
-        const prompt = `Return EXACTLY this JSON format based on the persona:
-        {
-            "rivalProgress": (A number representing the rival's completed tasks, must be >= ${userTasksCompleted}),
-            "message": "The 1-sentence in-character taunt."
-        }
-        
-        Persona instructions:
-        ${rivalPrompt}
-        `;
-
-        try {
-            const insight = await callAI(prompt, "You are a competitive study rival AI. Return only JSON.");
-            res.json(extractJson(insight));
-        } catch (e) {
-            res.json({ 
-                rivalProgress: userTasksCompleted + 1,
-                message: "I'm already ahead of you. Keep pushing!"
-            });
-        }
-
-    } catch (err) {
-        res.status(500).json({ message: "Rival Sync Error", error: err.message });
-    }
-});
-
-// 16. AI Mind Sweep (Brain Dump Auto-Organizer)
+// 15. AI Mind Sweep (Brain Dump Auto-Organizer)
 router.post('/mind-sweep', auth, async (req, res) => {
     try {
-        const { brainDump } = req.body;
-        if (!brainDump) return res.status(400).json({ message: "Brain dump text is required" });
+        const { text } = req.body;
+        if (!text) return res.status(400).json({ message: "Text is required" });
 
-        const prompt = `A university student has done a 'Brain Dump' of their current thoughts, tasks, and worries.
-        Your job is to act as a highly intelligent assistant that organizes these chaotic thoughts into actionable items.
-        
-        Brain Dump:
-        "${brainDump}"
+        const prompt = `A user just did a 'brain dump': "${text}".
+        Extract actionable items and organize them into three categories: 'todos', 'assignments', and 'notes'.
+        - Todos should be short tasks. If it sounds urgent, set 'dayPlan' to true. Priority can be High, Medium, or Low. Format: { title, priority, dayPlan, category } (category can be Study, Personal, etc).
+        - Assignments should be major academic tasks. Predict a reasonable deadline if not specified (use YYYY-MM-DD format). Format: { title, description, priority, deadline }.
+        - Notes should be for random thoughts, ideas, or links. Format: { title, content, tags: ["BrainDump", "Idea"] }.
 
-        Extract and categorize these into 3 arrays:
-        1. 'todos': Short, actionable tasks.
-        2. 'assignments': Major tasks that sound like academic assignments or projects. Predict a plausible deadline (e.g., 'Next Friday') if not specified.
-        3. 'notes': Ideas, thoughts, or information that don't require immediate action.
-
-        Return EXACTLY this JSON format and NOTHING else:
+        Return EXACTLY this JSON structure, arrays can be empty:
         {
-            "todos": [
-                { "title": "...", "description": "...", "dayPlan": true }
-            ],
-            "assignments": [
-                { "title": "...", "course": "...", "deadline": "YYYY-MM-DD" }
-            ],
-            "notes": [
-                { "title": "...", "content": "..." }
-            ]
+            "todos": [],
+            "assignments": [],
+            "notes": []
         }`;
 
-        try {
-            const insight = await callAI(prompt, "You are a master productivity organizer. Return only valid JSON.");
-            res.json(extractJson(insight));
-        } catch (e) {
-            // Fallback response if AI fails
-            res.json({
-                todos: [{ title: "Review tasks", description: "Sort through the brain dump manually.", dayPlan: true }],
-                assignments: [],
-                notes: [{ title: "Raw Brain Dump", content: brainDump }]
-            });
-        }
+        const responseText = await callAI(prompt, "You are an intelligent task extractor and organizer. Respond ONLY with valid JSON.");
+        const result = extractJson(responseText);
+        
+        // ensure default arrays
+        res.json({
+            todos: result.todos || [],
+            assignments: result.assignments || [],
+            notes: result.notes || []
+        });
+
     } catch (err) {
         res.status(500).json({ message: "Mind Sweep Error", error: err.message });
     }

@@ -7,7 +7,6 @@ import toast from 'react-hot-toast';
 import TaskMatchmaker from '../components/TaskMatchmaker';
 import DopamineVault from '../components/DopamineVault';
 import ProcrastinationSimulator from '../components/ProcrastinationSimulator';
-import AIStudyRival from '../components/AIStudyRival';
 
 const DailyPlannerPage = () => {
     const { updateUserXP } = useAuth();
@@ -189,13 +188,6 @@ const DailyPlannerPage = () => {
             <div className="dashboard-grid-hero" style={{ gap: '2rem' }}>
                 {/* ── LEFT COLUMN: THE ACTIVE DAY PLAN ── */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    
-                    {/* The New AI Study Rival Component */}
-                    <AIStudyRival 
-                        userTasksCompleted={completedToday.length} 
-                        totalSessionTasks={Math.max(5, dayPlanTasks.length + completedToday.length)} 
-                    />
-
                     <ProcrastinationSimulator defaultTask={potentialTasks.length > 0 ? potentialTasks[0].title : ''} />
                     <DopamineVault tasksCompletedCount={completedToday.length} />
                     <TaskMatchmaker />
