@@ -38,23 +38,20 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
 
     let lastError = null;
 
-    // Try each model using the new syntax
+    // Try each model using the correct syntax
     for (const modelName of models) {
         try {
             console.log(`🤖 AI Attempt: ${modelName} via @google/genai`);
             
-            const interaction = await client.interactions.create({
+            const response = await client.models.generateContent({
                 model: modelName,
-                input: `${systemInstruction}\n\nStudent Input: ${prompt}`,
+                contents: `${systemInstruction}\n\nStudent Input: ${prompt}`,
             });
 
-            // Extract text from the new interaction output structure
-            if (interaction && interaction.outputs && interaction.outputs.length > 0) {
-                const text = interaction.outputs[interaction.outputs.length - 1].text;
-                if (text) {
-                    console.log(`✅ AI Success: ${modelName}`);
-                    return text.trim();
-                }
+            // Extract text from the response
+            if (response && response.text) {
+                console.log(`✅ AI Success: ${modelName}`);
+                return response.text.trim();
             }
         } catch (err) {
             lastError = err;
@@ -167,14 +164,12 @@ router.post('/chat', auth, async (req, res) => {
             const responseText = await callAI(prompt, "You are a concise, highly knowledgeable, friendly tutor helping a university student. Keep answers under 3 short paragraphs. Use analogies.");
             res.json({ reply: responseText.trim() });
         } catch (e) {
-            if (e.message === 'API_KEY_MISSING') {
+            if (e.message.includes('API_KEY_MISSING')) {
                 res.json({ reply: "I'm currently in **Demonstration Mode**. Please configure the `GEMINI_API_KEY` to enable my full intelligence." });
+            } else if (e.message && (e.message.toLowerCase().includes('quota') || e.message.toLowerCase().includes('429'))) {
+                res.json({ reply: "My Gemini API quota has been exhausted temporarily! 🚀\n\nWhile I wait for the rate limit to reset, I highly recommend checking out your **AI Arsenal** (in the sidebar)! We recently upgraded its tools to run on indestructible local algorithms, so they work beautifully even when I'm offline." });
             } else {
-                if (message.includes("Give me one short")) {
-                    res.json({ reply: "Discipline is choosing between what you want now and what you want most. Open your planner and let's go!" });
-                } else {
-                    res.json({ reply: "My server API link is resetting to protect quotas! But don't worry—your local AI Arsenal tools are still perfectly functional right now." });
-                }
+                res.json({ reply: "My Gemini API is taking a quick nap (rate limit/connection issue). While I wake up, jump into the **AI Arsenal**—it uses backup algorithms so it never goes offline!" });
             }
         }
     } catch (err) {
@@ -553,22 +548,15 @@ router.post('/mind-sweep', auth, async (req, res) => {
             "notes": []
         }`;
 
-        try {
-            const responseText = await callAI(prompt, "You are an intelligent task extractor and organizer. Respond ONLY with valid JSON.");
-            const result = extractJson(responseText);
-            
-            res.json({
-                todos: result.todos || [],
-                assignments: result.assignments || [],
-                notes: result.notes || []
-            });
-        } catch (e) {
-            res.json({
-                todos: [{ title: `Review Brain Dump: "${text.substring(0, 20)}..."`, priority: 'High', dayPlan: true, category: 'Personal' }],
-                assignments: [],
-                notes: [{ title: 'Auto-Archived Mind Sweep', content: text, tags: ["BrainDump", "Fallback"] }]
-            });
-        }
+        const responseText = await callAI(prompt, "You are an intelligent task extractor and organizer. Respond ONLY with valid JSON.");
+        const result = extractJson(responseText);
+        
+        // ensure default arrays
+        res.json({
+            todos: result.todos || [],
+            assignments: result.assignments || [],
+            notes: result.notes || []
+        });
 
     } catch (err) {
         res.status(500).json({ message: "Mind Sweep Error", error: err.message });
