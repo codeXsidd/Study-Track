@@ -106,9 +106,19 @@ const DopamineVault = ({ tasksCompletedCount = 0 }) => {
                     <ShieldAlert size={22} color="#10b981" />
                     <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>Dopamine Detox Vault</h3>
                 </div>
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1.25rem', lineHeight: 1.5 }}>
-                    Lock away a distraction. The AI will calculate the academic "cost" to unlock it based on Focus Keys. You cannot open it by time—only by momentum.
+                <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1rem', lineHeight: 1.5 }}>
+                    Are you craving cheap dopamine (YouTube, Gaming, Social Media)? Put it in the Vault.
                 </p>
+
+                {/* VISUAL GUIDE FOR USERS */}
+                <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px dashed rgba(16,185,129,0.3)', borderRadius: 12, padding: '1.25rem', marginBottom: '1.5rem' }}>
+                    <h4 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#34d399', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>How to Use the Vault:</h4>
+                    <ol style={{ margin: 0, paddingLeft: '1.2rem', color: '#a7f3d0', fontSize: '0.85rem', lineHeight: 1.6, fontWeight: 500 }}>
+                        <li><span style={{ color: '#fff' }}>Enter your craving</span> (e.g. "Watch 1 episode of Anime") into the safe below.</li>
+                        <li><span style={{ color: '#fff' }}>We lock it away.</span> The AI will assign a Focus Key cost.</li>
+                        <li><span style={{ color: '#fff' }}>Earn your keys</span> by actually studying. Earning your dopamine feels 100x better!</li>
+                    </ol>
+                </div>
                 <form onSubmit={handleLock} style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
                     <input
                         className="input"
