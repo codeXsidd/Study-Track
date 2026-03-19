@@ -534,4 +534,50 @@ router.post('/rival-sync', auth, async (req, res) => {
     }
 });
 
+// 16. AI Mind Sweep (Brain Dump Auto-Organizer)
+router.post('/mind-sweep', auth, async (req, res) => {
+    try {
+        const { brainDump } = req.body;
+        if (!brainDump) return res.status(400).json({ message: "Brain dump text is required" });
+
+        const prompt = `A university student has done a 'Brain Dump' of their current thoughts, tasks, and worries.
+        Your job is to act as a highly intelligent assistant that organizes these chaotic thoughts into actionable items.
+        
+        Brain Dump:
+        "${brainDump}"
+
+        Extract and categorize these into 3 arrays:
+        1. 'todos': Short, actionable tasks.
+        2. 'assignments': Major tasks that sound like academic assignments or projects. Predict a plausible deadline (e.g., 'Next Friday') if not specified.
+        3. 'notes': Ideas, thoughts, or information that don't require immediate action.
+
+        Return EXACTLY this JSON format and NOTHING else:
+        {
+            "todos": [
+                { "title": "...", "description": "...", "dayPlan": true }
+            ],
+            "assignments": [
+                { "title": "...", "course": "...", "deadline": "YYYY-MM-DD" }
+            ],
+            "notes": [
+                { "title": "...", "content": "..." }
+            ]
+        }`;
+
+        try {
+            const insight = await callAI(prompt, "You are a master productivity organizer. Return only valid JSON.");
+            res.json(extractJson(insight));
+        } catch (e) {
+            // Fallback response if AI fails
+            res.json({
+                todos: [{ title: "Review tasks", description: "Sort through the brain dump manually.", dayPlan: true }],
+                assignments: [],
+                notes: [{ title: "Raw Brain Dump", content: brainDump }]
+            });
+        }
+    } catch (err) {
+        res.status(500).json({ message: "Mind Sweep Error", error: err.message });
+    }
+});
+
 module.exports = router;
