@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API, { aiMindSweep, getSubjects, addAssignment, addNote } from '../services/api';
+import API, { parseMindSweep, getSubjects, addAssignment, addNote } from '../services/api';
 import toast from 'react-hot-toast';
 import { Wand2, Loader, Save, Trash2, CheckCircle2, AlertCircle, FileText, CheckSquare } from 'lucide-react';
 
@@ -25,7 +25,7 @@ const AiMindSweepPage = () => {
         
         setLoading(true);
         try {
-            const res = await aiMindSweep({ text });
+            const res = await parseMindSweep({ text });
             setTodos(res.data.todos || []);
             setAssignments(res.data.assignments || []);
             setNotes(res.data.notes || []);
