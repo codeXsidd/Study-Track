@@ -27,13 +27,15 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     const client = getClient(key);
     if (!client) throw new Error("AI_CLIENT_INITIALIZATION_FAILED");
 
-    // Valid model names for the current Gemini API in 2026
     const models = [
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-flash",
         "gemini-3.1-flash",
         "gemini-3.1-pro",
         "gemini-3-flash-preview",
-        "gemini-2.5-flash",
-        "gemini-2.5-pro"
+        "gemini-2.5-pro",
+        "gemini-2.0-flash-lite",
+        "gemma-3-4b-it"
     ];
 
     let lastError = null;
@@ -42,7 +44,7 @@ const callAI = async (prompt, systemInstruction = "You are a helpful AI study as
     for (const modelName of models) {
         try {
             console.log(`🤖 AI Attempt: ${modelName} via @google/genai`);
-            
+
             const response = await client.models.generateContent({
                 model: modelName,
                 contents: `${systemInstruction}\n\nStudent Input: ${prompt}`,
@@ -323,7 +325,7 @@ router.post('/match-task', auth, async (req, res) => {
     try {
         const userId = req.userId;
         const { timeAvailable, energyLevel } = req.body;
-        
+
         if (!timeAvailable || !energyLevel) {
             return res.status(400).json({ message: "Time and energy level are required." });
         }
@@ -366,7 +368,7 @@ router.post('/match-task', auth, async (req, res) => {
                     bestType = 'assignment';
                     rationale = `With your High energy and ${timeAvailable} available, this high-priority assignment is the perfect challenge right now.`;
                 } else {
-                    const sortedTodos = todos.sort((a,b) => getPriorityScore(b.priority) - getPriorityScore(a.priority));
+                    const sortedTodos = todos.sort((a, b) => getPriorityScore(b.priority) - getPriorityScore(a.priority));
                     bestTask = sortedTodos[0].title;
                     rationale = `With high energy, knocking out your highest priority task is the best use of your ${timeAvailable}.`;
                 }
@@ -401,7 +403,7 @@ router.post('/match-task', auth, async (req, res) => {
 router.post('/mastery-roadmap', auth, async (req, res) => {
     try {
         const { topic, timeframe } = req.body;
-        
+
         if (!topic) return res.status(400).json({ message: "Topic is required" });
 
         const prompt = `Create a learning roadmap to master the topic of "${topic}". The timeframe is ${timeframe || '7 days'}.
@@ -454,7 +456,7 @@ router.post('/vault/lock', auth, async (req, res) => {
             let keys = parseInt(parsed.keysRequired);
             if (isNaN(keys) || keys < 1) keys = 2;
             if (keys > 10) keys = 10;
-            
+
             res.json({ keysRequired: keys, aiMessage: parsed.aiMessage });
         } catch (e) {
             res.json({ keysRequired: 3, aiMessage: `The Vault containing your "${reward}" is sealed tight. Prove your unshakable focus to unlock it!` });
@@ -470,7 +472,7 @@ router.post('/vault/break', auth, async (req, res) => {
     try {
         const userId = req.userId;
         const { reward, keysRemaining } = req.body;
-        
+
         const assignments = await Assignment.find({ user: userId, completed: false }).sort({ deadline: 1 }).limit(3);
         const assignmentContext = assignments.map(a => `${a.title} (due ${a.deadline.toDateString()})`).join(', ');
 
@@ -516,7 +518,7 @@ router.post('/simulate-procrastination', auth, async (req, res) => {
             const insight = await callAI(prompt, "You are a dramatic, terrifying narrator showing alternate future timelines to stop procrastination. Return only JSON.");
             res.json(extractJson(insight));
         } catch (e) {
-            res.json({ 
+            res.json({
                 oneWeek: `You keep pushing "${taskTitle}" off, and the pile of work doubles. You end up sacrificing your entire weekend.`,
                 oneMonth: `The stress from avoiding "${taskTitle}" bleeds into your other classes. Your grades slip universally.`,
                 oneYear: `You look back and realize procrastinating on "${taskTitle}" was the domino that ruined your semester's momentum.`,
@@ -550,7 +552,7 @@ router.post('/mind-sweep', auth, async (req, res) => {
 
         const responseText = await callAI(prompt, "You are an intelligent task extractor and organizer. Respond ONLY with valid JSON.");
         const result = extractJson(responseText);
-        
+
         // ensure default arrays
         res.json({
             todos: result.todos || [],
