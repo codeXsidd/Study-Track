@@ -1,5 +1,17 @@
 # StudyTrack - Premium AI-Powered Student Productivity Workspace 🚀
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![React](https://img.shields.io/badge/React-Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/AI-Google%20Gemini-blue?style=for-the-badge)
+![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?style=for-the-badge&logo=vercel)
+![Render](https://img.shields.io/badge/Backend-Render-purple?style=for-the-badge)
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-green?style=for-the-badge&logo=google-chrome)](YOUR_DEPLOY_LINK)
+
+---
+
 StudyTrack is an all-in-one, ultra-premium personal student workspace designed to transform academic chaos into peak productivity. Powered by **Google Gemini AI**, it goes beyond simple tracking—it acts as your personal tutor, scheduler, and motivator.
 
 ## 🌟 The Vision & Idea
