@@ -67,8 +67,8 @@ The core idea behind **StudyTrack** is to create a holistic, intelligent ecosyst
 
 ### 1. Clone the repository:
 ```bash
-git clone https://github.com/codeXsidd/Student-Management.git
-cd Student-Management
+git clone https://github.com/codeXsidd/Study-Track.git
+cd Study-Track
 ```
 
 ### 2. Frontend Setup
