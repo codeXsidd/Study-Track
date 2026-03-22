@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { GraduationCap, Plus, Trash2, Save, TrendingUp, ChevronRight, Award, RefreshCw } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -204,6 +205,10 @@ const GpaCalculatorPage = () => {
 
     return (
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem 1.5rem' }}>
+            <Helmet>
+                <title>GPA & CGPA Predictor — StudyTrack</title>
+                <meta name="description" content="Use the AI Predictor to calculate the exact SGPA you need to reach your target CGPA." />
+            </Helmet>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.5rem', fontWeight: 700 }}>
                     <GraduationCap size={26} color="#6366f1" /> GPA / CGPA Calculator

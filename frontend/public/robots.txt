@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://studytrack-hub.vercel.app/sitemap.xml

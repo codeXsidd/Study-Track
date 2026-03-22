@@ -1,4 +1,5 @@
 import React from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
@@ -88,8 +89,9 @@ const AppRoutes = () => {
 
 function App() {
     return (
-        <AuthProvider>
-            <BrowserRouter>
+        <HelmetProvider>
+            <AuthProvider>
+                <BrowserRouter>
                 <AppRoutes />
                 <Toaster position="top-right" toastOptions={{
                     style: { background: '#1a1a2e', color: '#e2e8f0', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px', fontFamily: 'Inter, sans-serif', fontSize: '0.875rem' },
@@ -98,6 +100,7 @@ function App() {
                 }} />
             </BrowserRouter>
         </AuthProvider>
+        </HelmetProvider>
     );
 }
 

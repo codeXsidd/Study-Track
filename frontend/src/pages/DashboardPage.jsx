@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API, { getUpcoming, getHabits, toggleHabit, aiChat, addXP } from '../services/api';
@@ -221,6 +222,10 @@ const DashboardPage = () => {
 
     return (
         <div className="page-container animate-slide-scale">
+            <Helmet>
+                <title>Dashboard — StudyTrack</title>
+                <meta name="description" content="View your upcoming classes, deadlines, habits, and study streak on StudyTrack." />
+            </Helmet>
 
             {/* ── HERO HEADER ── */}
             <div style={{
