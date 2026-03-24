@@ -84,33 +84,32 @@ router.post('/analyze', auth, async (req, res) => {
         const { code, language, mode } = req.body;
         if (!code) return res.status(400).json({ message: "Code is required" });
 
-        const prompt = `Act as a world-class programming teacher and expert software engineer. Your goal is to teach a COMPLETE BEGINNER while also guiding them to write efficient, optimal code.
+        const prompt = `Act as a world-class programming teacher and expert software engineer.
+Your goal is to teach a COMPLETE BEGINNER while also guiding them to optimal code.
 Analyze this ${language || 'programming'} code:
 
 ${code}
 
 Mode: ${mode || 'Beginner'}
 
-Return EXACTLY this JSON format and nothing else:
+Return EXACTLY this JSON format (ALL keys must exist):
 {
-  "simpleSummary": "Explain what the code does in 2-3 lines using very simple English.",
-  "stepByStep": "Explain each line of code clearly. What keywords mean, why they are used. Formatted as markdown.",
-  "background": "Explain what happens in the background. What happens in memory (RAM), how variables are stored, how the CPU executes this. Like a story.",
-  "executionSteps": [
-    { "line": 1, "explanation": "Detailed explanation of this specific execution step.", "variables": {"i": "0"} }
-  ],
-  "visualization": "Text simulation of variable changes (e.g., i = 0 -> 1 -> 2)",
-  "analogy": "Explain using a simple real-world example.",
-  "timeComplexity": "Explain time complexity in simple terms. Avoid heavy math.",
-  "spaceComplexity": "Explain space complexity in simple terms.",
-  "beginnerTips": "Common mistakes beginners make and what to focus on.",
-  "mistakes": "Identify logical errors, edge cases, or inefficient parts in the original code.",
-  "betterApproach": "Suggest a more efficient or cleaner approach and explain why.",
-  "optimizedCode": "Provide the completely improved version of the code with beginner comments.",
-  "interviewInsight": "What an interviewer expects from this problem and follow-up questions."
+  "simpleSummary": "2-3 lines explaining what the code does in very simple English...",
+  "stepByStep": [{"line": 1, "explanation": "Explain each line clearly avoiding jargon...", "variables": {"i": "0"}}],
+  "backgroundExecution": "Explain what happens in memory (RAM), how variables are stored, and CPU execution like a story...",
+  "dryRun": "Take a sample input and show step-by-step execution...",
+  "visualization": "Show changes like: i = 0 -> 1 -> 2, sum = 0 -> 3",
+  "analogy": "Explain using a simple real-world example...",
+  "timeComplexity": "O(N) - explain in very simple terms...",
+  "spaceComplexity": "O(1) - explain in very simple terms...",
+  "beginnerTips": "Common mistakes beginners make and what to focus on...",
+  "mistakes": "Check for logical errors, edge case issues, inefficient parts...",
+  "optimalSolution": "Format: Current Approach: ... Better Approach: ... Why Better: ...",
+  "optimizedCode": "// Provide improved version of the code with beginner comments",
+  "interviewInsight": "What interviewer expects and common follow-up questions"
 }`;
 
-        const systemInstruction = "You are a senior full-stack developer and world-class AI programming tutor. Always return valid structured JSON without markdown code blocks surrounding the JSON.";
+        const systemInstruction = "You are a senior full-stack developer and AI programming tutor. Return ONLY valid JSON.";
 
         try {
             const responseText = await callAI(prompt, systemInstruction);
@@ -118,20 +117,21 @@ Return EXACTLY this JSON format and nothing else:
             res.json(result);
         } catch (e) {
             console.error("CodeInsight Analysis Error:", e);
+            // Fallback response
             res.json({
                 simpleSummary: "This code performs standard operations.",
-                stepByStep: "- Line 1 starts the process...",
-                background: "The RAM allocates space for your variables...",
-                executionSteps: [{ line: 1, explanation: "Starting execution", variables: {} }],
-                visualization: "Variables initialize...",
+                stepByStep: [{ line: 1, explanation: "Starting execution", variables: {} }],
+                backgroundExecution: "The CPU reads your instructions one by one and stores variables in memory.",
+                dryRun: "Input: 5. Step 1: starts... Step 2: ends.",
+                visualization: "x = 0 -> 5",
                 analogy: "Like reading a book page by page.",
-                timeComplexity: "O(N) - Linear time.",
-                spaceComplexity: "O(1) - Constant space.",
-                beginnerTips: "Always remember to name variables clearly.",
-                mistakes: "No major logical errors detected in fallback mode.",
-                betterApproach: "Use built-in functions where applicable.",
-                optimizedCode: "// Optimizations will appear here in normal operation",
-                interviewInsight: "Focus on explaining your thought process out loud."
+                timeComplexity: "O(N)",
+                spaceComplexity: "O(1)",
+                beginnerTips: "Remember to check for edge cases.",
+                mistakes: "No major logical errors detected in fallback.",
+                optimalSolution: "Current: Basic. Better: Optimized approach.",
+                optimizedCode: "// Optimised code here",
+                interviewInsight: "Focus on edge cases."
             });
         }
     } catch (err) {

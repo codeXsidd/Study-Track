@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Code2, Play, Cpu, Zap, Activity, Info, AlertTriangle, FastForward, CheckCircle2, BookOpen, Database, Lightbulb, Terminal, Code } from 'lucide-react';
+import { Code2, Play, Cpu, Zap, Activity, Info, AlertTriangle, FastForward, CheckCircle2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import toast from 'react-hot-toast';
 import { analyzeCode } from '../services/api';
 
 const CodeInsightPage = () => {
-    const [code, setCode] = useState('// Write or paste your code here...\n\nfunction example() {\n  return "Hello, CodeInsight!";\n}');
+    const boilerplates = {
+        javascript: '// Write or paste your JavaScript code here...\n\nfunction example() {\n  return "Hello, CodeInsight!";\n}\n\nconsole.log(example());',
+        python: '# Write or paste your Python code here...\n\ndef example():\n    return "Hello, CodeInsight!"\n\nif __name__ == "__main__":\n    print(example())',
+        java: '// Write or paste your Java code here...\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, CodeInsight!");\n    }\n}',
+        cpp: '// Write or paste your C++ code here...\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, CodeInsight!" << endl;\n    return 0;\n}'
+    };
+
     const [language, setLanguage] = useState('javascript');
+    const [code, setCode] = useState(boilerplates['javascript']);
     const [mode, setMode] = useState('Beginner');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -59,7 +66,13 @@ const CodeInsightPage = () => {
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <select 
                             value={language} 
-                            onChange={(e) => setLanguage(e.target.value)}
+                            onChange={(e) => {
+                                const newLang = e.target.value;
+                                if (Object.values(boilerplates).includes(code) || code.trim() === '') {
+                                    setCode(boilerplates[newLang]);
+                                }
+                                setLanguage(newLang);
+                            }}
                             style={{ 
                                 background: 'rgba(255,255,255,0.05)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.1)', 
                                 padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' 
@@ -129,13 +142,13 @@ const CodeInsightPage = () => {
                 {result ? (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', overflow: 'hidden' }}>
                         {/* Tabs */}
-                        <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                            {['Explanation', 'Deep Dive', 'Execution Flow'].map(tab => (
+                        <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto' }} className="hide-scrollbar">
+                            {['Explanation', 'Simulation', 'Optimization'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     style={{
-                                        padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s',
+                                        padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s', whiteSpace: 'nowrap',
                                         background: activeTab === tab ? 'rgba(99,102,241,0.15)' : 'transparent',
                                         color: activeTab === tab ? '#818cf8' : '#94a3b8',
                                         border: `1px solid ${activeTab === tab ? 'rgba(99,102,241,0.3)' : 'transparent'}`
@@ -152,131 +165,90 @@ const CodeInsightPage = () => {
                             {activeTab === 'Explanation' && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} className="animate-fade-in">
                                     <div style={{ padding: '1rem', borderRadius: '12px', background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02))', border: '1px solid rgba(16,185,129,0.2)' }}>
-                                        <h3 style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><Info size={16} /> Simple Summary</h3>
-                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6 }}>{result.simpleSummary || "No summary available."}</p>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><Info size={16} /> 🧠 Simple Summary</h3>
+                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6 }}>{result.simpleSummary}</p>
+                                    </div>
+                                    
+                                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><FastForward size={16} /> 📦 Real-Life Analogy</h3>
+                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, fontStyle: 'italic' }}>"{result.analogy}"</p>
                                     </div>
 
-                                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <h3 style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 800, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}><BookOpen size={16} /> Step-by-Step Explanation</h3>
-                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{result.stepByStep || "No step-by-step logic available."}</p>
+                                    <div style={{ padding: '1.25rem', borderRadius: '12px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)' }}>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#818cf8', fontWeight: 800, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}><Cpu size={16} /> ⚙️ What Happens in the Background</h3>
+                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.backgroundExecution}</p>
                                     </div>
 
-                                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <h3 style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 800, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}><Database size={16} /> What Happens in the Background</h3>
-                                        <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{result.background}</p>
-                                    </div>
-
-                                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <h3 style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><FastForward size={16} /> Real-World Analogy</h3>
-                                        <p style={{ fontSize: '0.9rem', color: '#fbbf24', lineHeight: 1.6, fontStyle: 'italic' }}>"{result.analogy}"</p>
+                                    <div>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase' }}>📖 Step-by-Step Explanation</h3>
+                                        {result.stepByStep && result.stepByStep.length > 0 ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                {result.stepByStep.map((step, idx) => (
+                                                    <div key={idx} style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', borderLeft: '3px solid #6366f1' }}>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#818cf8', marginBottom: '0.25rem', display: 'block' }}>Line {step.line || '?'}</span>
+                                                        <p style={{ fontSize: '0.85rem', color: '#e2e8f0', lineHeight: 1.5 }}>{step.explanation}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No step-by-step data available.</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {activeTab === 'Deep Dive' && (
+                            {activeTab === 'Simulation' && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} className="animate-fade-in">
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                        <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(0,0,0,0))', border: '1px solid rgba(239,68,68,0.2)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
-                                                <Activity color="#f87171" size={20} />
-                                                <h3 style={{ fontSize: '0.9rem', color: '#fca5a5', fontWeight: 700 }}>Time Complexity</h3>
-                                            </div>
-                                            <p style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
-                                                {result.timeComplexity?.split('-')[0]?.trim() || 'Wait...'}
-                                            </p>
-                                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                                {result.timeComplexity?.split('-').slice(1).join('-').trim() || result.timeComplexity}
-                                            </p>
+                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(0,0,0,0))', border: '1px solid rgba(239,68,68,0.2)' }}>
+                                            <h3 style={{ fontSize: '0.85rem', color: '#fca5a5', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={16} /> ⏱ Time Complexity</h3>
+                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.5 }}>{result.timeComplexity}</p>
                                         </div>
-
-                                        <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(0,0,0,0))', border: '1px solid rgba(56,189,248,0.2)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
-                                                <Cpu color="#38bdf8" size={20} />
-                                                <h3 style={{ fontSize: '0.9rem', color: '#7dd3fc', fontWeight: 700 }}>Space Complexity</h3>
-                                            </div>
-                                            <p style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
-                                                {result.spaceComplexity?.split('-')[0]?.trim() || 'Wait...'}
-                                            </p>
-                                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                                                {result.spaceComplexity?.split('-').slice(1).join('-').trim() || result.spaceComplexity}
-                                            </p>
+                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(0,0,0,0))', border: '1px solid rgba(56,189,248,0.2)' }}>
+                                            <h3 style={{ fontSize: '0.85rem', color: '#7dd3fc', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><Code2 size={16} /> 💾 Space Complexity</h3>
+                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.5 }}>{result.spaceComplexity}</p>
                                         </div>
                                     </div>
 
-                                    {result.beginnerTips && (
-                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(56,189,248,0.05)', border: '1px solid rgba(56,189,248,0.15)' }}>
-                                            <h3 style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><Lightbulb size={16} /> Beginner Tips</h3>
-                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6 }}>{result.beginnerTips}</p>
-                                        </div>
-                                    )}
+                                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase' }}>🔄 Dry Run (Execution Flow)</h3>
+                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.dryRun}</p>
+                                    </div>
 
-                                    {result.mistakes && (
-                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                                            <h3 style={{ fontSize: '0.85rem', color: '#f87171', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><AlertTriangle size={16} /> Mistake Detection & Edge Cases</h3>
-                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6 }}>{result.mistakes}</p>
-                                        </div>
-                                    )}
-
-                                    {result.betterApproach && (
-                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                                            <h3 style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={16} /> Optimal Solution / Better Approach</h3>
-                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.betterApproach}</p>
-                                        </div>
-                                    )}
-
-                                    {result.optimizedCode && (
-                                        <div style={{ padding: '1rem', borderRadius: '12px', background: '#0a0a10', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <h3 style={{ fontSize: '0.85rem', color: '#a78bfa', fontWeight: 800, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}><Code size={16} /> Optimized Code Snippet</h3>
-                                            <pre style={{ fontSize: '0.8rem', color: '#e2e8f0', overflowX: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}><code>{result.optimizedCode}</code></pre>
-                                        </div>
-                                    )}
-
-                                    {result.interviewInsight && (
-                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)' }}>
-                                            <h3 style={{ fontSize: '0.85rem', color: '#818cf8', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><Terminal size={16} /> Interview Insight</h3>
-                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6 }}>{result.interviewInsight}</p>
-                                        </div>
-                                    )}
+                                    <div style={{ padding: '1rem', borderRadius: '12px', background: '#0a0a10', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase' }}>🎥 Visualization</h3>
+                                        <pre style={{ margin: 0, fontSize: '0.85rem', color: '#10b981', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>{result.visualization}</pre>
+                                    </div>
                                 </div>
                             )}
 
-                            {activeTab === 'Execution Flow' && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }} className="animate-fade-in">
-                                    {result.visualization && (
-                                        <div style={{ padding: '1rem', borderRadius: '12px', background: '#0a0a10', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
-                                            <h3 style={{ fontSize: '0.8rem', color: '#10b981', textTransform: 'uppercase', fontWeight: 800, marginBottom: '0.5rem' }}>Text Simulation</h3>
-                                            <pre style={{ fontSize: '0.85rem', color: '#e2e8f0', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{result.visualization}</pre>
-                                        </div>
-                                    )}
+                            {activeTab === 'Optimization' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} className="animate-fade-in">
+                                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#f87171', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><AlertTriangle size={16} /> 🔍 Mistake Detection</h3>
+                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.mistakes}</p>
+                                    </div>
 
-                                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.5rem' }}>Step-by-step Dry Run of execution.</p>
-                                    
-                                    {result.executionSteps && result.executionSteps.length > 0 ? (
-                                        result.executionSteps.map((step, idx) => (
-                                            <div key={idx} style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderLeft: '3px solid #6366f1' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#818cf8', background: 'rgba(99,102,241,0.1)', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
-                                                        Line {step.line || '?'}
-                                                    </span>
-                                                    <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>Step {idx + 1}</span>
-                                                </div>
-                                                <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.5, marginBottom: step.variables && Object.keys(step.variables).length > 0 ? '0.75rem' : 0 }}>
-                                                    {step.explanation}
-                                                </p>
-                                                
-                                                {step.variables && Object.keys(step.variables).length > 0 && (
-                                                    <div style={{ padding: '0.5rem', background: '#0a0a10', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                                                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>Variables in memory:</span>
-                                                        <code style={{ fontSize: '0.8rem', color: '#10b981', display: 'block', wordBreak: 'break-all' }}>
-                                                            {JSON.stringify(step.variables).replace(/[{}]/g, '')}
-                                                        </code>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No step-by-step data available for this snippet.</p>
-                                    )}
+                                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><Zap size={16} /> ⚡ Optimal Solution</h3>
+                                        <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.optimalSolution}</p>
+                                    </div>
+
+                                    <div style={{ padding: '1rem', borderRadius: '12px', background: '#1e1e2f', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <h3 style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 800, marginBottom: '0.75rem', textTransform: 'uppercase' }}>💻 Optimized Code</h3>
+                                        <pre style={{ margin: 0, fontSize: '0.85rem', color: '#a78bfa', fontFamily: 'monospace', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>{result.optimizedCode}</pre>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <h3 style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 800, marginBottom: '0.5rem', textTransform: 'uppercase' }}>🚀 Beginner Tips</h3>
+                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.beginnerTips}</p>
+                                        </div>
+                                        <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)' }}>
+                                            <h3 style={{ fontSize: '0.85rem', color: '#818cf8', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={16} /> 🧪 Interview Insight</h3>
+                                            <p style={{ fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.interviewInsight}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
