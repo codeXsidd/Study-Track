@@ -13,6 +13,8 @@ const app = express();
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'https://smartstudy-hub.vercel.app', 'https://studytrack-hub.vercel.app'];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+const mongoSanitize = require('express-mongo-sanitize');
+app.use(mongoSanitize()); // Globally blocks NoSQL Injection by sanitizing req.body, req.query, and req.params
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', require('./routes/auth'));

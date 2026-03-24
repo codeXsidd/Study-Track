@@ -55,10 +55,11 @@ router.post('/', (req, res) => {
 // GET download a certificate
 router.get('/:id/download', async (req, res) => {
     try {
-        const cert = await Certificate.findOne({ _id: req.params.id, user: req.userId });
+        const cert = await Certificate.findOne({ _id: String(req.params.id), user: req.userId });
         if (!cert) return res.status(404).json({ message: 'Certificate not found.' });
 
-        const filePath = path.join(__dirname, '..', 'uploads', cert.filename);
+        const safeFilename = path.basename(cert.filename || '');
+        const filePath = path.join(__dirname, '..', 'uploads', safeFilename);
         if (!fs.existsSync(filePath)) return res.status(404).json({ message: 'File not found on server.' });
 
         res.download(filePath, cert.originalName);
@@ -70,10 +71,11 @@ router.get('/:id/download', async (req, res) => {
 // DELETE a certificate
 router.delete('/:id', async (req, res) => {
     try {
-        const cert = await Certificate.findOneAndDelete({ _id: req.params.id, user: req.userId });
+        const cert = await Certificate.findOneAndDelete({ _id: String(req.params.id), user: req.userId });
         if (!cert) return res.status(404).json({ message: 'Certificate not found.' });
 
-        const filePath = path.join(__dirname, '..', 'uploads', cert.filename);
+        const safeFilename = path.basename(cert.filename || '');
+        const filePath = path.join(__dirname, '..', 'uploads', safeFilename);
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
         res.json({ message: 'Certificate deleted.' });
