@@ -72,3 +72,4 @@ export const simulateProcrastination = (data) => API.post('/ai/simulate-procrast
 export const generateMasteryRoadmap = (data) => API.post('/ai/mastery-roadmap', data);
 export const syncRival = (data) => API.post('/ai/rival-sync', data);
 export const parseMindSweep = (data) => API.post('/ai/mind-sweep', data);
+export const analyzeCode = (data) => API.post('/codeinsight/analyze', data);
