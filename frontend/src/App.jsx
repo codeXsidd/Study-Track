@@ -42,37 +42,14 @@ const Layout = ({ children }) => {
     }, [pathname]);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
-            {/* Global Announcement Banner */}
-            <div style={{ 
-                background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899)', 
-                color: '#fff', 
-                padding: '0.5rem 1rem', 
-                textAlign: 'center', 
-                fontSize: '0.85rem', 
-                fontWeight: 700, 
-                letterSpacing: '0.02em',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                zIndex: 1000,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '1rem'
-            }}>
-                <span>🚀 Growth Potential: <strong style={{color:'#fdf2f8'}}>All Devs</strong></span>
-                <span style={{ opacity: 0.5 }}>|</span>
-                <span>🎯 Target Users: <strong style={{color:'#fdf2f8'}}>50k+</strong></span>
-            </div>
-            
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                <Sidebar />
-                <main className="main-content" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-                    {/* Key forces component to unmount/remount on navigation for a 'fresh' feel */}
-                    <div key={pathname} style={{ height: '100%' }}>
-                        {children}
-                    </div>
-                </main>
-            </div>
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
+            <Sidebar />
+            <main className="main-content" style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+                {/* Key forces component to unmount/remount on navigation for a 'fresh' feel */}
+                <div key={pathname} style={{ height: '100%' }}>
+                    {children}
+                </div>
+            </main>
         </div>
     );
 };
