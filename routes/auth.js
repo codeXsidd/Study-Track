@@ -26,7 +26,7 @@ router.post('/send-otp', async (req, res) => {
         await OTP.create({ email, otp });
 
         if (process.env.BREVO_API_KEY) {
-            await fetch("https://api.brevo.com/v3/smtp/email", {
+            const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
                 method: "POST",
                 headers: {
                     "Accept": "application/json",
@@ -44,6 +44,11 @@ router.post('/send-otp', async (req, res) => {
                     `
                 })
             });
+            const data = await brevoResponse.json();
+            if (!brevoResponse.ok) {
+                console.error("Brevo API error in send-otp:", data);
+                throw new Error(data.message || "Failed to send OTP email via Brevo.");
+            }
         } else {
             console.warn("BREVO_API_KEY missing, generated OTP:", otp);
         }
@@ -51,6 +56,22 @@ router.post('/send-otp', async (req, res) => {
         res.json({ message: 'OTP sent to email.' });
     } catch (err) {
         console.error('SEND OTP ERROR:', err.message);
+        res.status(500).json({ message: 'Server error.', error: err.message });
+    }
+});
+
+// @POST /api/auth/verify-otp
+router.post('/verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required.' });
+
+        const validOtp = await OTP.findOne({ email, otp });
+        if (!validOtp) return res.status(400).json({ message: 'Invalid or expired OTP.' });
+
+        res.json({ message: 'OTP verified successfully.' });
+    } catch (err) {
+        console.error('VERIFY OTP ERROR:', err.message);
         res.status(500).json({ message: 'Server error.', error: err.message });
     }
 });

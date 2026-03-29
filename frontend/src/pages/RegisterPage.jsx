@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register as registerApi, sendOtp } from '../services/api';
+import { register as registerApi, sendOtp, verifyOtp } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
@@ -43,7 +43,6 @@ const RegisterPage = () => {
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
-        if (form.password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
         setLoading(true);
         try {
             await sendOtp({ email: form.email });
@@ -56,9 +55,24 @@ const RegisterPage = () => {
         }
     };
 
-    const handleRegister = async (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
         if (!otp) { toast.error('Please enter the verification code'); return; }
+        setLoading(true);
+        try {
+            await verifyOtp({ email: form.email, otp });
+            toast.success('Email verified successfully!');
+            setStep(3);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Invalid or expired OTP');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        if (form.password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
         setLoading(true);
         try {
             const res = await registerApi({ ...form, otp });
@@ -169,15 +183,15 @@ const RegisterPage = () => {
                         <p style={{ color: '#64748b', fontSize: '0.8rem' }}>Free forever. No credit card required.</p>
                     </div>
 
-                    <form onSubmit={step === 1 ? handleSendOtp : handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {step === 1 ? (
+                    <form onSubmit={step === 1 ? handleSendOtp : step === 2 ? handleVerifyOtp : handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {step === 1 && (
                             <>
                         <div>
                             <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</label>
                             <div style={{ position: 'relative' }}>
                                 <User size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                                 <input type="text" placeholder="Your name" className="input" style={{ paddingLeft: '2.25rem' }}
-                                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required autoFocus />
+                                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required autoFocus={step === 1} />
                             </div>
                         </div>
 
@@ -189,13 +203,29 @@ const RegisterPage = () => {
                                     value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
                             </div>
                         </div>
+                        </>
+                        )}
 
+                        {step === 2 && (
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verification Code</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Key size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                                    <input type="text" placeholder="Enter 6-digit code" className="input" style={{ paddingLeft: '2.25rem' }} value={otp} onChange={e => setOtp(e.target.value)} required autoFocus={step === 2} />
+                                </div>
+                                <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 8 }}>We sent a code to <strong>{form.email}</strong></p>
+                                <button type="button" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: '0.7rem', fontWeight: 600, marginTop: 4, cursor: 'pointer', padding: 0 }}>← Back to edit details</button>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <>
                         <div>
-                            <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
+                            <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Create Password</label>
                             <div style={{ position: 'relative' }}>
                                 <Lock size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                                 <input type={showPwd ? 'text' : 'password'} placeholder="min. 6 characters" className="input" style={{ paddingLeft: '2.25rem', paddingRight: '2.5rem' }}
-                                    value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
+                                    value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required autoFocus={step === 3} />
                                 <button type="button" onClick={() => setShowPwd(!showPwd)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#475569', fontSize: '0.65rem', fontWeight: 700, padding: 0 }}>
                                     {showPwd ? 'HIDE' : 'SHOW'}
                                 </button>
@@ -214,22 +244,12 @@ const RegisterPage = () => {
                             )}
                         </div>
                         </>
-                        ) : (
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verification Code</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Key size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type="text" placeholder="Enter 6-digit code" className="input" style={{ paddingLeft: '2.25rem' }} value={otp} onChange={e => setOtp(e.target.value)} required autoFocus />
-                                </div>
-                                <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 8 }}>We sent a code to <strong>{form.email}</strong></p>
-                                <button type="button" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: '0.7rem', fontWeight: 600, marginTop: 4, cursor: 'pointer', padding: 0 }}>← Back to edit details</button>
-                            </div>
                         )}
 
                         <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 6, width: '100%', padding: '0.78rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                             {loading
-                                ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} /> {step === 1 ? 'Sending Code...' : 'Creating workspace...'}</>
-                                : <><Rocket size={15} /> {step === 1 ? 'Continue' : 'Verify & Create Workspace'}</>
+                                ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} /> {step === 1 ? 'Sending Code...' : step === 2 ? 'Verifying...' : 'Creating workspace...'}</>
+                                : <><Rocket size={15} /> {step === 1 ? 'Continue' : step === 2 ? 'Verify & Continue' : 'Create Free Workspace'}</>
                             }
                         </button>
                     </form>
