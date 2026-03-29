@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 
 const router = express.Router();
 
@@ -10,17 +11,66 @@ const generateToken = (userId) => {
     return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
+// @POST /api/auth/send-otp
+router.post('/send-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ message: 'Email is required.' });
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json({ message: 'Email already registered.' });
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        await OTP.deleteMany({ email });
+        await OTP.create({ email, otp });
+
+        if (process.env.BREVO_API_KEY) {
+            await fetch("https://api.brevo.com/v3/smtp/email", {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "api-key": process.env.BREVO_API_KEY
+                },
+                body: JSON.stringify({
+                    sender: { name: "StudyTrack Support", email: "siddharthdeveloper2006@gmail.com" },
+                    to: [{ email }],
+                    subject: "Your StudyTrack Verification Code",
+                    htmlContent: `
+                        <h2>StudyTrack Registration</h2>
+                        <p>Your verification code is: <strong>${otp}</strong></p>
+                        <p>This code is valid for 5 minutes.</p>
+                    `
+                })
+            });
+        } else {
+            console.warn("BREVO_API_KEY missing, generated OTP:", otp);
+        }
+
+        res.json({ message: 'OTP sent to email.' });
+    } catch (err) {
+        console.error('SEND OTP ERROR:', err.message);
+        res.status(500).json({ message: 'Server error.', error: err.message });
+    }
+});
+
 // @POST /api/auth/register
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, otp } = req.body;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'All fields are required.' });
+        if (!name || !email || !password || !otp) {
+            return res.status(400).json({ message: 'All fields and OTP are required.' });
         }
 
         if (password.length < 6) {
             return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+        }
+
+        const validOtp = await OTP.findOne({ email, otp });
+        if (!validOtp) {
+            return res.status(400).json({ message: 'Invalid or expired OTP.' });
         }
 
         const existingUser = await User.findOne({ email });
@@ -30,6 +80,8 @@ router.post('/register', async (req, res) => {
 
         const user = new User({ name, email, password });
         await user.save();
+        
+        await OTP.deleteMany({ email });
 
         const token = generateToken(user._id);
 

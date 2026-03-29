@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register as registerApi } from '../services/api';
+import { register as registerApi, sendOtp } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
     BookOpen, Mail, Lock, User, Sparkles, Rocket, Star,
-    CheckCircle2, Flame, GraduationCap, Clock, ListTodo, TrendingUp
+    CheckCircle2, Flame, GraduationCap, Clock, ListTodo, TrendingUp, Key
 } from 'lucide-react';
 
 const FEATURES = [
@@ -19,6 +19,8 @@ const FEATURES = [
 
 const RegisterPage = () => {
     const [form, setForm] = useState({ name: '', email: '', password: '' });
+    const [otp, setOtp] = useState('');
+    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [showPwd, setShowPwd] = useState(false);
     const { login } = useAuth();
@@ -39,12 +41,27 @@ const RegisterPage = () => {
     const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'][strength];
     const strengthColor = ['', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4'][strength];
 
-    const handleSubmit = async (e) => {
+    const handleSendOtp = async (e) => {
         e.preventDefault();
         if (form.password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
         setLoading(true);
         try {
-            const res = await registerApi(form);
+            await sendOtp({ email: form.email });
+            toast.success(`OTP sent to ${form.email}`);
+            setStep(2);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to send OTP');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        if (!otp) { toast.error('Please enter the verification code'); return; }
+        setLoading(true);
+        try {
+            const res = await registerApi({ ...form, otp });
             login(res.data.user, res.data.token);
             toast.success(`Welcome to StudyTrack, ${res.data.user.name}! 🚀`);
             navigate('/');
@@ -152,7 +169,9 @@ const RegisterPage = () => {
                         <p style={{ color: '#64748b', fontSize: '0.8rem' }}>Free forever. No credit card required.</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <form onSubmit={step === 1 ? handleSendOtp : handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {step === 1 ? (
+                            <>
                         <div>
                             <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</label>
                             <div style={{ position: 'relative' }}>
@@ -194,11 +213,23 @@ const RegisterPage = () => {
                                 </div>
                             )}
                         </div>
+                        </>
+                        ) : (
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verification Code</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Key size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                                    <input type="text" placeholder="Enter 6-digit code" className="input" style={{ paddingLeft: '2.25rem' }} value={otp} onChange={e => setOtp(e.target.value)} required autoFocus />
+                                </div>
+                                <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 8 }}>We sent a code to <strong>{form.email}</strong></p>
+                                <button type="button" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: '0.7rem', fontWeight: 600, marginTop: 4, cursor: 'pointer', padding: 0 }}>← Back to edit details</button>
+                            </div>
+                        )}
 
                         <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 6, width: '100%', padding: '0.78rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                             {loading
-                                ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} /> Creating workspace...</>
-                                : <><Rocket size={15} /> Create Free Workspace</>
+                                ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} /> {step === 1 ? 'Sending Code...' : 'Creating workspace...'}</>
+                                : <><Rocket size={15} /> {step === 1 ? 'Continue' : 'Verify & Create Workspace'}</>
                             }
                         </button>
                     </form>

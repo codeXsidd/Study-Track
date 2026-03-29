@@ -565,4 +565,55 @@ router.post('/mind-sweep', auth, async (req, res) => {
     }
 });
 
+// 16. Study Streak & Share Card
+router.post('/study-card', auth, async (req, res) => {
+    try {
+        const { subject, hoursStudied, mood, userName } = req.body;
+        if (!subject) return res.status(400).json({ message: "Subject is required" });
+
+        const moodLabels = { '🔥': 'fire mode', '😤': 'determined', '💪': 'beast mode', '🧠': 'deep focus', '✨': 'flow state' };
+        const moodLabel = moodLabels[mood] || 'focused';
+
+        const prompt = `A student named "${userName || 'Champion'}" just completed a ${hoursStudied || 1}-hour study session on "${subject}" in ${moodLabel} mood.
+        Generate a personalized achievement card for them.
+        Return EXACTLY this JSON format:
+        {
+            "badge": "A short, punchy badge name (e.g. 'Focus Beast', 'Data Structures Warrior', 'Algorithm Slayer'). Max 3 words. Should relate to the subject if possible.",
+            "badgeEmoji": "One single relevant emoji for the badge.",
+            "quote": "A powerful, unique 1-sentence motivational quote personalized to the subject '${subject}'. Make it feel like it was written specifically for them.",
+            "tagline": "A short, energetic 4-6 word tagline (e.g. 'One session at a time.').",
+            "colorTheme": "One of: purple, blue, green, orange, red, pink — best matching the subject mood."
+        }`;
+
+        const fallbackBadges = [
+            { badge: 'Knowledge Seeker', badgeEmoji: '📚' },
+            { badge: 'Deep Focus Champion', badgeEmoji: '🧠' },
+            { badge: 'Study Warrior', badgeEmoji: '⚔️' },
+        ];
+        const fallback = fallbackBadges[Math.floor(Math.random() * fallbackBadges.length)];
+
+        try {
+            const responseText = await callAI(prompt, "You are a hype coach generating personalized achievement cards. Return only JSON.");
+            const parsed = extractJson(responseText);
+            res.json({
+                badge: parsed.badge || fallback.badge,
+                badgeEmoji: parsed.badgeEmoji || fallback.badgeEmoji,
+                quote: parsed.quote || `Every hour you invest in ${subject} is a step closer to mastery.`,
+                tagline: parsed.tagline || 'One session at a time.',
+                colorTheme: parsed.colorTheme || 'purple'
+            });
+        } catch (e) {
+            res.json({
+                badge: fallback.badge,
+                badgeEmoji: fallback.badgeEmoji,
+                quote: `Every hour you invest in ${subject} is a step closer to mastery. Keep pushing.`,
+                tagline: 'One session at a time.',
+                colorTheme: 'purple'
+            });
+        }
+    } catch (err) {
+        res.status(500).json({ message: "Study Card Error", error: err.message });
+    }
+});
+
 module.exports = router;

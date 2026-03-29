@@ -5,7 +5,7 @@ import API from '../services/api';
 import {
     BookOpen, LayoutDashboard, Users, ClipboardList, CheckSquare,
     Award, Timer, GraduationCap, Calendar, BookMarked, Code2,
-    StickyNote, Target, Bell, LogOut, ChevronLeft, ChevronRight, Sparkles, Activity, Zap, TrendingUp, Wand2, Brain, Cpu
+    StickyNote, Target, Bell, LogOut, ChevronLeft, ChevronRight, Sparkles, Activity, Zap, TrendingUp, Wand2, Brain, Cpu, Share2
 } from 'lucide-react';
 
 const mainLinks = [
@@ -31,6 +31,7 @@ const productivityLinks = [
     { to: '/codeinsight', icon: <Cpu size={18} />, label: 'CodeInsight AI' },
     { to: '/arsenal', icon: <Brain size={18} />, label: 'AI Arsenal' },
     { to: '/mind-sweep', icon: <Wand2 size={18} />, label: 'AI Mind Sweep' },
+    { to: '/study-card', icon: <Share2 size={18} />, label: 'Share Card' },
     { to: '/pomodoro', icon: <Timer size={18} />, label: 'Pomodoro' },
     { to: '/focus-room', icon: <Zap size={18} />, label: 'Deep Focus Room' },
     { to: '/journal', icon: <BookMarked size={18} />, label: 'Study Journal' },
