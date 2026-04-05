@@ -5,7 +5,7 @@ const API = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
-// Attach token from localStorage on every request
+// Attach token and log errors
 API.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -13,6 +13,20 @@ API.interceptors.request.use((config) => {
     }
     return config;
 });
+
+API.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        console.error('API ERROR:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            message: error.response?.data?.message || error.message,
+            data: error.response?.data
+        });
+        return Promise.reject(error);
+    }
+);
 
 export default API;
 

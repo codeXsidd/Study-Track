@@ -16,7 +16,7 @@ const generateToken = (userId) => {
 // --- Security Middleware ---
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10, // Max 10 requests per window
+    max: 100, // increased from 10 to 100
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Too many authentication requests, please try again in 15 minutes." }
@@ -144,11 +144,13 @@ router.post('/login', authLimiter, async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
+            console.warn(`[LOGIN FAILED] Account does not exist: ${email}`);
             return res.status(400).json({ message: 'Invalid email or password.' });
         }
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
+            console.warn(`[LOGIN FAILED] Password mismatch for: ${email}`);
             return res.status(400).json({ message: 'Invalid email or password.' });
         }
 
