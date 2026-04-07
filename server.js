@@ -27,7 +27,14 @@ const allowedOrigins = [
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(helmet());
 app.use(express.json());
-app.use(mongoSanitize());
+// express-mongo-sanitize middleware tries to reassign req.query etc. which fails in Express 5.
+// We instead mutate the objects in-place using the sanitize function.
+app.use((req, res, next) => {
+  if (req.body) mongoSanitize.sanitize(req.body, { replaceWith: '_' });
+  if (req.params) mongoSanitize.sanitize(req.params, { replaceWith: '_' });
+  if (req.query) mongoSanitize.sanitize(req.query, { replaceWith: '_' });
+  next();
+});
 
 // Logger to help diagnose connectivity and routing issues in deployment
 app.use((req, res, next) => {
