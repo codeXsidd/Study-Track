@@ -3,24 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { login as loginApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import {
-    BookOpen, Mail, Lock, LogIn, CheckCircle2, Flame,
-    GraduationCap, Clock, ListTodo, StickyNote, TrendingUp
-} from 'lucide-react';
-
-const FEATURES = [
-    { icon: <GraduationCap size={16} />, color: '#818cf8', text: 'GPA & CGPA tracker across all semesters' },
-    { icon: <Clock size={16} />, color: '#10b981', text: 'Smart timetable with today\'s class view' },
-    { icon: <CheckCircle2 size={16} />, color: '#f59e0b', text: 'Assignment deadlines & to-do lists' },
-    { icon: <Flame size={16} />, color: '#ef4444', text: 'Study journal with activity heatmap' },
-    { icon: <ListTodo size={16} />, color: '#a78bfa', text: 'Notes wall, portfolio & skill tracker' },
-    { icon: <TrendingUp size={16} />, color: '#22d3ee', text: 'Attendance tracker with warnings' },
-];
 
 const LoginPage = () => {
     const [form, setForm] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
-    const [showPwd, setShowPwd] = useState(false);
+    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -30,7 +17,7 @@ const LoginPage = () => {
         try {
             const res = await loginApi(form);
             login(res.data.user, res.data.token);
-            toast.success(`Welcome back, ${res.data.user.name}! 👋`);
+            toast.success(`Welcome back! 👋`);
             navigate('/');
         } catch (err) {
             console.error('LOGIN_ERROR:', err.response?.data || err.message);
@@ -41,141 +28,247 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="auth-bg">
-            {/* Left panel — brand / features */}
+        <div style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#13131A', /* Dark premium background */
+            color: '#fff',
+            fontFamily: "'Inter', sans-serif"
+        }}>
             <div style={{
-                flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                padding: '3rem', maxWidth: 520,
-                background: 'linear-gradient(160deg, rgba(99,102,241,0.1) 0%, rgba(8,8,18,0) 70%)',
-                borderRight: '1px solid rgba(99,102,241,0.08)'
-            }} className="hide-mobile">
-                {/* Logo */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '3rem' }}>
-                    <div style={{
-                        width: 48, height: 48, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                        borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 8px 28px rgba(99,102,241,0.4)'
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: '5rem',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                padding: '2rem',
+                width: '100%',
+                maxWidth: '1000px'
+            }}>
+                {/* Lamp SVG section */}
+                <div style={{ position: 'relative', width: 280, height: 380, display: 'flex', justifyContent: 'center' }}>
+                    {/* The light cone */}
+                    <svg width="600" height="400" style={{ 
+                        position: 'absolute', 
+                        top: 150, 
+                        left: -160, 
+                        zIndex: 0, 
+                        opacity: isPasswordFocused ? 0.05 : 1, 
+                        transition: 'opacity 0.5s ease-in-out',
+                        pointerEvents: 'none'
                     }}>
-                        <BookOpen size={24} color="white" />
-                    </div>
-                    <div>
-                        <h1 className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.03em' }}>StudyTrack</h1>
-                        <p style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 500 }}>Your personal study companion</p>
-                    </div>
+                        <defs>
+                            <linearGradient id="lightGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="rgba(255, 255, 255, 0.4)" />
+                                <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
+                            </linearGradient>
+                        </defs>
+                        <polygon points="200,0 400,0 550,400 50,400" fill="url(#lightGradient)" />
+                    </svg>
+
+                    {/* The lamp itself */}
+                    <svg width="300" height="380" style={{ position: 'relative', zIndex: 1, overflow: 'visible' }}>
+                        {/* Base and stand */}
+                        <ellipse cx="150" cy="350" rx="45" ry="12" fill="#D1D5DB" />
+                        <ellipse cx="150" cy="345" rx="45" ry="12" fill="#E5E7EB" />
+                        
+                        {/* Stand pole */}
+                        <rect x="142" y="180" width="16" height="165" fill="#9CA3AF" />
+                        <rect x="142" y="180" width="8" height="165" fill="#D1D5DB" />
+                        
+                        {/* String pull */}
+                        <line 
+                            x1="120" y1="180" 
+                            x2="120" y2={isPasswordFocused ? "260" : "230"} 
+                            stroke="#E5E7EB" strokeWidth="2" 
+                            style={{ transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }} 
+                        />
+                        <circle 
+                            cx="120" cy={isPasswordFocused ? "260" : "230"} 
+                            r="5" fill="#fff" 
+                            style={{ transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }} 
+                        />
+
+                        {/* Lamp shade */}
+                        <g style={{ 
+                            transformOrigin: '150px 80px', 
+                            transform: isPasswordFocused ? 'rotate(-6deg) translateY(12px)' : 'rotate(0deg)',
+                            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' 
+                        }}>
+                            {/* Inner darkness / bulb area */}
+                            <ellipse cx="150" cy="180" rx="90" ry="20" fill="#3A2A32" />
+                            
+                            {/* Main shade body */}
+                            <path d="M 100 60 L 200 60 L 240 180 L 60 180 Z" fill="#8E7885" />
+                            
+                            {/* Top collar */}
+                            <ellipse cx="150" cy="60" rx="50" ry="8" fill="#75616D" />
+                            
+                            {/* Bottom rim */}
+                            <path d="M 60 180 Q 150 205 240 180 L 235 175 Q 150 198 65 175 Z" fill="#75616D" />
+                            
+                            {/* Cute Face */}
+                            <g style={{ 
+                                transform: isPasswordFocused ? 'translateY(15px)' : 'translateY(0px)',
+                                transition: 'transform 0.4s ease'
+                            }}>
+                                {/* Eyes */}
+                                {isPasswordFocused ? (
+                                    <>
+                                        {/* Closed / sleeping eyes */}
+                                        <path d="M 115 140 Q 125 145 135 140" stroke="#1F151A" strokeWidth="4" fill="none" strokeLinecap="round" />
+                                        <path d="M 165 140 Q 175 145 185 140" stroke="#1F151A" strokeWidth="4" fill="none" strokeLinecap="round" />
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Happy arches */}
+                                        <path d="M 115 140 Q 125 125 135 140" stroke="#1F151A" strokeWidth="4" fill="none" strokeLinecap="round" />
+                                        <path d="M 165 140 Q 175 125 185 140" stroke="#1F151A" strokeWidth="4" fill="none" strokeLinecap="round" />
+                                    </>
+                                )}
+                                
+                                {/* Mouth */}
+                                {isPasswordFocused ? (
+                                    <ellipse cx="150" cy="155" rx="4" ry="4" fill="#1F151A" />
+                                ) : (
+                                    <path d="M 135 150 Q 150 175 165 150 Z" fill="#E11D48" stroke="#1F151A" strokeWidth="2" strokeLinejoin="round" />
+                                )}
+                                
+                                {/* Blushes */}
+                                <ellipse cx="106" cy="150" rx="8" ry="4" fill="#E11D48" opacity="0.4" />
+                                <ellipse cx="194" cy="150" rx="8" ry="4" fill="#E11D48" opacity="0.4" />
+                            </g>
+                        </g>
+                    </svg>
                 </div>
 
-                <div style={{ marginBottom: '2.5rem' }}>
-                    <h2 style={{ fontSize: '2.2rem', fontWeight: 900, lineHeight: 1.2, letterSpacing: '-0.04em', marginBottom: '0.75rem' }}>
-                        Track everything.<br />
-                        <span className="gradient-text">Achieve more.</span>
+                {/* Login Form Frame */}
+                <div style={{
+                    width: '100%',
+                    maxWidth: '380px',
+                    background: '#1A1A24',
+                    padding: '2.5rem',
+                    borderRadius: '24px',
+                    boxShadow: isPasswordFocused 
+                        ? '0px 0px 30px rgba(225, 29, 72, 0.1)' 
+                        : '0px 0px 60px rgba(225, 29, 72, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    transition: 'box-shadow 0.5s ease',
+                    position: 'relative',
+                    zIndex: 2
+                }}>
+                    <h2 style={{ textAlign: 'center', fontSize: '1.8rem', marginBottom: '2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                        Welcome Back
                     </h2>
-                    <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                        Your all-in-one personal student workspace — built for students, by design.
-                    </p>
-                </div>
 
-                {/* Feature list */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-                    {FEATURES.map((f, i) => (
-                        <div key={i} className="fade-up" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', animationDelay: `${i * 0.06}s` }}>
-                            <div style={{
-                                width: 30, height: 30, borderRadius: 8, background: `${f.color}18`,
-                                border: `1px solid ${f.color}33`, display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', flexShrink: 0, color: f.color
-                            }}>{f.icon}</div>
-                            <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 500 }}>{f.text}</span>
-                        </div>
-                    ))}
-                </div>
-
-                <div style={{ marginTop: '2.5rem', padding: '1rem 1.25rem', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.12)', borderRadius: 12, position: 'relative' }}>
-                    <div style={{ position: 'absolute', top: -10, left: 16, background: '#0a0a14', padding: '0 8px', color: '#8b5cf6', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Creator's Note
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', lineHeight: 1.6, marginTop: 4 }}>
-                        "I built StudyTrack because I needed a smarter way to manage my GPA, timetable, and study habits in one place. Built for students, by a student."
-                    </p>
-                    <a href="https://linkedin.com/in/siddharth2006" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: 12, textDecoration: 'none', width: 'fit-content' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.75rem', fontWeight: 800 }}>S</div>
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         <div>
-                            <p style={{ fontSize: '0.75rem', color: '#e2e8f0', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                Siddharth 
-                                <span style={{ opacity: 0.5 }}>
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                                </span>
-                            </p>
-                            <p style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>Full Stack Developer</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
-
-            {/* Right panel — form */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', position: 'relative', zIndex: 1 }}>
-                <div className="glass-card fade-in" style={{ width: '100%', maxWidth: 440, padding: '2rem 1.75rem' }}>
-                    {/* Mobile logo */}
-                    <div className="hide-desktop" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
-                            <BookOpen size={22} color="white" />
-                        </div>
-                        <h1 className="gradient-text" style={{ fontSize: '1.4rem', fontWeight: 900 }}>StudyTrack</h1>
-                    </div>
-
-                    <div style={{ marginBottom: '1.75rem' }}>
-                        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>Welcome back 👋</h2>
-                        <p style={{ color: '#64748b', fontSize: '0.82rem' }}>Sign in to continue to your workspace</p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div>
-                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</label>
-                            <div style={{ position: 'relative' }}>
-                                <Mail size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                <input type="email" placeholder="you@example.com" className="input" style={{ paddingLeft: '2.25rem' }}
-                                    value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required autoFocus />
-                            </div>
+                            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: '#9CA3AF', fontWeight: 500 }}>Email Address</label>
+                            <input 
+                                type="email" 
+                                placeholder="student@example.com"
+                                value={form.email}
+                                onChange={e => setForm({...form, email: e.target.value})}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.85rem 1rem',
+                                    borderRadius: '12px',
+                                    background: '#13131A',
+                                    border: '1px solid #2D2D3B',
+                                    color: '#fff',
+                                    outline: 'none',
+                                    fontSize: '0.95rem',
+                                    transition: 'border-color 0.3s ease'
+                                }}
+                                onFocus={(e) => {
+                                    setIsPasswordFocused(false);
+                                    e.target.style.borderColor = '#E11D48';
+                                }}
+                                onBlur={(e) => e.target.style.borderColor = '#2D2D3B'}
+                                required 
+                            />
                         </div>
 
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
-                                <Link to="/forgot-password" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Forgot?</Link>
-                            </div>
-                            <div style={{ position: 'relative' }}>
-                                <Lock size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                <input type={showPwd ? 'text' : 'password'} placeholder="••••••••" className="input" style={{ paddingLeft: '2.25rem', paddingRight: '2.5rem' }}
-                                    value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
-                                <button type="button" onClick={() => setShowPwd(!showPwd)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#475569', fontSize: '0.7rem', fontWeight: 600, padding: 0 }}>
-                                    {showPwd ? 'HIDE' : 'SHOW'}
-                                </button>
-                            </div>
+                            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', color: '#9CA3AF', fontWeight: 500 }}>Password</label>
+                            <input 
+                                type="password" 
+                                placeholder="••••••••"
+                                value={form.password}
+                                onChange={e => setForm({...form, password: e.target.value})}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.85rem 1rem',
+                                    borderRadius: '12px',
+                                    background: '#13131A',
+                                    border: '1px solid #2D2D3B',
+                                    color: '#fff',
+                                    outline: 'none',
+                                    fontSize: '0.95rem',
+                                    transition: 'border-color 0.3s ease'
+                                }}
+                                onFocus={(e) => {
+                                    setIsPasswordFocused(true);
+                                    e.target.style.borderColor = '#E11D48';
+                                }}
+                                onBlur={(e) => {
+                                    setIsPasswordFocused(false);
+                                    e.target.style.borderColor = '#2D2D3B';
+                                }}
+                                required 
+                            />
                         </div>
 
-                        <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 6, width: '100%', padding: '0.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            {loading ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} /> Signing in...</> : <><LogIn size={16} /> Sign In</>}
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            style={{
+                                marginTop: '1rem',
+                                width: '100%',
+                                padding: '1rem',
+                                borderRadius: '12px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #F43F5E, #9F1239)',
+                                color: '#fff',
+                                fontSize: '1rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                boxShadow: isPasswordFocused ? 'none' : '0 8px 25px rgba(225, 29, 72, 0.4)'
+                            }}
+                            onMouseEnter={e => { if(!isPasswordFocused) e.currentTarget.style.transform = 'translateY(-2px)' }}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
+                        >
+                            {loading ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                                <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
+                                Logging in...
+                            </span> : 'Login'}
                         </button>
                     </form>
 
                     <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                        <p style={{ color: '#475569', fontSize: '0.82rem' }}>
-                            New student?{' '}
-                            <Link to="/register" style={{ color: '#818cf8', fontWeight: 700, textDecoration: 'none' }}>Create your workspace →</Link>
-                        </p>
+                        <Link to="/forgot-password" style={{ color: '#9CA3AF', fontSize: '0.85rem', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#fff'} onMouseLeave={e => e.target.style.color = '#9CA3AF'}>
+                            Forgot Password?
+                        </Link>
                     </div>
 
-                    {/* Trust badges */}
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
-                        {['🔒 Secure', '☁️ Cloud Sync', '📱 Mobile Ready'].map(b => (
-                            <span key={b} style={{ fontSize: '0.65rem', color: '#334155', fontWeight: 500, padding: '0.2rem 0.55rem', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: 20 }}>{b}</span>
-                        ))}
+                    <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <p style={{ color: '#6B7280', fontSize: '0.85rem' }}>
+                            New student?{' '}
+                            <Link to="/register" style={{ color: '#F43F5E', fontWeight: 600, textDecoration: 'none' }}>
+                                Create your account
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
-
+            {/* Global animation styles injected for spinner */}
             <style>{`
-        @media (max-width: 768px) { .hide-mobile { display: none !important; } }
-        @media (min-width: 769px) { .hide-desktop { display: none !important; } }
-      `}</style>
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+            `}</style>
         </div>
     );
 };
