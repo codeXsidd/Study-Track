@@ -256,64 +256,7 @@ const LoginPage = () => {
 
                 {/* Right panel — form */}
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', position: 'relative', zIndex: 1 }}>
-                    <div className="glass-card fade-in" style={{ width: '100%', maxWidth: 440, padding: '2rem 1.75rem' }}>
-                        {/* Mobile logo */}
-                        <div className="hide-desktop" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
-                                <BookOpen size={22} color="white" />
-                            </div>
-                            <h1 className="gradient-text" style={{ fontSize: '1.4rem', fontWeight: 900 }}>StudyTrack</h1>
-                        </div>
 
-                        <div style={{ marginBottom: '1.75rem' }}>
-                            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>Welcome back 👋</h2>
-                            <p style={{ color: '#64748b', fontSize: '0.82rem' }}>Sign in to continue to your workspace</p>
-                        </div>
-
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Mail size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type="email" placeholder="you@example.com" className="input" style={{ paddingLeft: '2.25rem' }}
-                                        value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required autoFocus={!isLampOn} />
-                                </div>
-                            </div>
-
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
-                                    <Link to="/forgot-password" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Forgot?</Link>
-                                </div>
-                                <div style={{ position: 'relative' }}>
-                                    <Lock size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type={showPwd ? 'text' : 'password'} placeholder="••••••••" className="input" style={{ paddingLeft: '2.25rem', paddingRight: '2.5rem' }}
-                                        value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
-                                    <button type="button" onClick={() => setShowPwd(!showPwd)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#475569', fontSize: '0.7rem', fontWeight: 600, padding: 0 }}>
-                                        {showPwd ? 'HIDE' : 'SHOW'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 6, width: '100%', padding: '0.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                                {loading ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} /> Signing in...</> : <><LogIn size={16} /> Sign In</>}
-                            </button>
-                        </form>
-
-                        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                            <p style={{ color: '#475569', fontSize: '0.82rem' }}>
-                                New student?{' '}
-                                <Link to="/register" style={{ color: '#818cf8', fontWeight: 700, textDecoration: 'none' }}>Create your workspace →</Link>
-                            </p>
-                        </div>
-
-                        {/* Trust badges */}
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
-                            {['🔒 Secure', '☁️ Cloud Sync', '📱 Mobile Ready'].map(b => (
-                                <span key={b} style={{ fontSize: '0.65rem', color: '#334155', fontWeight: 500, padding: '0.2rem 0.55rem', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: 20 }}>{b}</span>
-                            ))}
-                        </div>
-                    </div>
                 </div>
             </div>
 
