@@ -267,7 +267,7 @@ const LoginPage = () => {
                     transform: isLampOn ? 'translateY(-50%) scale(1)' : 'translateY(-48%) scale(0.98)',
                     opacity: isLampOn ? 0.9 : 0.02,
                     transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    pointerEvents: 'none',
+                    pointerEvents: isLampOn ? 'auto' : 'none',
                     zIndex: 0,
                     maxWidth: '420px'
                 }}>
@@ -312,6 +312,34 @@ const LoginPage = () => {
                                 <span style={{ fontSize: '0.9rem', color: '#cbd5e1', fontWeight: 500 }}>{f.text}</span>
                             </div>
                         ))}
+                    </div>
+
+                    <div style={{ 
+                        marginTop: '3.5rem', padding: '1.25rem', background: 'rgba(99,102,241,0.06)', 
+                        border: '1px solid rgba(99,102,241,0.12)', borderRadius: 12, position: 'relative',
+                        transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        transform: isLampOn ? 'translateY(0)' : 'translateY(20px)',
+                        transitionDelay: isLampOn ? '0.7s' : '0s',
+                        opacity: isLampOn ? 1 : 0
+                    }}>
+                        <div style={{ position: 'absolute', top: -10, left: 16, background: isLampOn ? '#121921' : '#050505', transition: 'background 0.6s ease', padding: '0 8px', color: '#8b5cf6', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Creator's Note
+                        </div>
+                        <p style={{ fontSize: '0.82rem', color: '#94a3b8', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
+                            "I built StudyTrack because I needed a smarter way to manage my GPA, timetable, and study habits in one place. Built for students, by a student."
+                        </p>
+                        <a href="https://linkedin.com/in/siddharth2006" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: 14, textDecoration: 'none', width: 'fit-content' }}>
+                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.85rem', fontWeight: 800, boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>S</div>
+                            <div>
+                                <p style={{ fontSize: '0.8rem', color: '#e2e8f0', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                                    Siddharth 
+                                    <span style={{ opacity: 0.6 }}>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                    </span>
+                                </p>
+                                <p style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '2px 0 0 0' }}>Full Stack Developer</p>
+                            </div>
+                        </a>
                     </div>
                 </div>
 
