@@ -313,6 +313,21 @@ const LoginPage = () => {
                             </div>
                         ))}
                     </div>
+
+                    {/* FOOTER */}
+                    <div style={{
+                        marginTop: '3.5rem',
+                        transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        transform: isLampOn ? 'translateX(0)' : 'translateX(-30px)',
+                        transitionDelay: isLampOn ? '0.7s' : '0s'
+                    }}>
+                        <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0 0 8px 0', letterSpacing: '0.05em' }}>
+                            Designed by <span style={{ color: '#fff', fontWeight: 700 }}>Siddharth</span>
+                        </p>
+                        <a href="https://www.linkedin.com/in/siddharth2006" target="_blank" rel="noopener noreferrer" className="footer-linkedin-link">
+                            Full Stack Developer
+                        </a>
+                    </div>
                 </div>
 
                 <div className="cute-container" style={{ position: 'relative', zIndex: 1 }}>
@@ -529,23 +544,7 @@ const LoginPage = () => {
                         </form>
                     </div>
                 </div>
-                
-                {/* FOOTER */}
-                <div style={{
-                    position: 'absolute',
-                    bottom: '2.5rem',
-                    textAlign: 'center',
-                    zIndex: 2,
-                    opacity: isLampOn ? 0.9 : 0.2,
-                    transition: 'opacity 0.8s ease'
-                }}>
-                    <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0 0 6px 0', letterSpacing: '0.05em' }}>
-                        Designed by <span style={{ color: '#fff', fontWeight: 700 }}>Siddharth</span>
-                    </p>
-                    <a href="https://www.linkedin.com/in/siddharth2006" target="_blank" rel="noopener noreferrer" className="footer-linkedin-link">
-                        Full Stack Developer
-                    </a>
-                </div>
+
             </div>
 
             <style>{`
