@@ -543,7 +543,7 @@ const LoginPage = () => {
                         Designed by <span style={{ color: '#fff', fontWeight: 700 }}>Siddharth</span>
                     </p>
                     <a href="https://www.linkedin.com/in/siddharth2006" target="_blank" rel="noopener noreferrer" className="footer-linkedin-link">
-                        www.linkedin.com/siddharth2006
+                        Full Stack Developer
                     </a>
                 </div>
             </div>
