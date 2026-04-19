@@ -3,7 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { login as loginApi, register as registerApi, sendOtp, verifyOtp } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Mail, Lock, User, Key } from 'lucide-react';
+import { Mail, Lock, User, Key, BookOpen, CheckCircle2, Flame, GraduationCap, Clock, ListTodo, TrendingUp } from 'lucide-react';
+
+const FEATURES = [
+    { icon: <GraduationCap size={16} />, color: '#818cf8', text: 'GPA & CGPA tracker across all semesters' },
+    { icon: <Clock size={16} />, color: '#10b981', text: 'Smart timetable with today\'s class view' },
+    { icon: <CheckCircle2 size={16} />, color: '#f59e0b', text: 'Assignment deadlines & to-do lists' },
+    { icon: <Flame size={16} />, color: '#ef4444', text: 'Study journal with activity heatmap' },
+    { icon: <ListTodo size={16} />, color: '#a78bfa', text: 'Notes wall, portfolio & skill tracker' },
+    { icon: <TrendingUp size={16} />, color: '#22d3ee', text: 'Attendance tracker with warnings' },
+];
 
 const LoginPage = () => {
     const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -250,7 +259,63 @@ const LoginPage = () => {
                 placeItems: 'center',
                 overflowY: 'auto'
             }}>
-                <div className="cute-container">
+                {/* BACK SCREEN CONTENT */}
+                <div className="hide-mobile" style={{
+                    position: 'absolute',
+                    left: '8%',
+                    top: '50%',
+                    transform: isLampOn ? 'translateY(-50%) scale(1)' : 'translateY(-48%) scale(0.98)',
+                    opacity: isLampOn ? 0.9 : 0.02,
+                    transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                    maxWidth: '420px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '2.5rem' }}>
+                        <div style={{
+                            width: 52, height: 52, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                            borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: isLampOn ? '0 8px 28px rgba(99,102,241,0.4)' : 'none'
+                        }}>
+                            <BookOpen size={26} color="white" />
+                        </div>
+                        <div>
+                            <h1 style={{ fontSize: '1.8rem', fontWeight: 900, margin: 0, color: '#fff', letterSpacing: '-0.03em' }}>StudyTrack</h1>
+                            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, fontWeight: 500 }}>Your personal study companion</p>
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '2.5rem' }}>
+                        <h2 style={{ fontSize: '2.2rem', color: '#fff', fontWeight: 900, lineHeight: 1.2, letterSpacing: '-0.04em', margin: '0 0 0.75rem 0' }}>
+                            Track everything.<br />
+                            <span style={{ color: '#818cf8' }}>Achieve more.</span>
+                        </h2>
+                        <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
+                            Your all-in-one personal student workspace — built for students, by design.
+                        </p>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                        {FEATURES.map((f, i) => (
+                            <div key={i} style={{ 
+                                display: 'flex', alignItems: 'center', gap: '1rem', 
+                                transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)', 
+                                transform: isLampOn ? 'translateX(0)' : 'translateX(-30px)', 
+                                transitionDelay: isLampOn ? `${i * 0.08 + 0.2}s` : '0s' 
+                            }}>
+                                <div style={{
+                                    width: 32, height: 32, borderRadius: 8, background: `${f.color}18`,
+                                    border: `1px solid ${f.color}33`, display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', flexShrink: 0, color: f.color,
+                                    boxShadow: isLampOn ? `0 0 15px ${f.color}20` : 'none'
+                                }}>{f.icon}</div>
+                                <span style={{ fontSize: '0.9rem', color: '#cbd5e1', fontWeight: 500 }}>{f.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="cute-container" style={{ position: 'relative', zIndex: 1 }}>
                     <svg
                         className="lamp"
                         viewBox="0 0 333 484"
