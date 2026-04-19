@@ -1,36 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login as loginApi } from '../services/api';
+import { login as loginApi, register as registerApi, sendOtp, verifyOtp } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import {
-    BookOpen, Mail, Lock, LogIn, CheckCircle2, Flame,
-    GraduationCap, Clock, ListTodo, StickyNote, TrendingUp
-} from 'lucide-react';
-
-const FEATURES = [
-    { icon: <GraduationCap size={16} />, color: '#818cf8', text: 'GPA & CGPA tracker across all semesters' },
-    { icon: <Clock size={16} />, color: '#10b981', text: 'Smart timetable with today\'s class view' },
-    { icon: <CheckCircle2 size={16} />, color: '#f59e0b', text: 'Assignment deadlines & to-do lists' },
-    { icon: <Flame size={16} />, color: '#ef4444', text: 'Study journal with activity heatmap' },
-    { icon: <ListTodo size={16} />, color: '#a78bfa', text: 'Notes wall, portfolio & skill tracker' },
-    { icon: <TrendingUp size={16} />, color: '#22d3ee', text: 'Attendance tracker with warnings' },
-];
+import { Mail, Lock, User, Key } from 'lucide-react';
 
 const LoginPage = () => {
-    const [form, setForm] = useState({ email: '', password: '' });
+    const [form, setForm] = useState({ name: '', email: '', password: '' });
     const [loading, setLoading] = useState(false);
-    const [showPwd, setShowPwd] = useState(false);
+    // Cute Lamp System States
     const [isLampOn, setIsLampOn] = useState(false);
+    const [cuteMode, setCuteMode] = useState('login'); // 'login' or 'register'
+    const [step, setStep] = useState(1);
+    const [otp, setOtp] = useState('');
 
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    // -------------------------------------
+    // STANDARD LOGIN PAGE HANDLER
+    // -------------------------------------
+    const handleStandardLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await loginApi(form);
+            const res = await loginApi({ email: form.email, password: form.password });
             login(res.data.user, res.data.token);
             toast.success(`Welcome back, ${res.data.user.name}! 👋`);
             navigate('/');
@@ -39,6 +33,72 @@ const LoginPage = () => {
             toast.error(err.response?.data?.message || err.message || 'Login failed');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // -------------------------------------
+    // CUTE UI REGISTRATION HANDLERS
+    // -------------------------------------
+    const handleSendOtp = async (e) => {
+        e.preventDefault();
+        if (!form.name || !form.email) {
+            toast.error("Name and Email are required");
+            return;
+        }
+        setLoading(true);
+        try {
+            await sendOtp({ email: form.email });
+            toast.success(`OTP sent to ${form.email}`);
+            setStep(2);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to send OTP');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        if (!otp) { toast.error('Please enter the verification code'); return; }
+        setLoading(true);
+        try {
+            await verifyOtp({ email: form.email, otp });
+            toast.success('Email verified successfully!');
+            setStep(3);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Invalid or expired OTP');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!pwdRegex.test(form.password)) { 
+            toast.error('Password must be at least 8 chars, include an uppercase, a number, and a special char'); 
+            return; 
+        }
+        setLoading(true);
+        try {
+            const res = await registerApi({ ...form, otp });
+            login(res.data.user, res.data.token);
+            toast.success(`Welcome to StudyTrack, ${res.data.user.name}! 🚀`);
+            navigate('/');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Registration failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const submitCuteForm = (e) => {
+        if (cuteMode === 'login') {
+            handleStandardLogin(e);
+        } else {
+            if (step === 1) handleSendOtp(e);
+            else if (step === 2) handleVerifyOtp(e);
+            else handleRegister(e);
         }
     };
 
@@ -180,149 +240,11 @@ const LoginPage = () => {
 
     return (
         <>
-            {/* OLD LOGIN PAGE */}
-            <div className="auth-bg" style={{ 
-                minHeight: '100vh',
-                opacity: isLampOn ? 0 : 1, 
-                pointerEvents: isLampOn ? 'none' : 'auto', 
-                transition: 'opacity 0.6s ease'
-            }}>
-                <div style={{
-                    flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                    padding: '3rem', maxWidth: 520,
-                    background: 'linear-gradient(160deg, rgba(99,102,241,0.1) 0%, rgba(8,8,18,0) 70%)',
-                    borderRight: '1px solid rgba(99,102,241,0.08)'
-                }} className="hide-mobile">
-                    {/* Logo */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '3rem' }}>
-                        <div style={{
-                            width: 48, height: 48, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                            borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 8px 28px rgba(99,102,241,0.4)'
-                        }}>
-                            <BookOpen size={24} color="white" />
-                        </div>
-                        <div>
-                            <h1 className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.03em' }}>StudyTrack</h1>
-                            <p style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 500 }}>Your personal study companion</p>
-                        </div>
-                    </div>
-
-                    <div style={{ marginBottom: '2.5rem' }}>
-                        <h2 style={{ fontSize: '2.2rem', fontWeight: 900, lineHeight: 1.2, letterSpacing: '-0.04em', marginBottom: '0.75rem' }}>
-                            Track everything.<br />
-                            <span className="gradient-text">Achieve more.</span>
-                        </h2>
-                        <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.7 }}>
-                            Your all-in-one personal student workspace — built for students, by design.
-                        </p>
-                    </div>
-
-                    {/* Feature list */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-                        {FEATURES.map((f, i) => (
-                            <div key={i} className="fade-up" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', animationDelay: `${i * 0.06}s` }}>
-                                <div style={{
-                                    width: 30, height: 30, borderRadius: 8, background: `${f.color}18`,
-                                    border: `1px solid ${f.color}33`, display: 'flex', alignItems: 'center',
-                                    justifyContent: 'center', flexShrink: 0, color: f.color
-                                }}>{f.icon}</div>
-                                <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 500 }}>{f.text}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div style={{ marginTop: '2.5rem', padding: '1rem 1.25rem', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.12)', borderRadius: 12, position: 'relative' }}>
-                        <div style={{ position: 'absolute', top: -10, left: 16, background: '#0a0a14', padding: '0 8px', color: '#8b5cf6', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Creator's Note
-                        </div>
-                        <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', lineHeight: 1.6, marginTop: 4 }}>
-                            "I built StudyTrack because I needed a smarter way to manage my GPA, timetable, and study habits in one place. Built for students, by a student."
-                        </p>
-                        <a href="https://linkedin.com/in/siddharth2006" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: 12, textDecoration: 'none', width: 'fit-content' }}>
-                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.75rem', fontWeight: 800 }}>S</div>
-                            <div>
-                                <p style={{ fontSize: '0.75rem', color: '#e2e8f0', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    Siddharth 
-                                    <span style={{ opacity: 0.5 }}>
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                                    </span>
-                                </p>
-                                <p style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>Full Stack Developer</p>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-
-                {/* Right panel — form */}
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', position: 'relative', zIndex: 1 }}>
-                    <div className="glass-card fade-in" style={{ width: '100%', maxWidth: 440, padding: '2rem 1.75rem' }}>
-                        {/* Mobile logo */}
-                        <div className="hide-desktop" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
-                                <BookOpen size={22} color="white" />
-                            </div>
-                            <h1 className="gradient-text" style={{ fontSize: '1.4rem', fontWeight: 900 }}>StudyTrack</h1>
-                        </div>
-
-                        <div style={{ marginBottom: '1.75rem' }}>
-                            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>Welcome back 👋</h2>
-                            <p style={{ color: '#64748b', fontSize: '0.82rem' }}>Sign in to continue to your workspace</p>
-                        </div>
-
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, marginBottom: 6, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Mail size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type="email" placeholder="you@example.com" className="input" style={{ paddingLeft: '2.25rem' }}
-                                        value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required autoFocus={!isLampOn} />
-                                </div>
-                            </div>
-
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
-                                    <Link to="/forgot-password" style={{ fontSize: '0.72rem', color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>Forgot?</Link>
-                                </div>
-                                <div style={{ position: 'relative' }}>
-                                    <Lock size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type={showPwd ? 'text' : 'password'} placeholder="••••••••" className="input" style={{ paddingLeft: '2.25rem', paddingRight: '2.5rem' }}
-                                        value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
-                                    <button type="button" onClick={() => setShowPwd(!showPwd)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#475569', fontSize: '0.7rem', fontWeight: 600, padding: 0 }}>
-                                        {showPwd ? 'HIDE' : 'SHOW'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 6, width: '100%', padding: '0.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                                {loading ? <><span style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} /> Signing in...</> : <><LogIn size={16} /> Sign In</>}
-                            </button>
-                        </form>
-
-                        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                            <p style={{ color: '#475569', fontSize: '0.82rem' }}>
-                                New student?{' '}
-                                <Link to="/register" style={{ color: '#818cf8', fontWeight: 700, textDecoration: 'none' }}>Create your workspace →</Link>
-                            </p>
-                        </div>
-
-                        {/* Trust badges */}
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
-                            {['🔒 Secure', '☁️ Cloud Sync', '📱 Mobile Ready'].map(b => (
-                                <span key={b} style={{ fontSize: '0.65rem', color: '#334155', fontWeight: 500, padding: '0.2rem 0.55rem', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: 20 }}>{b}</span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* LAMP AND CUTE FORM OVERLAY */}
+            {/* LAMP AND CUTE FORM */}
             <div id="lamp-login-system" style={{
                 position: 'fixed', inset: 0,
-                pointerEvents: 'none',
                 zIndex: 100,
-                background: isLampOn ? '#121921' : 'transparent',
+                background: isLampOn ? '#121921' : '#050505',
                 transition: 'background 0.6s ease',
                 display: 'grid',
                 placeItems: 'center',
@@ -409,44 +331,136 @@ const LoginPage = () => {
                     </svg>
 
                     <div className={`cute-login-form ${isLampOn ? 'active' : ''}`} style={{ pointerEvents: isLampOn ? 'auto' : 'none' }}>
-                        <div style={{ width: 50, height: 50, background: 'linear-gradient(135deg, var(--glow-color), var(--glow-color-dark))', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', boxShadow: '0 0 20px var(--glow-color)', transition: 'all 0.3s ease' }}>
-                            <LogIn size={26} color="white" />
+                        
+                        <div className="cute-tabs">
+                            <button type="button" className={`cute-tab ${cuteMode === 'login' ? 'active' : ''}`} onClick={() => { setCuteMode('login'); setStep(1); }}>Login</button>
+                            <button type="button" className={`cute-tab ${cuteMode === 'register' ? 'active' : ''}`} onClick={() => setCuteMode('register')}>Register</button>
                         </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="cute-form-group">
-                                <label htmlFor="cute-username">Email</label>
-                                <input
-                                    type="email"
-                                    id="cute-username"
-                                    placeholder="Enter your email"
-                                    className="cute-input"
-                                    required
-                                    value={form.email}
-                                    onChange={e => setForm({ ...form, email: e.target.value })}
-                                />
-                            </div>
-                            <div className="cute-form-group">
-                                <label htmlFor="cute-password">Password</label>
-                                <input
-                                    type="password"
-                                    id="cute-password"
-                                    placeholder="Enter your password"
-                                    className="cute-input"
-                                    required
-                                    value={form.password}
-                                    onChange={e => setForm({ ...form, password: e.target.value })}
-                                />
-                            </div>
+
+                        <form onSubmit={submitCuteForm}>
+                            
+                            {/* LOGIN MODE */}
+                            {cuteMode === 'login' && (
+                                <>
+                                    <div className="cute-form-group">
+                                        <label htmlFor="cute-login-email">Email</label>
+                                        <div className="input-wrapper">
+                                            <Mail size={16} className="cute-input-icon" />
+                                            <input
+                                                type="email"
+                                                id="cute-login-email"
+                                                placeholder="Enter your email"
+                                                className="cute-input"
+                                                required
+                                                value={form.email}
+                                                onChange={e => setForm({ ...form, email: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="cute-form-group">
+                                        <label htmlFor="cute-login-password">Password</label>
+                                        <div className="input-wrapper">
+                                            <Lock size={16} className="cute-input-icon" />
+                                            <input
+                                                type="password"
+                                                id="cute-login-password"
+                                                placeholder="Enter your password"
+                                                className="cute-input"
+                                                required
+                                                value={form.password}
+                                                onChange={e => setForm({ ...form, password: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* REGISTER MODE */}
+                            {cuteMode === 'register' && step === 1 && (
+                                <>
+                                    <div className="cute-form-group">
+                                        <label htmlFor="cute-reg-name">Full Name</label>
+                                        <div className="input-wrapper">
+                                            <User size={16} className="cute-input-icon" />
+                                            <input
+                                                type="text"
+                                                id="cute-reg-name"
+                                                placeholder="Your name"
+                                                className="cute-input"
+                                                required
+                                                value={form.name}
+                                                onChange={e => setForm({ ...form, name: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="cute-form-group">
+                                        <label htmlFor="cute-reg-email">Email</label>
+                                        <div className="input-wrapper">
+                                            <Mail size={16} className="cute-input-icon" />
+                                            <input
+                                                type="email"
+                                                id="cute-reg-email"
+                                                placeholder="you@example.com"
+                                                className="cute-input"
+                                                required
+                                                value={form.email}
+                                                onChange={e => setForm({ ...form, email: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {cuteMode === 'register' && step === 2 && (
+                                <div className="cute-form-group fade-in">
+                                    <label htmlFor="cute-reg-otp">Verification Code</label>
+                                    <div className="input-wrapper">
+                                        <Key size={16} className="cute-input-icon" />
+                                        <input
+                                            type="text"
+                                            id="cute-reg-otp"
+                                            placeholder="Enter 6-digit code"
+                                            className="cute-input"
+                                            required
+                                            value={otp}
+                                            onChange={e => setOtp(e.target.value)}
+                                        />
+                                    </div>
+                                    <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>Sent to {form.email}</p>
+                                    <button type="button" onClick={() => setStep(1)} className="cute-back-btn">← Edit Details</button>
+                                </div>
+                            )}
+
+                            {cuteMode === 'register' && step === 3 && (
+                                <div className="cute-form-group fade-in">
+                                    <label htmlFor="cute-reg-password">Create Password</label>
+                                    <div className="input-wrapper">
+                                        <Lock size={16} className="cute-input-icon" />
+                                        <input
+                                            type="password"
+                                            id="cute-reg-password"
+                                            placeholder="min. 8 chars + special"
+                                            className="cute-input"
+                                            required
+                                            value={form.password}
+                                            onChange={e => setForm({ ...form, password: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <button type="submit" className="cute-btn" disabled={loading}>
-                                {loading ? 'Logging in...' : 'Login'}
+                                {loading ? 'Processing...' : (
+                                    cuteMode === 'login' ? 'Login' : 
+                                    (step === 1 ? 'Continue' : step === 2 ? 'Verify Code' : 'Create Account')
+                                )}
                             </button>
-                            <div className="cute-form-footer">
-                                <Link to="/forgot-password" className="cute-forgot-link">Forgot Password?</Link>
-                            </div>
-                            <div style={{ textAlign: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                                <span style={{ color: '#888', fontSize: '0.85rem' }}>New student? </span>
-                                <Link to="/register" style={{ color: 'var(--glow-color)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', textShadow: '0 0 8px var(--glow-color-dark)' }}>Create your workspace</Link>
-                            </div>
+
+                            {cuteMode === 'login' && (
+                                <div className="cute-form-footer">
+                                    <Link to="/forgot-password" className="cute-forgot-link">Forgot Password?</Link>
+                                </div>
+                            )}
                         </form>
                     </div>
                 </div>
@@ -487,71 +501,110 @@ const LoginPage = () => {
                     gap: 8vmin;
                     flex-wrap: wrap;
                     padding: 2rem;
+                    width: 100%;
                 }
 
                 #lamp-login-system .cute-login-form {
-                    background: rgba(18, 25, 33, 0.9);
-                    padding: 3rem 2.5rem;
-                    border-radius: 20px;
-                    min-width: 320px;
+                    background: rgba(18, 25, 33, 0.45);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    padding: 2.5rem 2rem;
+                    border-radius: 24px;
+                    width: 90%;
+                    max-width: 380px;
                     opacity: 0;
-                    transform: scale(0.8) translateY(20px);
-                    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-                    border: 2px solid transparent;
+                    transform: scale(0.9) translateY(20px);
+                    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
                     box-shadow: 0 0 0px rgba(255, 255, 255, 0);
                 }
 
                 #lamp-login-system .cute-login-form.active {
                     opacity: 1;
                     transform: scale(1) translateY(0);
-                    border-color: var(--glow-color);
-                    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1),
-                        0 0 30px var(--glow-color),
-                        inset 0 0 15px rgba(255, 255, 255, 0.05);
+                    border-color: rgba(255, 255, 255, 0.12);
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.4),
+                        0 0 40px var(--glow-color),
+                        inset 0 0 20px rgba(255, 255, 255, 0.03);
                 }
 
-                #lamp-login-system .cute-login-form h2 {
-                    color: #fff;
-                    font-size: 2rem;
-                    margin: 0 0 2rem 0;
+                #lamp-login-system .cute-tabs {
+                    display: flex;
+                    background: rgba(0, 0, 0, 0.3);
+                    border-radius: 12px;
+                    padding: 4px;
+                    margin-bottom: 2rem;
+                }
+
+                #lamp-login-system .cute-tab {
+                    flex: 1;
                     text-align: center;
-                    text-shadow: 0 0 8px var(--glow-color);
+                    padding: 0.7rem;
+                    color: rgba(255, 255, 255, 0.5);
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    background: none;
+                    border: none;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                }
+
+                #lamp-login-system .cute-tab.active {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #fff;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
                 }
 
                 #lamp-login-system .cute-form-group {
-                    margin-bottom: 1.5rem;
+                    margin-bottom: 1.25rem;
                 }
 
                 #lamp-login-system .cute-form-group label {
                     display: block;
-                    color: #aaa;
-                    font-size: 0.9rem;
-                    margin-bottom: 0.5rem;
-                    text-shadow: 0 0 5px var(--glow-color);
-                    text-transform: none;
-                    letter-spacing: normal;
+                    color: rgba(255,255,255,0.7);
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    margin-bottom: 0.4rem;
+                    text-shadow: 0 0 6px var(--glow-color);
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+
+                #lamp-login-system .input-wrapper {
+                    position: relative;
+                }
+
+                #lamp-login-system .cute-input-icon {
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: rgba(255,255,255,0.3);
+                    pointer-events: none;
                 }
 
                 #lamp-login-system .cute-input {
                     width: 100%;
-                    padding: 0.75rem 1rem;
-                    background: rgba(255, 255, 255, 0.05) !important;
-                    border: 2px solid rgba(255, 255, 255, 0.1) !important;
-                    border-radius: 10px !important;
+                    padding: 0.85rem 1.25rem;
+                    padding-left: 2.8rem;
+                    background: rgba(255, 255, 255, 0.04) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    border-radius: 12px !important;
                     color: #fff !important;
-                    font-size: 1rem !important;
+                    font-size: 0.95rem !important;
                     transition: all 0.3s ease !important;
                 }
 
                 #lamp-login-system .cute-input:focus {
                     outline: none !important;
                     border-color: var(--glow-color) !important;
-                    box-shadow: 0 0 10px var(--glow-color) !important;
+                    box-shadow: 0 0 15px var(--glow-color) !important;
                     background: rgba(255, 255, 255, 0.08) !important;
                 }
 
                 #lamp-login-system .cute-input::placeholder {
-                    color: #666;
+                    color: rgba(255, 255, 255, 0.3);
                 }
 
                 #lamp-login-system .cute-btn {
@@ -559,10 +612,10 @@ const LoginPage = () => {
                     padding: 0.875rem;
                     background: linear-gradient(135deg, var(--glow-color), var(--glow-color-dark));
                     border: none;
-                    border-radius: 10px;
+                    border-radius: 12px;
                     color: #fff;
                     font-size: 1rem;
-                    font-weight: 600;
+                    font-weight: 700;
                     cursor: pointer;
                     transition: all 0.3s ease;
                     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -578,14 +631,30 @@ const LoginPage = () => {
                     transform: translateY(0);
                 }
 
+                #lamp-login-system .cute-back-btn {
+                    background: none;
+                    border: none;
+                    color: var(--glow-color);
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    margin-top: 6px;
+                    cursor: pointer;
+                    padding: 0;
+                    transition: all 0.2s;
+                }
+                #lamp-login-system .cute-back-btn:hover {
+                    text-shadow: 0 0 8px var(--glow-color);
+                }
+
                 #lamp-login-system .cute-form-footer {
                     margin-top: 1.5rem;
                     text-align: center;
                 }
 
                 #lamp-login-system .cute-forgot-link {
-                    color: #888;
-                    font-size: 0.9rem;
+                    color: rgba(255,255,255,0.5);
+                    font-size: 0.85rem;
+                    font-weight: 600;
                     text-decoration: none;
                     transition: all 0.3s ease;
                 }
@@ -602,6 +671,21 @@ const LoginPage = () => {
                     overflow: visible !important;
                 }
 
+                @media (max-width: 768px) {
+                    #lamp-login-system .cute-container {
+                        flex-direction: column;
+                        gap: 4vmin;
+                    }
+                    #lamp-login-system .lamp {
+                        height: 28vmin;
+                        min-height: 180px;
+                    }
+                    #lamp-login-system .cute-login-form {
+                        padding: 1.75rem 1.5rem;
+                        max-width: 340px;
+                    }
+                }
+
                 #lamp-login-system .cord { stroke: var(--cord); }
                 #lamp-login-system .cord--rig { display: none; }
                 #lamp-login-system .lamp__tongue { fill: var(--tongue); }
@@ -615,23 +699,6 @@ const LoginPage = () => {
                 #lamp-login-system .base__top { fill: var(--base-top); }
                 #lamp-login-system .base__side { fill: var(--base-side); }
                 #lamp-login-system .top__body { fill: var(--t-3); }
-
-                @media (max-width: 640px) {
-                    #lamp-login-system .cute-container {
-                        gap: 1.5rem;
-                        padding: 1rem;
-                        flex-direction: column;
-                    }
-                    #lamp-login-system .lamp {
-                        height: 35vmin;
-                        min-height: 220px;
-                    }
-                    #lamp-login-system .cute-login-form {
-                        padding: 2rem 1.75rem;
-                        min-width: 90%;
-                        width: 100%;
-                    }
-                }
             `}</style>
         </>
     );

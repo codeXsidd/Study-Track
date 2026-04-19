@@ -8,7 +8,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
@@ -61,7 +60,7 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/login" element={!token ? <LoginPage /> : <Navigate to="/" replace />} />
-            <Route path="/register" element={!token ? <RegisterPage /> : <Navigate to="/" replace />} />
+            <Route path="/register" element={<Navigate to="/login" replace />} />
             <Route path="/forgot-password" element={!token ? <ForgotPasswordPage /> : <Navigate to="/" replace />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
