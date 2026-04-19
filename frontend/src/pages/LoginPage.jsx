@@ -585,6 +585,11 @@ const LoginPage = () => {
                     padding: 2rem;
                     width: 100%;
                 }
+                @media (min-width: 1024px) {
+                    #lamp-login-system .cute-container {
+                        padding-left: 22vw;
+                    }
+                }
 
                 #lamp-login-system .cute-login-form {
                     background: rgba(18, 25, 33, 0.45);
